@@ -1,0 +1,1471 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep Neural Networks for Multi-Class Classification</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用于多类分类的深度神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在开发预测和分类模型时，根据响应或目标变量的类型，我们会遇到两种潜在类型的问题:目标变量是分类类型(这是问题的分类类型)或目标变量是数值类型(这是问题的回归类型)。据观察，约70%的数据属于分类类别产生的问题，其余30%是回归问题(这里是参考:<a href="https://www.topcoder.com/role-of-statistics-in-data-science/">https://www . top coder . com/role-of-statistics-in-data-science/</a>)。在本章中，我们将提供将深度学习神经网络应用于分类问题的步骤。这些步骤用胎儿心率图或ctg来说明。</p>
+
+<p>在本章中，我们将讨论以下主题:</p>
+
+<ul>
+
+<li>对胎儿心脏分娩图(或CTG)数据集的简单了解</li>
+
+<li>数据准备的步骤，包括标准化、数据分区和一次性编码</li>
+
+<li>为分类问题创建和拟合深度神经网络模型</li>
+
+<li>评估分类模型性能并使用该模型进行预测</li>
+
+<li>微调模型以实现性能优化和最佳实践</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Cardiotocogram dataset</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">心电图数据集</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一节中，我们将提供关于用于开发多类分类模型的数据的信息。我们将只使用一个库，即Keras。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Dataset (medical)</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">数据集(医学)</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>本章使用的数据集可以在加州大学信息和计算机科学学院维护的UCI机器学习库中公开获得。你可以在<a href="https://archive.ics.uci.edu/ml/datasets/cardiotocography">https://archive.ics.uci.edu/ml/datasets/cardiotocography</a>访问这个。</p>
+
+<p>需要注意的是，此URL允许您下载Excel数据文件。通过将文件保存为<kbd>.csv</kbd>文件，可以很容易地将该文件转换为<kbd>.csv</kbd>格式。</p>
+
+<p>对于数据，我们应该使用用于<kbd>.csv</kbd>的格式，如下面的代码所示:</p>
+
+<pre># Read data<br/>library(keras)<br/>data &lt;- read.csv('~/Desktop/data/CTG.csv', header=T)<br/>str(data)<br/><br/>OUTPUT<br/> ## 'data.frame': 2126 obs. of 22 variables:<br/> ## $ LB : int 120 132 133 134 132 134 134 122 122 122 ...<br/> ## $ AC : num 0 0.00638 0.00332 0.00256 0.00651 ...<br/> ## $ FM : num 0 0 0 0 0 0 0 0 0 0 ...<br/> ##  $ UC      : num  0 0.00638 0.00831 0.00768 0.00814 ...<br/> ##  $ DL      : num  0 0.00319 0.00332 0.00256 0 ...<br/> ##  $ DS      : num  0 0 0 0 0 0 0 0 0 0 ...<br/> ##  $ DP      : num  0 0 0 0 0 ...<br/> ##  $ ASTV    : int  73 17 16 16 16 26 29 83 84 86 ...<br/> ##  $ MSTV    : num  0.5 2.1 2.1 2.4 2.4 5.9 6.3 0.5 0.5 0.3 ...<br/> ##  $ ALTV    : int  43 0 0 0 0 0 0 6 5 6 ...<br/> ##  $ MLTV    : num  2.4 10.4 13.4 23 19.9 0 0 15.6 13.6 10.6 ...<br/> ##  $ Width   : int  64 130 130 117 117 150 150 68 68 68 ...<br/> ##  $ Min     : int  62 68 68 53 53 50 50 62 62 62 ...<br/> ##  $ Max     : int  126 198 198 170 170 200 200 130 130 130 ...<br/> ##  $ Nmax    : int  2 6 5 11 9 5 6 0 0 1 ...<br/> ##  $ Nzeros  : int  0 1 1 0 0 3 3 0 0 0 ...<br/> ##  $ Mode    : int  120 141 141 137 137 76 71 122 122 122 ...<br/> ##  $ Mean    : int  137 136 135 134 136 107 107 122 122 122 ...<br/> ##  $ Median  : int  121 140 138 137 138 107 106 123 123 123 ...<br/> ##  $ Variance: int  73 12 13 13 11 170 215 3 3 1 ...<br/> ##  $ Tendency: int  1 0 0 1 1 0 0 1 1 1 ...<br/> ##  $ NSP     : int  2 1 1 1 1 3 3 3 3 3 ...</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root">该数据由胎儿ctg组成，目标变量将患者分为三类:正常、可疑和病理。该数据集中有2，126行。ctg由三位产科专家进行分类，并将它们中的每一个指定为正常(N)(由1表示)、可疑(S)(由2表示)和病理(P)(由3表示)。有21个独立变量，主要目标是开发一个分类模型，以正确地将每个患者分类到由N、S和p表示的三个类别之一。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Preparing the data for model building</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">为模型构建准备数据</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将准备用于构建分类模型的数据。数据准备包括标准化数据、将数据划分为训练数据和测试数据，以及对响应变量进行一次性编码。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Normalizing numeric variables</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">规范化数字变量</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了开发深层网络模型，我们对数值变量进行了规范化，使它们具有共同的尺度。在处理几个变量时，不同的变量可能有不同的尺度，例如，可能有一个变量显示公司的收入，其值可能以百万美元计。在另一个例子中，可能有一个以厘米为单位显示产品尺寸的变量。这种规模上的极端差异给训练网络带来了困难，而标准化有助于解决这个问题。为了规范化，我们将使用以下代码:</p>
+
+<pre># Normalize data <br/>data &lt;- as.matrix(data)<br/> dimnames(data) &lt;- NULL  <br/> data[,1:21] &lt;- normalize(data[,1:21])<br/> data[,22] &lt;- as.numeric(data[,22]) -1</pre>
+
+<p>正如您在前面的代码中看到的，我们首先将数据更改为矩阵格式，然后通过将<kbd>NULL</kbd>分配给维度名称来删除默认名称。在这一步中，22个变量的名称将更改为<kbd>V1</kbd>、<kbd>V2</kbd>、<kbd>V3</kbd>，...，<kbd>V22</kbd>。如果您在这个阶段运行<kbd>str(data)</kbd>，您会注意到原始数据的格式发生了变化。我们使用<kbd>normalize</kbd>函数对21个独立变量进行标准化，这是Keras包的一部分。当您运行这行代码时，您会注意到它使用TensorFlow作为后端。我们还将目标变量NSP从默认的整数类型改为数字类型。此外，在同一行代码中，我们还分别将值从<kbd>1</kbd>、<kbd>2</kbd>和<kbd>3</kbd>更改为<kbd>0</kbd>、<kbd>1</kbd>和<kbd>2</kbd>。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Partitioning the data</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">划分数据</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>接下来，我们将把这些数据划分为训练和测试数据集。为了执行数据分区，我们使用以下代码:</p>
+
+<pre class="SourceCode"># Data partition <br/>set.seed(1234)<br/> ind &lt;- sample(2, nrow(data), replace = T, prob=c(.7, .3))<br/> training &lt;- data[ind==1, 1:21]<br/> test &lt;- data[ind==2, 1:21]<br/> trainingtarget &lt;- data[ind==1, 22]<br/> testtarget &lt;- data[ind==2, 22]</pre>
+
+<p>从前面的代码中可以看出，为了在训练和测试数据集中获得相同的样本以实现可重复性，我们使用带有特定数字的<kbd>set.seed</kbd>，在本例中是<kbd>1234</kbd>。这将确保读者也可以在训练和测试数据中获得相同的样本。对于数据分区，这里使用70:30的分割，但也可以使用任何其他比例。在机器学习应用程序中，这是一个常用的步骤，以确保预测模型能够很好地处理以测试数据形式存储的未知数据。训练数据用于开发模型，测试数据用于评估模型的性能。有时，预测模型可能在训练数据的情况下表现得非常好，甚至非常好；但是，当使用模型没有看到的测试数据对其进行评估时，性能可能会非常令人失望。在机器学习中，这个问题被称为过度拟合模型。测试数据有助于评估和确保预测模型能够可靠地实现，以便做出适当的决策。</p>
+
+<p>我们使用<kbd>training</kbd>和<kbd>test</kbd>名称存储独立变量，使用<kbd>trainingtarget</kbd>和<kbd>testtarget</kbd>名称存储目标变量，这些变量存储在数据集的第22 <sup>和</sup>列中。在数据划分之后，我们将在训练数据中有1，523个观察值，剩余的603个观察值将在测试数据中。请注意，尽管我们在这里使用70:30的分割，但数据分区后的实际比例可能不完全是70:30。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>One-hot encoding</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">一键编码</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在数据划分之后，我们将对响应变量进行一次性编码。一键编码有助于用0和1来表示分类变量。一键编码的代码和输出如下:</p>
+
+<pre class="SourceCode"># One-hot encoding<br/> trainLabels &lt;- to_categorical(trainingtarget)<br/> testLabels &lt;- to_categorical(testtarget)<br/> print(testLabels[1:10,])<br/><br/>OUTPUT<br/><strong> ##        [,1] [,2] [,3]</strong><br/><strong> ##   [1,]    1    0    0</strong><br/><strong> ##   [2,]    1    0    0</strong><br/><strong> ##   [3,]    1    0    0</strong><br/><strong> ##   [4,]    0    0    1</strong><br/><strong> ##   [5,]    0    0    1</strong><br/><strong> ##   [6,]    0    1    0</strong><br/><strong> ##   [7,]    1    0    0</strong><br/><strong> ##   [8,]    1    0    0</strong><br/><strong> ##   [9,]    1    0    0</strong><br/><strong> ##  [10,]    1    0    0</strong><br/></pre>
+
+<p>正如您在前面的代码中看到的，在Keras包中的<kbd>to_categorical</kbd>函数的帮助下，我们将目标变量转换为二进制类矩阵，其中类的存在或不存在分别简单地用1或0表示。在这个例子中，我们有三个目标变量的类，它们被转换成三个虚拟变量。这个过程也叫做<strong>一键编码</strong>。首先，从<kbd>testLabels</kbd>打印10行。第一行指示(1，0，0)患者的正常类别，第六行指示(0，1，0)患者的可疑类别，第四行提供(0，0，1)患者的病理类别的示例。</p>
+
+<p>完成这些数据准备步骤后，我们进入下一步，创建分类模型，将患者分类为正常、可疑或病理。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Creating and fitting a deep neural network model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">创建和拟合深度神经网络模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将开发模型架构，编译模型，然后拟合模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Developing model architecture</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">开发模型架构</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>用于开发模型的代码如下:</p>
+
+<pre># Initializing the model<br/> model &lt;- keras_model_sequential()<br/><br/># Model architecture<br/> model %&gt;% <br/> layer_dense(units = 8, activation = 'relu', input_shape = c(21)) %&gt;% <br/> layer_dense(units = 3, activation = 'softmax')</pre>
+
+<p>如前面的代码所示，我们首先使用<kbd>keras_model_sequential()</kbd>函数创建一个顺序模型，它允许添加线性层堆栈。接下来，我们使用管道操作符<kbd>%&gt;%</kbd>向模型添加层。这个管道操作符将来自左边的信息作为输出，并将该信息作为输入提供给右边的内容。我们使用一个全连接或密集连接的神经网络，使用<kbd>layer_dense</kbd>函数，然后指定各种输入。在这个数据集中，我们有21个独立变量，因此，<kbd>input_shape</kbd>函数被指定为神经网络中的21个神经元或单元。这一层也称为网络中的输入层。第一个隐藏层有8个单元，我们在这里使用的激活函数是一个整流线性单元，或<kbd>relu</kbd>，这是在这些情况下最常用的激活函数。使用管道操作符将第一个隐藏层连接到具有3个单位的输出层。我们使用3个单位，因为我们的目标变量有3个类。输出层使用的激活函数是<kbd>'softmax'</kbd>，有助于保持输出值的范围在0和1之间。将输出值的范围保持在0和1之间将有助于我们以熟悉的概率值的形式解释结果。</p>
+
+<p>在RStudio中键入管道运算符<kbd>%&gt;%</kbd>，对于Mac可以使用<em>Shift</em>+<em>Command</em>+<em>M</em>快捷键，对于Windows可以使用<em>Shift</em>+<em>Ctrl</em>+<em>M</em>。</p>
+
+<p>为了获得我们已经创建的模型架构的概要，我们可以运行<kbd>summary</kbd>函数，如下面的代码所示:</p>
+
+<pre># Model summary<br/> summary(model)<br/> <br/> OUTPUT<br/> ## ___________________________________________________________________________<br/> ## Layer    (type) Output Shape Param #<br/> ## ===========================================================================<br/> ## dense_1 (Dense) (None, 8)      176<br/> ## ___________________________________________________________________________<br/> ## dense_2 (Dense) (None, 3)       27<br/> ## ===========================================================================<br/> ## Total params: 203<br/> ## Trainable params: 203<br/> ## Non-trainable params: 0<br/> ## ___________________________________________________________________________</pre>
+
+<p>由于输入层有21个单元连接到第一个隐藏层的8个单元中的每一个，我们最终得到168个权重(21×8)。我们还为隐藏层中的每个单元获得一个偏差项，总共有8个这样的项。所以，在第一个也是唯一的隐藏层阶段，我们总共有176个参数(168 + 8)。类似地，隐藏层中的8个单元连接到输出层中的3个单元，产生24个权重(8 x 3)。这样，我们在输出层有24个权重和3个偏置项，总共有27个参数。最后，这个神经网络结构的参数总数将是203。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Compiling the model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">编译模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了配置神经网络的学习过程，我们通过指定损失、优化器和度量来编译模型，如以下代码所示:</p>
+
+<pre># Compile model <br/>model %&gt;% <br/>   compile(loss = 'categorical_crossentropy', <br/>   optimizer = 'adam',<br/>   metrics = 'accuracy')</pre>
+
+<p>我们使用<kbd>loss</kbd>来指定我们想要优化的目标函数。如前面的代码所示，对于损失，我们使用<kbd>'categorical_crossentropy'</kbd>，因为我们的目标变量有三个类别。对于目标变量有两个类别的情况，我们使用<kbd>binary_crossentropy</kbd>。对于优化器，我们使用的是<kbd>'adam'</kbd>优化算法，这是一种流行的深度学习算法。它的流行主要是因为它比其他随机优化方法更快地给出好结果，例如<strong>自适应梯度算法</strong> ( <strong> AdaGrad </strong>)和<strong>均方根传播</strong> ( <strong> RMSProp </strong>)。我们指定了在训练和测试期间评估模型性能的指标。对于<kbd>metrics</kbd>，我们使用<kbd>accuracy</kbd>来评估模型的分类性能。</p>
+
+<p>现在我们已经准备好拟合模型，这将在下一节中进行。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Fitting the model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">拟合模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了适应这个模型，我们使用了下面的代码:</p>
+
+<pre># Fit model<br/>model_one &lt;- model %&gt;%   <br/> fit(training, <br/>   trainLabels, <br/>   epochs = 200,<br/>   batch_size = 32, <br/>   validation_split = 0.2)<br/><br/>OUTPUT (last 3 epochs)<br/>Epoch 198/200<br/>1218/1218 [==============================] - 0s 43us/step - loss: 0.3662 - acc: 0.8555 - val_loss: 0.5777 - val_acc: 0.8000<br/>Epoch 199/200<br/>1218/1218 [==============================] - 0s 41us/step - loss: 0.3654 - acc: 0.8530 - val_loss: 0.5763 - val_acc: 0.8000<br/>Epoch 200/200<br/>1218/1218 [==============================] - 0s 40us/step - loss: 0.3654 - acc: 0.8571 - val_loss: 0.5744 - val_acc: 0.8000</pre>
+
+<p>从前面的代码中可以看出，我们看到了以下观察结果:</p>
+
+<ul>
+
+<li>为了适应模型，我们提供了包含21个独立变量数据的训练数据和包含目标变量数据的<kbd>trainLabels</kbd>。</li>
+
+<li>迭代或历元的数量被指定为200。一个时期是训练数据的一次传递，随后是使用验证数据的模型评估。</li>
+
+<li>为了避免过度拟合，我们指定验证分割为0.2，这意味着随着训练的进行，20%的训练数据将用于评估模型性能。</li>
+
+<li>请注意，这20%的数据是训练数据中倒数20%的数据点。我们将模型训练期间生成的训练和验证数据的损失和精度值数据存储在<kbd>model_one</kbd>中，以备后用。</li>
+
+<li>对于<kbd>batch_size</kbd>，我们使用默认值32，它代表每个梯度将使用的样本数。</li>
+
+<li>随着模型训练的进行，我们基于每个时期后的训练和验证数据，得到损失和准确性的图形的可视化显示。</li>
+
+</ul>
+
+<ul>
+
+<li>对于准确性，我们希望模型具有较高的值，因为准确性是一种t <kbd>he-higher-the-better</kbd>类型的度量，而对于损失，这是一种<kbd>the-lower-the-better</kbd>类型的度量，我们希望模型具有较低的值。</li>
+
+<li>此外，我们还获得了基于最近3个时期的损失输出的数字摘要，如前面的代码输出所示。对于每个时期，我们看到训练数据的1，523个样本中的1，218个样本(大约80%)用于拟合模型。其余20%的数据用于计算验证数据的准确度和损失值。</li>
+
+</ul>
+
+<p>提醒一句。使用<kbd>validation_split</kbd>时，注意验证数据不是从训练数据中随机选取的——例如<kbd>validation_split = 0.2</kbd>时，训练数据的后20%用于验证，前80%用于训练。因此，如果目标变量的值不是随机的，那么<kbd>validation_split</kbd>可能在分类模型中引入偏差。</p>
+
+<p>在训练过程完成200个时期后，我们可以使用<kbd>plot</kbd>函数根据训练和验证数据的损失和准确性来绘制训练进度，如以下代码所示:</p>
+
+<pre> plot(model_one)</pre>
+
+<p>下图提供了一个在顶部窗口中具有精确度而在底部窗口中具有损耗的图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/e7d38d49-2ace-4e8d-9365-ba2e65201ed1.png" style="width:32.00em;height:19.67em;"/></p>
+
+<p>训练和验证数据的准确性和损失</p>
+
+<p>从前面的损耗和精度图中，我们可以得出以下结论:</p>
+
+<ul>
+
+<li>从顶部图表中的精度图可以看出，精度值在大约25个时期后显著增加，然后针对训练数据继续逐渐增加。</li>
+
+<li>对于验证数据，进展更加不均衡，在第25 <sup>个</sup>和第50 <sup>个</sup>个时期之间，精确度有所下降。</li>
+
+<li>对于损失值，在相反的方向观察到有点类似的模式。</li>
+
+<li>请注意，如果训练数据的准确性随着历元数的增加而增加，但验证数据的准确性降低，这将表明模型过度拟合。我们没有从该图中看到任何表明模型过度拟合的主要模式。</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Model evaluation and predictions</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">模型评估和预测</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将使用测试数据来评估模型性能。我们当然可以使用训练数据计算损失和准确度值；然而，对分类模型的真正考验是当它与看不见的数据一起使用时。由于测试数据与模型构建过程是分开的，我们现在可以用它来进行模型评估。我们将首先用测试数据计算损失和精度值，然后开发一个混淆矩阵。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Loss and accuracy calculation</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">损失和准确度计算</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>使用测试数据和输出获得损耗和精度值的代码如下所示:</p>
+
+<pre># Model evaluation<br/> model %&gt;% <br/> evaluate(test, testLabels) <br/><br/>OUTPUT<br/> ## $loss<br/> ## [1] 0.4439415<br/> ##<br/> ## $acc<br/> ## [1] 0.8424544</pre>
+
+<p>正如您在前面的代码中看到的，使用<kbd>evaluate</kbd>函数，我们可以分别获得损耗和精度值<kbd>0.4439</kbd>和<kbd>0.8424</kbd>。使用<kbd>colSums(testLabels)</kbd>，我们可以发现测试数据中分别有460、94和49例正常、可疑和病理患者。使用测试数据中总共603个样本将这些数字转换为百分比，我们分别获得76.3%、15.6%和8.1%。样本数最高的属于正常类别的患者，我们可以用76.3%作为模型性能的基准。如果我们不使用任何模型，并且简单地将测试数据中的所有病例分类为属于正常类别的患者，那么我们仍将有大约76.3%的时间是正确的，因为我们将对所有正常患者是正确的，而对其他两个类别是不正确的。</p>
+
+<p>也就是说，我们预测的准确率将高达76.3%；因此，我们在这里开发的模型应该至少比这个基准数字表现得更好。如果它的功能低于这个数字，那么它不可能有太多的实际用途。由于我们获得了84.2%的测试数据的准确性，我们肯定比基准值做得更好，但是显然我们还必须尝试改进我们的模型，以便表现得更好。为了做到这一点，让我们更深入地挖掘，并在混淆矩阵的帮助下了解每一类响应变量的模型性能。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Confusion matrix</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">混淆矩阵</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了获得混淆矩阵，让我们首先对测试数据进行预测，并将其保存在<kbd>pred</kbd>中。我们使用<kbd>predict_classes</kbd>进行预测，然后使用<kbd>table</kbd>函数为测试数据创建预测值与实际值的汇总，以创建混淆矩阵，如以下代码所示:</p>
+
+<pre># Prediction and confusion matrix<br/> pred &lt;- model %&gt;%<br/>   predict_classes(test)<br/> table(Predicted=pred, Actual=testtarget)<br/><br/>OUTPUT<br/>          Actual<br/> ## Predicted   0   1   2<br/> ##         0 435  41  11<br/> ##         1  24  51  16<br/> ##         2   1   2  22</pre>
+
+<p>在前面的混淆矩阵中，显示为输出”，值<kbd>0</kbd>、<kbd>1</kbd>和<kbd>2</kbd>分别代表正常、可疑和病理类别。从混淆矩阵中，我们可以得出以下结论:</p>
+
+<ul>
+
+<li>测试数据中有<kbd>435</kbd>名患者实际上是正常的，模型也预测他们是正常的。</li>
+
+<li>类似地，对于可疑组有<kbd>51</kbd>个正确预测，对于病理组有<kbd>22</kbd>个正确预测。</li>
+
+<li>如果我们将混淆矩阵对角线上所有正确分类的数字相加，我们得到508 (435 + 51 + 22)，或84.2% ((508 ÷ 603) x 100)的准确度。</li>
+
+<li>在混淆矩阵中，非对角线数字表示被错误分类的患者数量。最高的错误分类数是41，其中患者实际上属于可疑组，但是模型错误地将他们分类在正常患者类别中。</li>
+
+<li>具有最低数量的错误分类的实例涉及一个实际上属于正常类别的患者，但是模型错误地将该患者分类在病理类别中。</li>
+
+</ul>
+
+<p>让我们也看看概率方面的预测，而不仅仅是类别，这是我们以前使用的方法。为了预测概率，我们可以使用<kbd>predict_prob</kbd>函数。然后我们可以使用<kbd>cbind</kbd>函数来比较测试数据的前七行，如下面的代码所示:</p>
+
+<pre># Prediction probabilities<br/>prob &lt;- model %&gt;%<br/>    predict_proba(test)<br/>cbind(prob, pred, testtarget)[1:7,]<br/><br/>OUTPUT<br/>                                         pred testtarget<br/>[1,] 0.993281245 0.006415705 0.000302993    0          0<br/>[2,] 0.979825318 0.018759586 0.001415106    0          0<br/>[3,] 0.982333243 0.014519051 0.003147765    0          0<br/>[4,] 0.009040437 0.271216542 0.719743013    2          2<br/>[5,] 0.008850170 0.267527819 0.723622024    2          2<br/>[6,] 0.946622312 0.030137880 0.0232398603   0          1<br/>[7,] 0.986279726 0.012411724 0.0013086179   0          0</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable"/>
+
+<p>在前面的输出中，我们有基于模型的三个类别的概率值，我们也有测试数据中由<kbd>pred</kbd>表示的预测类别和由<kbd>testtarget</kbd>表示的实际类别。从前面的输出中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>对于第一个样本，<kbd>0.993</kbd>的最高概率是对于正常类别的患者，这就是预测类别被标识为<kbd>0</kbd>的原因。因为这个预测与测试数据中的实际结果相匹配，所以我们将它视为正确的分类。</li>
+
+<li>类似地，由于第四个样本显示了第三类的最高概率<kbd>0.7197</kbd>，预测的类被标记为<kbd>2</kbd>，这证明是正确的预测。</li>
+
+<li>然而，对于由<kbd>0</kbd>表示的第一类别，第六个样本具有最高概率的<kbd>0.9466</kbd>，而实际类别是<kbd>1</kbd>。在这种情况下，我们的模型对样本进行了错误分类。</li>
+
+</ul>
+
+<p>接下来，我们将探索提高模型分类性能的选项，以获得更好的准确性。我们可以遵循的两个关键策略是增加隐藏层的数量以构建更深的神经网络，以及改变隐藏层中的单元数量。我们将在下一节探讨这些选项。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Performance optimization tips and best practices</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">性能优化技巧和最佳实践</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将对之前的分类模型进行微调，以探索其功能，并查看其性能是否可以进一步提高。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Experimenting with an additional hidden layer</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">尝试附加的隐藏层</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这个实验中，我们将添加一个额外的隐藏层到先前的模型。模型摘要的代码和输出如下所示:</p>
+
+<pre># Model architecture<br/>model &lt;- keras_model_sequential()<br/>model %&gt;% <br/>   layer_dense(units = 8, activation = 'relu', input_shape = c(21)) %&gt;%   <br/>   layer_dense(units = 5, activation = 'relu') %&gt;% <br/>   layer_dense(units = 3, activation = 'softmax')<br/><br/>summary(model)<br/><br/>OUTPUT<br/>___________________________________________________________________________<br/>Layer (type)                   Output Shape                Param #     <br/>===========================================================================<br/>dense_1 (Dense)                (None, 8)                    176          <br/>___________________________________________________________________________<br/>dense_2 (Dense)                (None, 5)                    45           <br/>___________________________________________________________________________<br/>dense_3 (Dense)                (None, 3)                    18           <br/>===========================================================================<br/>Total params: 239<br/>Trainable params: 239<br/>Non-trainable params: 0<br/>___________________________________________________________________________</pre>
+
+<p>如前面的代码和输出所示，我们添加了第二个包含5个单元的隐藏层。在这个隐藏层中，我们也使用<kbd>relu </kbd>作为激活函数。请注意，由于这一更改，我们将参数总数从以前模型中的203个增加到了这个模型中的239个。</p>
+
+<p>接下来，我们使用以下代码编译并拟合模型:</p>
+
+<pre># Compile and fit model<br/>model %&gt;% <br/> compile(loss = 'categorical_crossentropy', <br/> optimizer = 'adam',<br/> metrics = 'accuracy')<br/>model_two &lt;- model %&gt;%   <br/>   fit(training, <br/>       trainLabels, <br/>       epochs = 200,<br/>       batch_size = 32,  <br/>       validation_split = 0.2)<br/> plot(model_two)</pre>
+
+<p>如前面的代码所示，我们已经使用之前使用的相同设置编译了模型。我们还将<kbd>fit</kbd>功能的设置保持与之前相同。模型输出相关信息存储在<kbd>model_two</kbd>中。下图提供了<kbd>model_two</kbd>的精度和损耗图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/81a4aa6a-1a94-4f86-a533-997d3a1f4cb0.png" style="width:50.42em;height:31.08em;"/></p>
+
+<p>训练和验证数据的准确性和损失</p>
+
+<p>从上图中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>基于训练和验证数据的准确度值在最初几个时期保持相对恒定。</li>
+
+<li>在大约20个时期之后，训练数据的准确度开始增加，然后在剩余时期继续增加。然而，增加的速率在大约100个时期后减慢。</li>
+
+</ul>
+
+<ul>
+
+<li>另一方面，基于验证数据的精度下降大约50个时期，然后开始增加，然后在大约125个时期后变得或多或少恒定。</li>
+
+<li>类似地，训练数据的损失值最初显著下降，但是在大约50个时期之后，下降率下降。</li>
+
+<li>验证数据的损失值在最初的几个时期下降，然后在大约25个时期后增加并稳定。</li>
+
+</ul>
+
+<p>使用基于测试数据的分类预测，我们还可以获得混淆矩阵来评估该分类模型的性能。以下代码用于获得混淆矩阵:</p>
+
+<pre># Prediction and confusion matrix<br/>pred &lt;- model %&gt;% <br/>    predict_classes(test)<br/>table(Predicted=pred, Actual=testtarget)<br/><br/>OUTPUT<br/>          Actual<br/> ## Predicted   0   1   2<br/> ##         0 429  38   4<br/> ##         1  29  54  33<br/> ##         2   2   2  12</pre>
+
+<p>从前面的混淆矩阵中，我们可以得出以下结论:</p>
+
+<ul>
+
+<li>通过将<kbd>0</kbd>、<kbd>1</kbd>和<kbd>2</kbd>类的正确分类与以前的模型进行比较，我们注意到只有<kbd>1</kbd>类有所改进，而<kbd>0</kbd>和<kbd>2</kbd>类的正确分类实际上有所减少。</li>
+
+<li>该模型的总体精度为82.1%，低于我们之前获得的精度值84.2%。因此，在这种情况下，我们试图使我们的模型稍微更深一点并没有提高准确性。</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Experimenting with a higher number of units in the hidden layer</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">在隐藏层中试验更多的单元</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，让我们使用以下代码，通过更改第一个也是唯一一个隐藏层中的单元数量来微调第一个模型:</p>
+
+<pre># Model architecture<br/> model &lt;- keras_model_sequential()<br/> model %&gt;% <br/>   layer_dense(units = 30, activation = 'relu', input_shape = c(21)) %&gt;% <br/>   layer_dense(units = 3, activation = 'softmax') <br/><br/>summary(model)<br/>OUTPUT<br/>__________________________________________________________________________<br/>Layer (type)                   Output Shape               Param #      <br/>==========================================================================<br/>dense_1 (Dense)                (None, 30)                  660          <br/>__________________________________________________________________________<br/>dense_2 (Dense)                (None, 3)                   93           <br/>==========================================================================<br/>Total params: 753<br/>Trainable params: 753<br/>Non-trainable params: 0<br/>__________________________________________________________________________<br/><br/># Compile model<br/> model %&gt;% <br/>   compile(loss = 'categorical_crossentropy', <br/>           optimizer = 'adam',<br/>           metrics = 'accuracy')<br/><br/># Fit model<br/>model_three &lt;- model %&gt;%<br/>   fit(training, <br/>       trainLabels, <br/>       epochs = 200,<br/>       batch_size = 32,<br/>       validation_split = 0.2)<br/> plot(model_three )</pre>
+
+<p>如前面的代码和输出所示，我们将第一个也是唯一一个隐藏层中的单元数量从<kbd>8</kbd>增加到了<kbd>30</kbd>。该型号的参数总数为<kbd>753</kbd>。我们用之前使用的相同设置来编译和装配模型。在<kbd>model_three</kbd>中拟合模型时，我们存储精度和损失值。</p>
+
+<p>以下屏幕截图提供了基于新分类模型的训练和验证数据的准确性和损失图，如下图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/469ca0d2-5a59-477c-b70e-e5e2c7c59d52.png" style="width:43.92em;height:27.08em;"/></p>
+
+<p>训练和验证数据的准确性和损失</p>
+
+<p>我们可以从前面的图中观察到以下情况:</p>
+
+<ul>
+
+<li>没有过度拟合的证据。</li>
+
+<li>在大约75个时期之后，我们没有看到模型性能的任何重大改进。</li>
+
+</ul>
+
+<p>使用测试数据和混淆矩阵的类预测是使用以下代码获得的:</p>
+
+<pre># Prediction and confusion matrix<br/> pred &lt;- model %&gt;%<br/>    predict_classes(test)<br/> table(Predicted=pred, Actual=testtarget)<br/><br/>OUTPUT<br/>          Actual<br/> ## Predicted   0   1   2<br/> ##         0 424  35   5<br/> ##         1  28  55   5<br/> ##         2   8   4  39</pre>
+
+<p>从前面的混淆矩阵中，我们可以得出以下结论:</p>
+
+<ul>
+
+<li>与第一个模型相比，我们看到1个可疑和2个病理类别的分类有所改进。</li>
+
+<li><kbd>0</kbd>、<kbd>1</kbd>和<kbd>2</kbd>类别的正确分类分别是<kbd>424</kbd>、<kbd>55</kbd>和<kbd>39</kbd>。</li>
+
+<li>使用测试数据的总体准确度达到85.9%，比前两个模型好。</li>
+
+</ul>
+
+<p>我们还可以通过将每一列中正确分类的数量除以该列的总数，来获得显示该模型正确分类每一类的频率的百分比。我们发现，该分类模型正确地分类了正常、可疑和病理病例，其百分比分别约为92.2%、58.5%和79.6%。因此，当正确分类正常患者时，模型性能最高；然而，当正确地将患者分类为可疑类别时，模型的准确性下降到仅58.5%。从混淆矩阵中，我们可以看到与错误分类相关的样本的最高数量是35。因此，有35名患者实际上属于可疑类别，但是分类模型错误地将这些患者归入正常类别。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Experimenting using a deeper network with more units in the hidden layer</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">实验使用一个更深的网络，在隐藏层有更多的单元</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在建立了分别具有203、239和753个参数的三个不同的神经网络模型之后，我们现在将建立一个更深的神经网络模型，该模型在隐藏层中包含更多的单元。本实验使用的代码如下:</p>
+
+<pre># Model architecture<br/>model &lt;- keras_model_sequential()<br/>model %&gt;%<br/>         layer_dense(units = 40, activation = 'relu', input_shape = c(21)) %&gt;%<br/>         layer_dropout(rate = 0.4) %&gt;%<br/>         layer_dense(units = 30, activation = 'relu') %&gt;%<br/>         layer_dropout(rate = 0.3) %&gt;%<br/>         layer_dense(units = 20, activation = 'relu') %&gt;%<br/>         layer_dropout(rate = 0.2) %&gt;%<br/>         layer_dense(units = 3, activation = 'softmax')<br/>summary(model)<br/><br/>OUTPUT<br/>__________________________________________________________________________<br/>Layer (type)                  Output Shape                 Param #     <br/>==========================================================================<br/>dense_1 (Dense)                (None, 40)                   880          <br/>__________________________________________________________________________<br/>dropout_1 (Dropout)            (None, 40)                    0            <br/>__________________________________________________________________________<br/>dense_2 (Dense)                (None, 30)                   1230         <br/>__________________________________________________________________________<br/>dropout_2 (Dropout)            (None, 30)                    0            <br/>__________________________________________________________________________<br/>dense_3 (Dense)                (None, 20)                   620          <br/>__________________________________________________________________________<br/>dropout_3 (Dropout)            (None, 20)                    0            <br/>__________________________________________________________________________<br/>dense_4 (Dense)                (None, 3)                     63           <br/>==========================================================================<br/>Total params: 2,793<br/>Trainable params: 2,793<br/>Non-trainable params: 0<br/>___________________________________________________________________________<br/><br/># Compile model<br/> model %&gt;% <br/>   compile(loss = 'categorical_crossentropy', <br/>           optimizer = 'adam',<br/>           metrics = 'accuracy')<br/><br/># Fit model<br/>model_four &lt;- model %&gt;% <br/> fit(training, <br/> trainLabels, <br/> epochs = 200,<br/> batch_size = 32, <br/> validation_split = 0.2)<br/>plot(model_four)</pre>
+
+<p>您可以从前面的代码和输出中看到，为了尝试提高分类性能，这个模型总共有2，793个参数。该模型有三个隐藏层，三个隐藏层中有40、30和20个单位。在每个隐藏层之后，我们还添加了一个辍学率为40%、30%和20%的辍学层，以避免过度拟合——例如，在第一个隐藏层之后的辍学率为0.4(或40%)，在训练时，第一个隐藏层中40%的单位随机降至零。这有助于避免由于隐藏层中单元数量较多而可能发生的任何过度拟合。我们编译模型，然后用我们之前使用的相同设置运行模型。我们还将每个时期后的损失和精度值存储在<kbd>model_four</kbd>中。</p>
+
+<p>下图显示了训练和验证数据的准确度和损失值:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/ef6be428-c579-42c5-8a68-0580a8f217aa.png" style="width:49.33em;height:30.42em;"/></p>
+
+<p>训练和验证数据的准确性和损失</p>
+
+<p>从前面的图中，我们可以得出以下结论:</p>
+
+<ul>
+
+<li>训练损失和准确度值在大约150个时期后保持大致恒定。</li>
+
+<li>验证数据的准确度值在大约75个时期后基本保持平稳。</li>
+
+<li>然而，对于损失，我们看到在大约75个时期后，训练和验证数据之间存在一些差异，验证数据的损失逐渐增加。这表明在大约75个时期后过度拟合的存在。</li>
+
+</ul>
+
+<p>现在，让我们使用测试数据进行预测，并检查产生的混淆矩阵以评估模型性能，如以下代码所示:</p>
+
+<pre># Predictions and confusion matrix<br/>pred &lt;- model %&gt;% <br/>         predict_classes(test)<br/>table(Predicted=pred, Actual=testtarget)<br/><br/>OUTPUT<br/>         Actual<br/>Predicted   0   1   2<br/>        0 431  34   7<br/>        1  20  53   2<br/>        2   9   7  40</pre>
+
+<p>从前面的混淆矩阵中，可以得出以下结论:</p>
+
+<ul>
+
+<li><kbd>0</kbd>、<kbd>1</kbd>和<kbd>2</kbd>类别的正确分类分别是<kbd>431</kbd>、<kbd>53</kbd>和<kbd>40</kbd>。</li>
+
+<li>总体准确率达到86.9%，优于前三种模型。</li>
+
+<li>我们还可以发现，该分类模型正确地分类了正常、可疑和病理病例，其百分比分别为大约93.7%、56.4%和81.6%。</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Experimenting by addressing the class imbalance problem</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">通过解决班级失衡问题进行实验</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在该数据集中，正常、可疑和病理类别中的患者数量不同。在原始数据集中，正常、可疑和病理患者的数量分别为1，655、295和176。</p>
+
+<p>我们将利用下面的代码来开发一个条形图:</p>
+
+<pre># Bar plot<br/>barplot(prop.table(table(data$NSP)),<br/>        col = rainbow(3),<br/>        ylim = c(0, 0.8),<br/>        ylab = 'Proportion',<br/>        xlab = 'NSP',<br/>        cex.names = 1.5)</pre>
+
+<p>运行上述代码后，我们获得了以下条形图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/290b5c4d-c759-4931-bd19-0893b0770a47.png" style="width:35.50em;height:21.50em;"/></p>
+
+<p>三个类别中每个类别的样本比例</p>
+
+<p>在前面的柱状图中，正常、可疑和病理患者的百分比分别约为78%、14%和8%。当我们比较这些类别时，我们观察到正常患者的数量比疑似患者的数量多大约5.6倍(1，655/295)，比病理患者的数量多大约9.4倍。表现出类不平衡但每个类包含显著不同数量事例的模式的数据集被描述为具有类不平衡问题。在训练模型时，具有大量事例的类可能会从中受益，但这是以其他类为代价的。</p>
+
+<p>因此，分类模型可能包含对具有明显更多案例的类别的偏向，并且与其他类别相比，为该类别提供具有更高分类准确性的结果。当数据受到此类不平衡的影响时，重要的是解决问题以避免最终分类模型中的偏差。在这种情况下，我们可以利用类权重来解决数据集中的类不平衡问题。</p>
+
+<p>通常，用于开发分类模型的数据集在每个类别中具有不同数量的样本。使用<kbd>class_weight</kbd>函数可以轻松处理这种等级不平衡问题。</p>
+
+<p>包含<kbd>class_weight</kbd>以合并类别不平衡信息的代码如以下代码所示:</p>
+
+<pre># Fit model<br/>model_five &lt;- model %&gt;% <br/>  fit(training, <br/>      trainLabels,<br/>      epochs = 200,<br/>      batch_size = 32,<br/>      validation_split = 0.2,<br/>      class_weight = list("0"=1,"1"=5.6, "2" = 9.4))<br/>plot(model_five)</pre>
+
+<p>正如您在前面的代码中看到的，我们为<kbd>normal</kbd>类指定了权重<kbd>1</kbd>，为可疑类指定了权重<kbd>5.6</kbd>，为病理类指定了权重<kbd>9.4</kbd>。分配这些权重为所有三个类别创造了一个公平的竞争环境。我们将所有其他设置保持为与之前型号相同。训练网络后，每个历元的损失和精度值存储在<kbd>model_five</kbd>中。</p>
+
+<p>下面的屏幕截图显示了该实验的损耗和精度图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/c9b36df6-2112-4e24-9488-ac26dcab752e.png" style="width:56.00em;height:34.58em;"/></p>
+
+<p>从基于训练和验证数据的准确性和损失图来看，我们没有看到任何明显的模式表明过度拟合。在大约100个时期之后，我们在损失和精度值方面没有看到模型性能的任何重大改进。</p>
+
+<p>模型预测的代码和产生的混淆矩阵如下:</p>
+
+<pre># Prediction and confusion matrix<br/>pred &lt;- model %&gt;% <br/>  predict_classes(test)<br/>table(Predicted=pred, Actual=testtarget)<br/><br/>OUTPUT<br/>         Actual<br/>Predicted   0   1   2<br/>        0 358  12   3<br/>        1  79  74   5<br/>        2  23   8  41</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>从前面的混淆矩阵中，我们可以得出以下结论:</p>
+
+<ul>
+
+<li><kbd>0</kbd>、<kbd>1</kbd>和<kbd>2</kbd>类别的正确分类分别是<kbd>358</kbd>、<kbd>74</kbd>和<kbd>41</kbd>。</li>
+
+<li>总体准确率现在降低到78.4%，这主要是由于正常类别的准确率下降，因为我们增加了其他两个类别的权重。</li>
+
+<li>我们还可以发现，该分类模型正确地分类了正常、可疑和病理病例，其百分比分别为大约77.8%、78.7%和83.7%。</li>
+
+<li>显然，最大的收获是可疑类，现在正确分类的比率为78.7%，而以前仅为56.4%。</li>
+
+<li>在病理学类中，我们看不到准确性值的任何重大增益或损失。</li>
+
+<li>这些结果清楚地表明了使用权重来解决类别不平衡问题的影响，因为现在跨三个类别的分类性能更加一致。</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Saving and reloading a model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">保存和重新加载模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们知道，每次我们在Keras中运行一个模型，由于随机的初始权重<em>，模型从不同的起点开始。</em>一旦我们得到一个具有可接受性能水平的模型，并且希望在将来重用同一个模型，我们可以使用<kbd>save_model_hdf5</kbd>函数保存该模型。然后，我们可以使用<kbd>load_model_hdf5</kbd>函数加载相同的模型:</p>
+
+<pre># Save and reload model<br/>save_model_hdf5(model, <br/> filepath, <br/> overwrite = TRUE,<br/> include_optimizer = TRUE)<br/>model_x &lt;- load_model_hdf5(filepath, <br/> custom_objects = NULL, <br/> compile = TRUE)</pre>
+
+<p>前面的代码将允许我们保存模型架构和模型权重，并且，如果需要，将允许我们从先前的训练会话中恢复模型的训练。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本章中，我们看到了如何开发一个神经网络模型来帮助解决一个分类类型的问题。我们从一个简单的分类模型开始，探索了如何改变隐藏层的数量和隐藏层中单元的数量。探索和微调分类模型背后的想法是说明如何探索和改进分类模型的性能。我们还看到了如何在混淆矩阵的帮助下更深入地理解分类模型的性能。我们在本章开始时有目的地查看了一个相对较小的神经网络模型，并以一个相对较深的神经网络模型的示例结束。涉及几个隐藏层的更深的网络也可能导致过拟合问题，其中分类模型可能在训练数据上表现优异，但在测试数据上表现不佳。为了避免这种情况，我们可以在每个密集层之后使用下降层，如前所述。我们还举例说明了在类别不平衡可能导致分类模型更偏向特定类别的情况下使用类别权重。最后，我们还看到了当我们不需要重新运行模型时，如何保存模型细节以备将来使用。</p>
+
+<p>对于我们在本章中使用的模型，有一些参数我们在各种实验中保持不变——例如，在编译模型时，我们总是使用<kbd>adam</kbd>作为优化器。使用<kbd>adam</kbd>受欢迎的原因之一是它不需要太多的调优，并且在更少的时间内提供良好的结果；但是，鼓励读者尝试其他优化器，如<kbd>adagrad</kbd>、<kbd>adadelta</kbd>和<kbd>rmsprop</kbd>，并观察对模型分类性能的影响。我们在本章中保持不变的另一个设置是训练网络时的批量大小32。还鼓励读者尝试更高(如64)和更低(如16)的批量，并观察这对分类性能有什么影响。</p>
+
+<p>随着我们进入未来的章节，我们将逐步开发越来越复杂和更深入的神经网络模型。在讨论了响应变量为分类变量的分类模型后，在下一章中，我们将讨论开发和改进回归类型问题的预测模型的步骤，其中目标变量为数字。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

@@ -1,0 +1,277 @@
+<html><head/><body>
+
+
+    
+        <title>Generative Adversarial Networks</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    Generative Adversarial Networks
+                
+            
+            
+                
+<p class="mce-root">阅读关于制作寿司的内容很容易；事实上，烹饪一种新的寿司比我们想象的要难。在深度学习中，创造过程更难，但并非不可能。我们已经看到了如何使用密集、卷积或递归网络来构建可以对数字进行分类的模型，今天我们将看到如何构建可以创建数字的模型。这一章介绍了一种称为生成对抗网络的学习方法，它属于对抗学习和生成模型家族。本章解释了生成器和鉴别器的概念，以及为什么良好的训练数据分布近似值可以导致模型在其他领域取得成功，如<em>数据扩充</em>。到本章结束时，你会知道为什么对抗性训练是重要的；您将能够编写必要的机制来训练有问题数据的生成器和鉴别器；并且你将编码一个<strong>生成对抗网络</strong> ( <strong>甘</strong>)来从一个学习到的潜在空间生成图像。</p>
+<p>本章组织如下:</p>
+<ul>
+<li>引入对抗性学习</li>
+<li>训练GAN</li>
+<li>比较gan和VAEs</li>
+<li>对生成模型伦理意蕴的思考</li>
+</ul>
+<h1 id="uuid-ed8891bf-ab75-4072-8e17-259192b82ac4">引入对抗性学习</h1>
+<p>最近，人们对使用对抗性神经网络进行对抗性训练产生了兴趣(Abadi，m .，et al. (2016))。这是由于敌对的神经网络可以被训练来保护模型本身免受基于人工智能的对手的攻击。我们可以将对抗性学习分为两个主要分支:</p>
+<ul>
+<li><strong>黑盒</strong>:在这一类中，机器学习模型作为黑盒存在，对手只能学习攻击黑盒使其失效。对手任意地(在一定范围内)创建假输入以使黑盒模型失败，但它无法访问它正在攻击的模型(易勒雅斯等人(2018))。</li>
+<li><strong>内部人士</strong>:这种对抗性学习是它要攻击的模型的训练过程的一部分。对手对模型的结果有影响，模型被训练成<em>而不是</em>被这样的对手愚弄(Goodfellow，I .，et al. (2014))。</li>
+</ul>
+<p>每种方法都有利弊:</p>
+<table style="border-collapse: collapse;width: 100%" border="1">
+<tbody>
+<tr>
+<td>
+<p><strong>黑盒优点</strong></p>
+</td>
+<td>
+<p><strong>黑盒弊</strong></p>
+</td>
+<td>
+<p><strong>内幕利弊</strong></p>
+</td>
+<td>
+<p><strong>内幕弊</strong></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>它提供了探索更多生成方法的能力。</p>
+</td>
+<td>
+<p>无法影响或改变黑盒模型。</p>
+</td>
+<td>
+<p>经过对抗性训练的模型对特定的黑盒攻击更具鲁棒性。</p>
+</td>
+<td>
+<p>产生攻击的选择目前是有限的。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>通常很快就能找到打破模型的方法。</p>
+</td>
+<td>
+<p>生成器通常只关注干扰现有数据。</p>
+</td>
+<td>
+<p>该生成器可用于<em>扩充</em>数据集。</p>
+</td>
+<td>
+<p>它通常比较慢。</p>
+</td>
+</tr>
+<tr>
+<td/>
+<td>
+<p>生成器可能无法用于<em>扩充</em>数据集。</p>
+</td>
+<td>因为这本书是给初学者看的，所以我们将把重点放在一个最简单的模型上:一个被称为GAN的内部模型。我们将查看它的部件，并讨论它的批量训练。</td>
+<td>gan在历史上一直用于生成逼真的图像(Goodfellow，I .等人(2014))，通常用于解决多智能体问题(Sukhbaatar，s .，<em>等人</em> (2016))，甚至用于密码学(Rivas，p .等人(2020))。</td>
+</tr>
+</tbody>
+</table>
+<p>让我们简单讨论一下对抗性学习和GANs。</p>
+<p>利用对手学习</p>
+<p>机器学习模型可以学习传统地做分类或回归等任务，其中可能有一个模型试图学习区分输入是合法的还是假的。在这种情况下，可以创建一个机器学习模型，作为产生虚假输入的对手，如图<em>图14.1 </em>所示:</p>
+<p>图14.1 -对抗性学习</p>
+<h2 id="uuid-4dccd8af-34ae-473a-8aa7-8b085d036298">在这种范式中，机器学习模型需要学会区分真输入和假输入。当它出错时，它需要<em>学习</em>来调整自己，以确保它正确识别真正的输入。另一方面，对手需要不断制造假输入，目的是让模型失败。</h2>
+<p>以下是每种模式的成功之处:</p>
+<div><img src="img/91180858-c5ad-465e-a34a-2a50c08f263e.png" style="width:29.25em;height:19.33em;"/></div>
+<p><strong>机器学习主模型</strong>如果能成功区分真假输入就是成功的。</p>
+<p><strong>对手模型</strong>如果能骗过机器学习主模型把假数据当真数据传，那就是成功的。</p>
+<p>Here is what success looks like for each model:</p>
+<ul>
+<li>The <strong>machine learning main model</strong> is successful if it can successfully distinguish fake from real input.</li>
+<li>如你所见，他们正在相互竞争。一个人的成功就是另一个人的失败，反之亦然。</li>
+</ul>
+<p class="mce-root">在学习过程中，机器学习主模型将不断调用一批批真实和虚假的数据进行学习、调整和重复，直到我们对性能感到满意，或者满足了其他一些停止标准。</p>
+<p class="mce-root">一般来说，在对抗性学习中，除了产生虚假数据之外，对对手没有特别的要求。</p>
+<p>一种流行的对抗性学习发生在GAN中，我们将在下面讨论。</p>
+<p>甘斯</p>
+<p>GAN是实现对抗性学习的最简单的基于神经的模型之一，最初是由Ian Goodfellow及其合作者在蒙特利尔的一个酒吧中构想出来的(Goodfellow，I .，et al. (2014))。它基于最小-最大优化问题，可以提出如下:</p>
+<div><strong>Adversarial robustness</strong> is a new term that is used to certify that certain models are robust against adversarial attacks. These certificates are usually designated for particular types of adversaries. See Cohen, J. M., <em>et al.</em> (2019) for further details.</div>
+<p><img class="fm-editor-equation" src="img/0b573800-6bdf-4433-8909-35c9a245825c.png" style="width:40.33em;height:2.25em;"/></p>
+<h2 id="uuid-b12530f6-4d9a-4cbd-8bae-af16a8c7fb9b">这个等式有几个部分需要解释，所以我们开始:</h2>
+<p><img class="fm-editor-equation" src="img/530da91e-fd4b-408a-9c71-b41264bb9b22.png" style="width:1.92em;height:1.00em;"/>:在GAN中，这是鉴别器，它是一个神经网络，取输入数据<img class="fm-editor-equation" src="img/cc202992-bba0-4e9f-8a96-2438a06b6f27.png" style="width:3.33em;height:1.00em;"/>，确定它是假的还是真的，如图<em>图14.2 </em>所示。</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b29516df-1c42-4df7-b399-1cb96d67038b.png" style="width:1.83em;height:1.00em;"/>:在GAN中，这是生成器，也是神经网络，但它的输入是随机噪声，<img class="fm-editor-equation" src="img/7e4747cc-6204-46b0-a126-eeaab1448a2b.png" style="width:3.17em;height:1.17em;"/>，概率<img class="fm-editor-equation" src="img/3db1149e-bb25-4f0c-8c17-d75a8d6624f7.png" style="width:1.67em;height:1.08em;"/>:</p>
+<p>图14.2 - GAN主要范例</p>
+<ul>
+<li>理想情况下，我们希望最大化鉴别器<img class="fm-editor-equation" src="img/612c1e2c-f7da-4500-9b2c-56397fee42b0.png" style="width:0.75em;height:0.83em;"/>的正确预测，同时，我们希望最小化发生器<img class="fm-editor-equation" src="img/90d6dec2-992d-4841-9a0b-27f5b6b5610a.png" style="width:0.75em;height:0.83em;"/>的误差，产生一个不会欺骗鉴别器的样本，表示为<img class="fm-editor-equation" src="img/12e9c0b3-a3e2-45a1-aac7-1bdff68ccaf0.png" style="width:6.92em;height:1.08em;"/>。期望值和对数的公式来自标准的交叉熵损失函数。</li>
+<li>概括地说，在GAN中，生成器和鉴别器是神经网络。发生器从随机分布中抽取随机噪声，并使用该噪声产生假的<em>输入来欺骗鉴别器。</em></li>
+</ul>
+<div><img src="img/09cb1a8f-dc00-4c81-86ca-0e958b50a8ec.png" style="width:21.75em;height:15.33em;"/></div>
+<p>考虑到这一点，让我们继续编写一个简单的GAN。</p>
+<p>训练GAN</p>
+<p>我们将从一个简单的基于MLP的模型开始我们的实现，也就是说，我们的生成器和鉴别器将是密集的、完全连接的网络。然后，我们将继续实施卷积GAN。</p>
+<p>MLP模型</p>
+<h1 id="uuid-5be4a103-334a-442b-8558-639ac96da7ee">我们现在将重点创建图14.3 所示的模型。该模型具有生成器和鉴别器，它们在层数和总参数方面是不同的。通常情况下，生成器比鉴别器需要更多的资源来构建。如果你仔细想想，这是很直观的:创造的过程通常比认知的过程更复杂。在生活中，如果你反复看巴勃罗·毕加索的所有作品，就很容易认出他的作品。</h1>
+<p>然而，相比之下，真正像毕加索那样画画可能要困难得多:</p>
+<h2 id="uuid-f26c3f7f-f1d0-4727-8634-443049a14340">图14.3 -基于MLP的GAN架构</h2>
+<p>该图描绘了一个图标，该图标简单地表示鉴别器将同时获取假数据和有效数据并从两个世界中学习的事实。关于GANs，你必须记住的一点是，它们从随机噪声中产生数据。只要想一分钟，你就会意识到这很酷。</p>
+<p>因此，<em>图14.3 </em>中的建筑没有任何我们以前没有发现的新项目。然而，设计本身就是原创的。此外，在Keras中创建它的方法也是一项艰巨的任务。因此，我们将展示完整的代码，尽可能多的注释来使事情变得清晰。</p>
+<div><img src="img/5abff9d3-4f0b-4129-a969-40b777d0c526.png" style="width:45.58em;height:27.17em;"/></div>
+<p>以下是完整的代码:</p>
+<p>接下来，我们将生成器定义如下:</p>
+<p>接下来，我们可以将鉴别器定义如下:</p>
+<p>下一步是按如下方式进行整合:</p>
+<pre>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import Dense, Activation, Input, Flatten<br/>from tensorflow.keras.layers import BatchNormalization, Dropout, Reshape<br/>from tensorflow.keras.optimizers import Adam<br/>from tensorflow.keras.datasets import mnist<br/>import numpy as np<br/>import matplotlib.pyplot as plt<br/><br/>img_dims = 28<br/>img_chnl = 1 <br/>ltnt_dim = 100<br/><br/>(x_train, y_train), (x_test, y_test) = mnist.load_data()<br/><br/>x_train = x_train.astype('float32') / 255.<br/>x_test = x_test.astype('float32') / 255.<br/><br/># this makes sure that each image has a third dimension<br/>x_train = np.expand_dims(x_train, axis=3)    # 28x28x1<br/>x_test = np.expand_dims(x_test, axis=3)<br/><br/>print('x_train shape:', x_train.shape)<br/>print('x_test shape:', x_test.shape)</pre>
+<p>接下来，我们将使训练在一个循环中进行，该循环将运行我们想要的任意多个时期:</p>
+<pre># building the generator network<br/><strong>inpt_noise</strong> = Input(shape=(ltnt_dim,))<br/>gl1 = Dense(256, activation='relu')(inpt_noise)<br/>gl2 = BatchNormalization()(gl1)<br/>gl3 = Dense(512, activation='relu')(gl2)<br/>gl4 = BatchNormalization()(gl3)<br/>gl5 = Dense(1024, activation='relu')(gl4)<br/>gl6 = BatchNormalization()(gl5)<br/>gl7 = Dropout(0.5)(gl6)<br/>gl8= Dense(img_dims*img_dims*img_chnl, activation='sigmoid')(gl7)<br/>gl9= Reshape((img_dims,img_dims,img_chnl))(gl8)<br/><strong>generator</strong> = Model(<strong>inpt_noise</strong>, gl9)<br/><strong>gnrtr_img</strong> = generator(<strong>inpt_noise</strong>)<br/># uncomment this if you want to see the summary<br/># generator.summary()</pre>
+<p>这将产生类似于以下内容的输出:</p>
+<pre># building the discriminator network<br/><strong>inpt_img</strong> = Input(shape=(img_dims,img_dims,img_chnl))<br/>dl1 = Flatten()(<strong>inpt_img</strong>)<br/>dl2 = Dropout(0.5)(dl1)<br/>dl3 = Dense(512, activation='relu')(dl2)<br/>dl4 = Dense(256, activation='relu')(dl3)<br/>dl5 = Dense(1, activation='sigmoid')(dl4)<br/><strong>discriminator</strong> = Model(<strong>inpt_img</strong>, dl5)<br/><strong>validity</strong> = <strong>discriminator</strong>(<strong>gnrtr_img</strong>)<br/># uncomment this if you want to see the summary<br/># discriminator.summary()</pre>
+<p>这在您的系统中可能看起来不同，因为这都是基于<strong>随机</strong>噪声。这种随机性很可能会将你的模型引向不同的方向。但是，你会看到的是，你的发电机损耗应该是逐渐减小的，如果发电机工作正常，精度应该越来越接近随机变化，也就是接近50%。如果你的鉴别器总是100%，那么你的发生器不够好，如果你的鉴别器是50%左右的准确度，那么你的发生器可能太好或者你的鉴别器太弱。</p>
+<pre># you can use either optimizer:<br/># optimizer = RMSprop(0.0005)<br/><strong>optimizer</strong> = Adam(0.0002, 0.5)<br/><br/># compiling the discriminator<br/><strong>discriminator</strong>.compile(loss='binary_crossentropy', optimizer=<strong>optimizer</strong>, <br/>                      metrics=['accuracy'])<br/><br/># this will freeze the discriminator in gen_dis below<br/><strong>discriminator</strong>.trainable = False<br/><br/><strong>gen_dis</strong> = Model(<strong>inpt_noise</strong>, <strong>validity</strong>)    # full model<br/><strong>gen_dis</strong>.compile(loss='binary_crossentropy', optimizer=<strong>optimizer</strong>)</pre>
+<p>现在，让我们画几样东西；学习曲线(损失和准确性)，以及跨时期生成的样本。</p>
+<pre>epochs = 12001     # this is up to you!<br/>batch_size=128    # small batches recommended<br/>sample_interval=200    # for generating samples<br/><br/># target vectors<br/>valid = np.ones((batch_size, 1))<br/>fake = np.zeros((batch_size, 1))<br/><br/># we will need these for plots and generated images<br/>samp_imgs = {}<br/>dloss = []<br/>gloss = []<br/>dacc = []<br/><br/># this loop will train in batches manually for every epoch<br/>for epoch in range(epochs):<br/>  # training the discriminator first &gt;&gt;<br/>  # batch of valid images<br/>  idx = np.random.randint(0, x_train.shape[0], batch_size)<br/>  imgs = x_train[idx]<br/>  <br/>  # noise batch to generate fake images<br/>  noise = np.random.uniform(0, 1, (batch_size, ltnt_dim))<br/>  gen_imgs = <strong>generator</strong>.predict(noise)<br/><br/>  # gradient descent on the batch<br/>  d_loss_real = <strong>discriminator</strong>.train_on_batch(imgs, valid)<br/>  d_loss_fake = <strong>discriminator</strong>.train_on_batch(gen_imgs, fake)<br/>  d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)<br/><br/>  # next we train the generator with the discriminator frozen &gt;&gt;<br/>  # noise batch to generate fake images<br/>  noise = np.random.uniform(0, 1, (batch_size, ltnt_dim))<br/><br/>  # gradient descent on the batch<br/>  g_loss = <strong>gen_dis</strong>.train_on_batch(noise, valid)<br/>  <br/>  # save performance<br/>  dloss.append(d_loss[0])<br/>  dacc.append(d_loss[1])<br/>  gloss.append(g_loss)<br/><br/>  # print performance every sampling interval<br/>  if epoch % sample_interval == 0:<br/>    print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % <br/>           (epoch, d_loss[0], 100*d_loss[1], g_loss))<br/><br/>    # use noise to generate some images<br/>    noise = np.random.uniform(0, 1, (2, ltnt_dim))<br/>    gen_imgs = <strong>generator</strong>.predict(noise)<br/>    samp_imgs[epoch] = gen_imgs    </pre>
+<p>以下代码将绘制学习曲线:</p>
+<pre>0 [D loss: 0.922930, acc.: 21.48%] [G loss: 0.715504]<br/>400 [D loss: 0.143821, acc.: 96.88%] [G loss: 4.265501]<br/>800 [D loss: 0.247173, acc.: 91.80%] [G loss: 4.752715]<br/>.<br/>.<br/>.<br/>11200 [D loss: 0.617693, acc.: 66.80%] [G loss: 1.071557]<br/>11600 [D loss: 0.611364, acc.: 66.02%] [G loss: 0.984210]<br/>12000 [D loss: 0.622592, acc.: 62.50%] [G loss: 1.056955]</pre>
+<p>这将生成下图所示的图:</p>
+<p>图14.4 -发生器和鉴别器跨时段丢失。基于MLP的GAN跨时代的精度</p>
+<p>如图所示，鉴频器的损耗最初很低，精度也表明了这一点。然而，随着时代的进步，发生器变得更好(损耗降低)，精度慢慢降低。</p>
+<pre>import matplotlib.pyplot as plt<br/><br/>fig, ax1 = plt.subplots(figsize=(10,6))<br/>ax1.set_xlabel('Epoch')<br/>ax1.set_ylabel('Loss')<br/>ax1.plot(range(epochs), gloss, '-.', color='#dc267f', alpha=0.75, <br/>         label='Generator')<br/>ax1.plot(range(epochs), dloss, '-.', color='#fe6100', alpha=0.75, <br/>         label='Discriminator')<br/>ax1.legend(loc=1)<br/>ax2 = ax1.twinx()<br/>ax2.set_ylabel('Discriminator Accuracy') <br/>ax2.plot(range(epochs), dacc, color='#785ef0', alpha=0.75, <br/>         label='Accuracy')<br/>ax2.legend(loc=4)<br/>fig.tight_layout() <br/>plt.show()</pre>
+<p><em>图14.5 </em>显示了随机噪声产生的每一采样时期的几幅图像:</p>
+<div><img src="img/54e97377-4afd-4ae0-bec1-940d89686a15.png" style="width:40.50em;height:24.17em;"/></div>
+<p>图14.5 - GAN生成的跨时代图像</p>
+<p>正如你所看到的，最初的图像看起来很嘈杂，而后来的图像有更多的细节和熟悉的形状。这将证实鉴别器准确性的降低，因为这些图像可以容易地作为真实的通过。<em>图14.5 </em>是使用以下代码生成的:</p>
+<p>让我们考虑一下这个模型的一些要点:</p>
+<div><img src="img/0692c795-14c9-40d4-a63e-9c561043e645.png" style="width:42.50em;height:31.67em;"/></div>
+<p>如果我们在需要的地方把模型做得更大，这个模型就有改进的余地。</p>
+<p>如果我们需要的是一个好的生成器，我们可以扩展生成器，或者将其更改为卷积生成器(下一节)。</p>
+<pre>import matplotlib.pyplot as plt<br/><br/>fig, axs = plt.subplots(6, 10, figsize=(10,7.5))<br/>cnt = sample_interval<br/>for i in range(6):<br/>  for j in [0, 2, 4, 6, 8]:<br/>    img = samp_imgs[cnt]<br/>    axs[i,j].imshow(img[0,:,:,0], cmap='gray')<br/>    axs[i,j].axis('off')<br/>    axs[i,j].set_title(cnt)<br/>    axs[i,j+1].imshow(img[1,:,:,0], cmap='gray')<br/>    axs[i,j+1].axis('off')<br/>    axs[i,j+1].set_title(cnt)<br/>    cnt += sample_interval<br/>plt.show()</pre>
+<p>如果我们愿意，我们可以保存<kbd>discriminator</kbd>并为数字分类重新训练(微调)。</p>
+<ul>
+<li>如果我们愿意，我们可以使用<kbd>generator</kbd>用我们想要的尽可能多的图像来扩充数据集。</li>
+<li>尽管基于MLP的氮化镓质量<em>不错</em>，但我们可以理解其形状可能不如原始样品那样清晰。然而，卷积gan可以有所帮助。</li>
+<li>让我们继续将基于MLP的模型转换为卷积模型。</li>
+<li>卷积模型</li>
+</ul>
+<p>GAN的卷积方法由拉德福德等人<em/>(2015)提出。提出的模型被称为<strong>深度卷积GAN </strong> ( <strong> DCGAN </strong>)。主要目标是让一系列卷积层学习特征表示，以产生<em>假</em>图像或<em>区分</em>有效或假图像。</p>
+<p>接下来，我们将<strong>有意</strong>为鉴别器网络使用不同的名称，我们称之为<strong>批评家</strong>。这两个术语在文献中都有使用。然而，现在有一种使用“T21批评家”这个词的新趋势，这个旧词可能会在某个时候消失。无论如何，你应该知道这两个术语指的是同一个东西:一个网络，其任务是确定输入是有效的(来自原始数据集)还是虚假的(来自敌对的生成器)。</p>
+<h2 id="uuid-962fb9d7-8e60-4a9a-a968-23c24a33e84a">我们将实施下图所示的模型:</h2>
+<p>图14.6 -基于CNN的GAN架构</p>
+<p>这个模型有本书从未见过的新东西:<kbd>Conv2DTranspose</kbd>。这种类型的层与传统的卷积层<kbd>Conv2D</kbd>完全一样，只是它的工作方向完全相反。一个<kbd>Conv2D</kbd>层学习过滤器(特征地图),将输入分成过滤的信息，而一个<kbd>Conv2DTranspose</kbd>层获取过滤的信息并将其连接在一起。</p>
+<p>有人把<kbd>Conv2DTranspose</kbd>称为<em>反卷积</em>。但是，我个人认为这样做是不正确的，因为<em>反卷积</em>是一个与<kbd>Conv2DTranspose</kbd>有很大不同的数学运算。无论哪种方式，你都需要记住，如果你在CNN的上下文中阅读<em>去卷积</em>，它的意思是<kbd>Conv2DTranspose</kbd>。</p>
+<div><img src="img/0ef4b620-6eac-4a91-9886-7b8fa5c1bb55.png" style="width:41.83em;height:29.42em;"/></div>
+<p>模型中的其余元素是我们之前已经讨论过的内容。省略了注释的完整代码如下:</p>
+<p>接下来，我们将生成器定义如下:</p>
+<p>然后，我们将批评家网络定义如下:</p>
+<p>接下来，我们将所有东西放在一起，并将模型的参数设置如下:</p>
+<pre>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import Dense, Activation, Input, Conv2DTranspose, Flatten<br/>from tensorflow.keras.layers import BatchNormalization, Dropout, Reshape, Conv2D<br/>from tensorflow.keras.optimizers import Adam<br/>from tensorflow.keras.datasets import mnist<br/>import numpy as np<br/>import matplotlib.pyplot as plt<br/><br/>img_dims = 28<br/>img_chnl = 1 <br/>ltnt_dim = 100<br/><br/>(x_train, y_train), (x_test, y_test) = mnist.load_data()<br/><br/>x_train = x_train.astype('float32') / 255.<br/>x_test = x_test.astype('float32') / 255.<br/><br/>x_train = np.expand_dims(x_train, axis=3)<br/>x_test = np.expand_dims(x_test, axis=3)</pre>
+<p>然后，我们使用以下周期进行训练:</p>
+<pre># building the generator convolutional network<br/>inpt_noise = Input(shape=(ltnt_dim,))<br/>gl1 = Dense(7*7*256, activation='relu')(inpt_noise)<br/>gl2 = BatchNormalization()(gl1)<br/>gl3 = <strong>Reshape</strong>((7, 7, 256))(gl2)<br/>gl4 = <strong>Conv2DTranspose</strong>(128, (5, 5), strides=(1, 1), padding='same', <br/>                      activation='relu')(gl3)<br/>gl5 = BatchNormalization()(gl4)<br/>gl6 = <strong>Conv2DTranspose</strong>(64, (5, 5), strides=(2, 2), padding='same', <br/>                      activation='relu')(gl5)<br/>gl7 = BatchNormalization()(gl6)<br/>gl8 = <strong>Conv2DTranspose</strong>(1, (5, 5), strides=(2, 2), padding='same', <br/>                      activation='sigmoid')(gl7)<br/><strong>generator</strong> = Model(inpt_noise, gl8)<br/>gnrtr_img = generator(inpt_noise)<br/>generator.summary()  # print to verify dimensions</pre>
+<p>前面的代码大约有70%和前面的一样。然而，卷积网络设计是新的。代码将为生成器和评论家打印摘要。以下是生成器的摘要:</p>
+<pre># building the critic convolutional network<br/>inpt_img = Input(shape=(img_dims,img_dims,img_chnl))<br/>dl1 = Conv2D(64, (5, 5), strides=(2, 2), padding='same', <br/>             activation='relu')(inpt_img)<br/>dl2 = Dropout(0.3)(dl1)<br/>dl3 = Conv2D(128, (5, 5), strides=(2, 2), padding='same', <br/>             activation='relu')(dl2)<br/>dl4 = Dropout(0.3)(dl3)<br/>dl5 = Flatten()(dl4)<br/>dl6 = Dense(1, activation='sigmoid')(dl5)<br/><strong>critic</strong> = Model(inpt_img, dl6)<br/>validity = <strong>critic</strong>(gnrtr_img)<br/><strong>critic</strong>.summary()   # again, print for verification</pre>
+<p>以下是评论家的总结:</p>
+<pre>optimizer = Adam(0.0002, 0.5)<br/><br/><strong>critic</strong>.compile(loss='binary_crossentropy', optimizer=optimizer, <br/>               <strong>metrics=['accuracy'])</strong><br/><br/><strong>critic.trainable</strong> = False<br/><br/><strong>gen_crt</strong> = Model(inpt_noise, validity)<br/><strong>gen_crt</strong>.compile(loss='binary_crossentropy', optimizer=optimizer)<br/><br/>epochs = 12001<br/>batch_size=64<br/>sample_interval=400</pre>
+<p>训练步骤的示例输出如下所示:</p>
+<pre>valid = np.ones((batch_size, 1))<br/>fake = np.zeros((batch_size, 1))<br/><br/>samp_imgs = {}<br/>closs = []<br/>gloss = []<br/>cacc = []<br/>for epoch in range(epochs):<br/>  idx = np.random.randint(0, x_train.shape[0], batch_size)<br/>  imgs = x_train[idx]<br/><br/>  noise = np.random.uniform(0, 1, (batch_size, ltnt_dim))<br/>  gen_imgs = generator.predict(noise)<br/>  c_loss_real = <strong>critic</strong>.train_on_batch(imgs, valid)<br/>  c_loss_fake = <strong>critic</strong>.train_on_batch(gen_imgs, fake)<br/>  c_loss = 0.5 * np.add(c_loss_real, c_loss_fake)<br/><br/>  noise = np.random.uniform(0, 1, (batch_size, ltnt_dim))<br/>  g_loss = <strong>gen_crt</strong>.train_on_batch(noise, valid)<br/>  <br/>  closs.append(c_loss[0])<br/>  cacc.append(c_loss[1])<br/>  gloss.append(g_loss)<br/><br/>  if epoch % sample_interval == 0:<br/>    print ("%d [C loss: %f, acc.: %.2f%%] [G loss: %f]" % <br/>           (epoch, d_loss[0], 100*d_loss[1], g_loss))<br/>  <br/>    noise = np.random.uniform(0, 1, (2, ltnt_dim))<br/>    gen_imgs = generator.predict(noise)<br/>    samp_imgs[epoch] = gen_imgs    </pre>
+<p>从训练输出中，我们可以看到卷积网络能够比MLP网络更快地减少发电机的损耗。看来，对于时代的剩余部分，批评家慢慢地学会了对虚假输入的生成者更加稳健。通过使用以下代码绘制结果，可以更清楚地观察到这一点:</p>
+<pre>Model: "Generator"<br/>_________________________________________________________________<br/>Layer (type)                   Output Shape       Param # <br/>=================================================================<br/>input_1 (InputLayer)           [(None, 100)]      0 <br/>_________________________________________________________________<br/>dense_1 (Dense)                (None, 12544)      1266944 <br/>_________________________________________________________________<br/>batch_normalization_1 (Batch   (None, 12544)      50176 <br/>_________________________________________________________________<br/>reshape (Reshape)              (None, 7, 7, 256)  0 <br/>_________________________________________________________________<br/>conv2d_transpose_1 (Conv2DTran (None, 7, 7, 128)  819328 <br/>_________________________________________________________________<br/>batch_normalization_2 (Batch   (None, 7, 7, 128)  512 <br/>_________________________________________________________________<br/>conv2d_transpose_2 (Conv2DTr   (None, 14, 14, 64) 204864 <br/>_________________________________________________________________<br/>batch_normalization_3 (Batch   (None, 14, 14, 64) 256 <br/>_________________________________________________________________<br/>conv2d_transpose_3 (Conv2DTr   (None, 28, 28, 1)  1601 <br/>=================================================================<br/>Total params: 2,343,681<br/>Trainable params: 2,318,209<br/>Non-trainable params: 25,472</pre>
+<p>代码产生了图14.7 中的<em>所示的图。从该图中，我们可以欣赏对快速收敛到小损失和缓慢恢复评论家的准确性的主张:</em></p>
+<pre>_________________________________________________________________<br/>Model: "Critic"<br/>_________________________________________________________________<br/>Layer (type)         Output Shape         Param # <br/>=================================================================<br/>input_2 (InputLayer) [(None, 28, 28, 1)]  0 <br/>_________________________________________________________________<br/>conv2d_1 (Conv2D)    (None, 14, 14, 64)   1664 <br/>_________________________________________________________________<br/>dropout_1 (Dropout)  (None, 14, 14, 64)   0 <br/>_________________________________________________________________<br/>conv2d_2 (Conv2D)    (None, 7, 7, 128)    204928 <br/>_________________________________________________________________<br/>dropout_2 (Dropout)  (None, 7, 7, 128)    0 <br/>_________________________________________________________________<br/>flatten (Flatten)    (None, 6272)         0 <br/>_________________________________________________________________<br/>dense_2 (Dense)      (None, 1)             6273 <br/>=================================================================<br/>Total params: 212,865<br/>Trainable params: 212,865<br/>Non-trainable params: 0</pre>
+<p>图14.7 -基于CNN的gan的学习曲线</p>
+<pre>0 [C loss: 0.719159, acc.: 22.66%] [G loss: 0.680779]<br/>400 [C loss: 0.000324, acc.: 100.00%] [G loss: 0.000151]<br/>800 [C loss: 0.731860, acc.: 59.38%] [G loss: 0.572153]<br/>.<br/>.<br/>.<br/>11200 [C loss: 0.613043, acc.: 66.41%] [G loss: 0.946724]<br/>11600 [C loss: 0.613043, acc.: 66.41%] [G loss: 0.869602]<br/>12000 [C loss: 0.613043, acc.: 66.41%] [G loss: 0.854222]</pre>
+<p>我们还可以显示卷积GAN训练时产生的样本。结果如图<em>图14.8 </em>所示。这些结果与在2000个历元下训练的低质量发生器一致。经过5，000个纪元后，生成器能够生成定义明确的数字，这些数字很容易被视为有效数字:</p>
+<pre>import matplotlib.pyplot as plt<br/><br/>fig, ax1 = plt.subplots(figsize=(10,6))<br/><br/>ax1.set_xlabel('Epoch')<br/>ax1.set_ylabel('Loss')<br/>ax1.plot(range(epochs), gloss, '-.', color='#dc267f', alpha=0.75, <br/>         label='Generator')<br/>ax1.plot(range(epochs), closs, '-.', color='#fe6100', alpha=0.75, <br/>         label='Critic')<br/>ax1.legend(loc=1)<br/>ax2 = ax1.twinx() <br/><br/>ax2.set_ylabel('Critic Accuracy') <br/>ax2.plot(range(epochs), cacc, color='#785ef0', alpha=0.75, <br/>         label='Accuracy')<br/>ax2.legend(loc=4)<br/><br/>fig.tight_layout() <br/>plt.show()</pre>
+<p>图14.8 -训练期间生成的样本</p>
+<div><img src="img/0c37a8ce-3502-4c4a-8f69-986f32a2abaf.png" style="width:44.58em;height:26.58em;"/></div>
+<p>作为参考，我们可以分别比较基于MLP和基于卷积方法的<em>图14.5 </em>和<em>图14.8 </em>。这种比较可以提供关于通用GAN(基于MLP)和专用于空间关系的GAN(基于CNN)之间的基本差异的见解。</p>
+<p>现在，我们将简要讨论<strong>变分自动编码器</strong> ( <strong> VAEs </strong>)和GANs带来的生成能力。</p>
+<div><img src="img/4b8424b6-2de1-4879-a650-d6d4318e39dd.png" style="width:32.58em;height:24.25em;"/></div>
+<p>比较gan和VAEs</p>
+<p>在<a href="c7b8496e-70e6-47ab-8746-d5893a10493d.xhtml">第9章</a>、<em>变分自动编码器</em>中，我们讨论了VAEs作为一种降维机制，旨在学习输入空间分布的参数，并使用学习到的参数基于潜在空间的随机抽取实现重建。这提供了我们已经在<a href="c7b8496e-70e6-47ab-8746-d5893a10493d.xhtml">第9章</a>、<em>变型自动编码器</em>中讨论过的许多优势，例如:</p>
+<p>降低噪声输入影响的能力，因为它学习输入的分布，而不是输入本身</p>
+<h1 id="uuid-ed023dee-efb0-412c-8d8a-95c04eefc46f">通过简单地查询潜在空间来生成样本的能力</h1>
+<p>另一方面，gan也可用于生成样品，如VAE。但是，两者的学习却大相径庭。在GANs中，我们可以认为模型有两个主要部分:一个评论者和一个生成者。在VAEs中，我们也有两个网络:编码器和解码器。</p>
+<ul>
+<li>如果我们要在两者之间建立任何联系，那就是解码器和生成器分别在VAEs和GANs中扮演着非常相似的角色。然而，一个编码器和一个评论家有着非常不同的目标。编码器将学习寻找丰富的潜在表示，通常与输入空间相比具有非常少的维度。与此同时，批评家的目标不是找到任何表征，而是解决日益复杂的二元分类问题。</li>
+<li>我们可以提出一个例子，批评家肯定是从输入空间学习特征；然而，声称最深层的特征在批评家和编码器中都是相似的需要更多的证据。</li>
+</ul>
+<p>为了进行比较，我们可以做的一件事是采用第九章、<em>、</em>、<em>图14.7 </em>所示的深度VAE模型，对其进行训练，并从VAE的生成器中抽取一些随机样本，对卷积GAN进行同样的操作。</p>
+<p>我们可以从显示来自卷积GAN的样本开始，并在前面部分的最后一段代码(包含训练好的GAN)之后立即执行以下代码。代码如下:</p>
+<p>这段代码将从随机噪声中产生400个数字！该图如<em>图14.9 </em>所示:</p>
+<p>图14.9 - 400卷积GAN产生的数字</p>
+<p>回想一下，这些数字是在12000个纪元后产生的。质量好像比较好。这些数字中的大多数实际上可以欺骗人类，让他们认为它们真的是人类写的。</p>
+<pre>import matplotlib.pyplot as plt<br/>import numpy as np<br/><br/>plt.figure(figsize=(10,10))<br/>samples = np.random.<strong>uniform</strong>(<strong>0.0, 1.0</strong>, size=(400,ltnt_dim))<br/>imgs = <strong>generator</strong>.predict(samples)<br/>for cnt in range(20*20):<br/>  plt.subplot(20,20,cnt+1)<br/>  img = imgs[cnt]<br/>  plt.imshow(img[:,:,0], cmap='gray')<br/>  plt.xticks([])<br/>  plt.yticks([])<br/>plt.show()</pre>
+<p>现在，我们想看看用VAE生成的数字的质量。为此，你需要进入<a href="c7b8496e-70e6-47ab-8746-d5893a10493d.xhtml">第9章</a>、<em>变分自动编码器</em>，使用提供的代码实现深度VAE，并对其进行5000次训练。经过训练后，您可以使用解码器通过选择随机参数从随机噪声中生成样本。</p>
+<div><img src="img/b787b620-e438-4ddd-b25c-8715396e7cee.png" style="width:34.17em;height:33.33em;"/></div>
+<p>一旦VAE的训练完成，以下是您应该使用的代码:</p>
+<p>两个明显的区别是，VAE假设潜在空间的参数遵循正态分布；此外，输出需要整形为28x28，与GAN相反，由于2D卷积输出层，输出已经处于正确的形状。该代码的输出如图<em>图14.10 </em>所示:</p>
+<p>图14.10-400 VAE解码器使用随机噪声生成的数字样本</p>
+<p>从图中可以看出，这些数字有些看起来很不错；有些人可能会说太好了。它们看起来光滑、圆润，或许我们可以说是无噪音的。与GAN产生的数字相比，产生的数字缺乏看起来嘈杂的独特品质。然而，这可能是一件好事，也可能是一件坏事，取决于你想做什么。</p>
+<pre>import matplotlib.pyplot as plt<br/>import numpy as np<br/><br/>plt.figure(figsize=(10,10))<br/>samples = np.random.<strong>normal(0.0, 1.0</strong>, size=(400,ltnt_dim))<br/>imgs = <strong>decoder</strong>.predict(samples)<br/>for cnt in range(20*20):<br/>  plt.subplot(20,20,cnt+1)<br/>  img = imgs[cnt]<strong>.reshape((28,28))</strong><br/>  plt.imshow(img, cmap='gray')<br/>  plt.xticks([])<br/>  plt.yticks([])<br/>plt.show()</pre>
+<p>比方说，你想要外观整洁的样品，很容易被识别为<em>假货，</em>那么VAE是最佳选择。现在，假设我们想要的样本可以轻易地欺骗人类，让他们认为它们不是由机器制造的；在这里，也许甘更适合。</p>
+<div><img src="img/84984cdc-549e-4db3-ad8c-921d787020f6.png" style="width:29.08em;height:28.42em;"/></div>
+<p>不管这些差异如何，如果需要更多数据，两者都可以用来扩充数据集。</p>
+<p>关于甘斯伦理意蕴的思考</p>
+<p>关于生成模型的一些伦理思想已经在<a href="c7b8496e-70e6-47ab-8746-d5893a10493d.xhtml">第9章</a>、<em>变型自动编码器</em>中提供。然而，鉴于GANs的敌对性质，第二轮思考是适当的。也就是说，在最小-最大博弈中，有一个从GAN到<em> trick </em>一个批评家的隐含需求，其中生成器需要获胜(或者批评家也需要获胜)。这个推广到对抗学习的概念提供了<em>攻击</em>现有机器学习模型的手段。</p>
+<p>非常成功的计算机视觉模型，如vgg 16(CNN模型)，已经受到了执行对抗性攻击的模型的攻击。有<em>个补丁</em>，你可以打印，放在t恤、帽子或任何物体上，一旦补丁出现在被攻击模型的输入中，它们就会被愚弄，以为现有的物体是一个完全不同的物体(Brown，T. B .，et al. (2017))。这里有一个对抗性补丁的例子，它欺骗一个模型认为香蕉是一个烤面包机:<a href="https://youtu.be/i1sp4X57TL4">https://youtu.be/i1sp4X57TL4</a>。</p>
+<h1 id="uuid-1fd37186-786c-4a67-944e-eb9012029f7b">既然已知存在这种类型的敌对攻击，研究人员已经在他们当前的系统中发现了漏洞。因此，对于我们这些深度学习实践者来说，确保我们的模型能够抵御敌对攻击几乎成了一项义务。这对于涉及敏感信息的系统或做出影响人类生活决策的系统尤为重要。</h1>
+<p>例如，需要测试部署在机场以协助安全工作的深度学习模型，以避免穿着印有敌对补丁的t恤的人被识别为禁区内的人。这对民众的安全至关重要。然而，自动调整一个人唱歌的音频的深度学习系统可能不是特别关键。</p>
+<p>你需要做的是研究测试你的模型是否有对抗性攻击。网上有一些经常更新的资源，如果你搜索的话，很容易找到。如果你来发现一个深度学习模型的漏洞，你应该立即向创造者报告，为了我们社会的福祉。</p>
+<p>摘要</p>
+<p>本章向您展示了如何创建GAN网络。您学习了GANs的主要组成部分，一个生成器和一个批判器，以及它们在学习过程中的作用。您学习了在打破模型并使它们对攻击具有鲁棒性的背景下的对抗性学习。您在同一个数据集上编码了基于MLP和基于卷积的GAN，并观察了它们的差异。此时，你应该有信心解释为什么对抗性训练是重要的。您应该能够编写必要的机制来训练GAN的生成器和鉴别器。你应该对编码GAN并将其与VAE进行比较以从学习的潜在空间生成图像感到自信。考虑到使用生成模型所带来的社会影响和责任，你应该能够设计生成模型。</p>
+<p>gan非常有趣，已经产生了惊人的研究和应用。他们也暴露了其他系统的弱点。深度学习的当前状态包括AEs、GANs、CNN和RNNs的组合，使用每个的特定组件，并逐渐增加深度学习在不同领域的应用潜力。深度学习的世界现在令人兴奋，你现在已经准备好拥抱它，并深入到你觉得喜欢的任何领域。<a href="216a275e-ae7e-451c-a8c6-f31eac314d3f.xhtml">第15章</a>，<em>深度学习未来的最后评论</em>，将呈现我们如何看待深度学习未来的简要评论。它试图用某种<em>预言</em>的声音来讲述即将到来的事情。但是在你走之前，用下面的问题来测试你自己。</p>
+<h1 id="uuid-050ccf51-424a-4113-979f-6f2b46175e2b">问题和答案</h1>
+<p><strong>甘的对手是谁？</strong></p>
+<p>发电机。它作为一个模型，其唯一目的是让批评家失败；它是批评家的对手。</p>
+<h1 id="uuid-4256c19b-1705-4d2c-9f96-22409949da3b"><strong>为什么发电机模型比评论家大？</strong></h1>
+<ol>
+<li>情况并非总是如此。这里讨论的模型作为数据生成器更有趣。然而，我们可以使用critic并重新训练它进行分类，在这种情况下，critic模型可能会更大。</li>
+</ol>
+<p style="padding-left: 60px">The generator. It acts as a model whose sole purpose is to make the critic fail; it is the critic's adversary.</p>
+<ol start="2">
+<li><strong>Why is the generator model bigger than the critic? </strong></li>
+</ol>
+<p style="padding-left: 60px"><strong>什么是对抗性鲁棒性？</strong></p>
+<p class="mce-root">这是深度学习中的一个新领域，其任务是研究如何证明深度学习模型对对抗性攻击具有鲁棒性。</p>
+<p class="mce-root">甘和哪个更好？</p>
+<ol start="3">
+<li>这取决于应用。GANs比VAEs更容易产生“有趣”的结果，但是VAEs更稳定。而且，训练一个甘人通常比训练一个VAE人要快。</li>
+</ol>
+<p style="padding-left: 60px"><strong>GANs有什么风险吗？</strong></p>
+<ol start="4">
+<li>是的。有一个已知的问题叫做<em>模式崩溃</em>，指的是GAN无法产生跨时代的新颖、不同的结果。看起来网络被几个样本卡住了，这可能会在评论家中引起足够的混乱，从而产生较低的损失，同时没有生成数据的多样性。这仍然是一个没有普遍解决办法的开放性问题。GAN的发电机缺乏多样性是它已经崩溃的迹象。要了解更多关于模式崩溃的信息，请阅读Srivastava，a .等人(2017)。</li>
+</ol>
+<p style="padding-left: 60px">参考</p>
+<ol start="5">
+<li>阿巴迪博士和安德森博士(2016年)。<em>学习用对抗性神经加密技术保护通信</em>。<em> arXiv预印本</em> arXiv:1610.06918</li>
+</ol>
+<p style="padding-left: 60px">和林(2018年)。<em>利用有限的查询和信息进行黑盒对抗性攻击</em>。arXiv预印本 arXiv:1804.08598。</p>
+<h1 id="uuid-3877bf6b-fd91-47c2-b8c1-f5900ed3eefa">Goodfellow，I .、Pouget-Abadie，j .、Mirza，m .、Xu，b .、Warde-Farley，d .、Ozair，s .和Bengio，Y. (2014年)。<em>生成对抗网</em>。在<em>神经信息处理系统的进展</em>(第2672-2680页)。<br/></h1>
+<ul>
+<li>苏赫巴托尔和弗格斯(2016年)。<em>用反向传播学习多智能体通信</em>。在<em>神经信息处理系统的进展</em>(第2244-2252页)。</li>
+<li>里瓦斯博士和班纳吉博士(2020年)。<em>基于神经的16位块ECB模式图像对抗加密</em>。在<em>国际人工智能会议</em>。</li>
+<li>科恩，J. M .，罗森菲尔德，e .和科特，J. Z. (2019)。<em>通过随机平滑认证对抗鲁棒性</em>。arXiv预印本 arXiv:1902.02918。</li>
+<li>拉德福德、梅斯和钦塔拉(2015年)。<em>深度卷积生成对抗网络的无监督表示学习</em>。arXiv预印本 arXiv:1511.06434。</li>
+<li>Brown，T. B .，Mané，d .，Roy，a .，Abadi，m .，Gilmer，J. (2017)。<em>对抗性补丁</em>。<em> arXiv预印本</em> arXiv:1712.09665。</li>
+<li>斯利瓦斯塔瓦、瓦尔科夫、拉塞尔、古特曼、麻省理工和萨顿(2017)。<em> Veegan:使用隐式变分学习减少GANs中的模式崩溃</em>。在<em>神经信息处理系统的进展</em>(第3308-3318页)。</li>
+<li>Radford, A., Metz, L., and Chintala, S. (2015). <em>Unsupervised representation learning with deep convolutional generative adversarial networks</em>. <em>arXiv preprint</em> arXiv:1511.06434.</li>
+<li>Brown, T. B., Mané, D., Roy, A., Abadi, M., and Gilmer, J. (2017). <em>Adversarial patch</em>. <em>arXiv preprint</em> arXiv:1712.09665.</li>
+<li>Srivastava, A., Valkov, L., Russell, C., Gutmann, M. U., and Sutton, C. (2017). <em>Veegan: Reducing mode collapse in GANs using implicit variational learning</em>. In <em>Advances in Neural Information Processing Systems</em> (pp. 3308-3318).</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

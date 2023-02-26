@@ -1,0 +1,265 @@
+<html><head/><body>
+
+
+	
+		<title>Chapter_2_SMP_ePub</title>
+		
+	
+	
+		<div><div/>
+		</div>
+		<div><h1 id="_idParaDest-44"><a id="_idTextAnchor044"/> 2。感知器</h1>
+		</div>
+		<div><p>本章描述了一种叫做<em class="italics">感知器</em>的算法。神经网络(即深度学习)是由美国研究人员Frank Rosenblatt在1957年发明的，正是从这种传统算法中产生的，因此是对两者进行更高级研究的必要的第一步。本章将描述一个感知器并使用它来解决简单的问题。在整个过程中，你将熟悉感知机的机制。</p>
+			<h2 id="_idParaDest-45"><a id="_idTextAnchor045"/>什么是感知器？</h2>
+			<p>感知器接收多个信号作为输入，并输出一个信号。这里的“信号”像电流或河流一样“流动”。就像电流流过导体并推动电子前进一样，感知器中的信号产生流动并传递信息。与电流不同，感知器中的信号是二进制的:“流动(1)或不流动(0)。”在本书中，0表示“不传递信号”，1表示“传递信号”。</p>
+			<p>(为了精确起见，请注意，本章中描述的感知器更准确地称为“人工神经元”或“简单感知器”。在这里，我们将称之为“感知器”，因为基本过程往往是相同的。)</p>
+			<p><em class="italics">图2.1 </em>显示了一个感知器的例子，它接收两个信号作为输入:</p>
+			<div><div><img src="img/fig02_1.jpg" alt="Figure 2.1: Perceptron with two inputs&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.1:有两个输入的感知器</h6>
+			<p><em class="italics"> x </em> 1和<em class="italics"> x </em> 2为输入信号，<em class="italics"> y </em>为输出信号，<em class="italics"> w </em> 1和<em class="italics"> w </em> 2为权重(w为“权重”的首字母)。上图中的圆圈称为“神经元”或“节点”当输入信号被发送到一个神经元时，它们中的每一个都被乘以它自己的权重(<em class="italics"> w </em> 1 <em class="italics"> x </em> 1和<em class="italics"> w </em> 2 <em class="italics"> x </em> 2)。神经元将接收到的信号相加，当总和超过某个极限值时输出1。这有时被称为“激发神经元”这里，极限值被称为<strong class="bold">阈值</strong>，并由符号<em class="italics"> θ </em>表示。</p>
+			<p>这都是关于感知器的工作原理。等式(2.1)显示了我们在此描述的内容:</p>
+			<table id="table001" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Firgure_2.1a.png" alt="1"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(2.1)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>感知器对多个输入中的每一个都有特定的权重，而权重控制每个信号的重要性。重量越大，重量信号越重要。</p>
+			<h4>注意</h4>
+			<p class="callout">重量相当于电阻。电阻是衡量电流通过难易程度的一个参数。电阻越小，电流越大。同时，当感知器的权重较大时，流动的信号变得较大。阻力和重量以同样的方式工作，因为它们都控制着传递信号的难易程度。</p>
+			<h2 id="_idParaDest-46"><a id="_idTextAnchor046"/>简单逻辑电路</h2>
+			<h3 id="_idParaDest-47"><a id="_idTextAnchor047"/>与门</h3>
+			<p>以下是一些使用感知器的简单问题。我们将在这里看逻辑电路。我们先考虑一个与门。与门由两个输入和一个输出组成。图2.2 中的输入和输出信号表被称为“真值表”如图<em class="italics">图2.2 </em>所示，当两个输入为1时，与门输出1。否则，它输出0:</p>
+			<div><div><img src="img/fig02_2.jpg" alt="Figure 2.2: Truth table of an AND gate&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.2:与门的真值表</h6>
+			<p>现在，我们将使用一个感知器来表达这个与门。我们将确定<em class="italics"> w </em> 1、<em class="italics"> w </em> 2和<em class="italics"> θ </em>的值，使它们满足<em class="italics">图2.2 </em>的真值表。我们可以设置什么值来创建一个满足<em class="italics">图2.2 </em>条件的感知器？</p>
+			<p>实际上，满足<em class="italics">图2.2 </em>的参数组合有无限多种。比如当(<em class="italics"> w </em> 1，<em class="italics"> w </em> 2，<em class="italics"> θ </em> ) = (0.5，0.5，0.7)时，感知器的工作方式如图<em class="italics">图2.2 </em>所示。(0.5，0.5，0.8)和(1.0，1.0，1.0)也满足与门的条件。如果设置了这些参数，当<em class="italics"> x </em> 1和<em class="italics"> x </em> 2都为1时，加权信号之和超过给定阈值<em class="italics"> θ </em>。</p>
+			<h3 id="_idParaDest-48"><a id="_idTextAnchor048"/>与非门和或门</h3>
+			<p>现在，让我们来看看与非门。NAND的意思是不与，与非门的输出与与门相反。如<em class="italics">图2.3 </em>提供的真值表所示，当<em class="italics"> x </em> 1和<em class="italics"> x </em> 2都为1时，输出0。否则，它输出1。与非门有哪些参数组合？</p>
+			<div><div><img src="img/fig02_3.jpg" alt="Figure 2.3: Truth table of a NAND gate&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.3:与非门的真值表</h6>
+			<p>(<em class="italics"> w </em> 1，<em class="italics"> w </em> 2，<em class="italics"> θ </em> ) = (-0.5，-0.5，-0.7)的一个组合可以代表一个与非门，还有无限多的其他组合。事实上，您可以通过反转构建与门的参数值的所有符号来构建与非门。</p>
+			<p>现在，我们来看一个OR门，如图<em class="italics">图2.4 </em>所示。这是一个逻辑电路，如果至少一个输入信号为1，则输出1。你认为我们可以为或门设置什么参数？</p>
+			<div><div><img src="img/fig02_4.jpg" alt="Figure 2.4: Truth table of an OR gate&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.4:或门的真值表</h6>
+			<h4>注意</h4>
+			<p class="callout">我们是决定感知器参数的人，而不是计算机。在查看“训练数据”时，也称为真值表，我们手动考虑(找到)参数值。在机器学习问题中，我们让计算机自动确定参数值。<strong class="bold">训练</strong>是确定合适参数的任务，我们考虑感知器的结构(模型)，把训练数据给计算机。</p>
+			<p>如前所述，我们可以使用感知器来构建与、与非、或逻辑电路。这里重要的是感知器的结构对于所有的与门、与非门和或门都是一样的。三个门的区别在于参数值(权重和阈值)。就像一个多才多艺的演员扮演各式各样的角色，同样结构的感知器在适当调整参数值时，会变成与、与非、或。</p>
+			<h2 id="_idParaDest-49"><a id="_idTextAnchor049"/>实现感知器</h2>
+			<h3 id="_idParaDest-50"><a id="_idTextAnchor050"/>易于实施</h3>
+			<p>让我们用Python实现前面的逻辑电路。这里，我们将定义AND函数，它将<code>x1</code>和<code>x2</code>作为参数:</p>
+			<pre>def AND(x1, x2):
+    w1, w2, theta = 0.5, 0.5, 0.7
+    tmp = x1*w1 + x2*w2
+    if tmp &lt;= theta:
+        return 0
+    elif tmp &gt; theta:
+        return 1</pre>
+			<p>在函数中初始化<code>w1</code>、<code>w2</code>和<code>theta</code>参数。当加权输入的总和超过阈值时，它返回1；否则，它返回0。让我们检查输出是否与图2.2 中的<em class="italics">所示的输出相同:</em></p>
+			<pre>AND(0, 0) # 0 (output)
+AND(1, 0) # 0 (output)
+AND(0, 1) # 0 (output)
+AND(1, 1) # 1 (output)</pre>
+			<p>产出和我们预期的一样。这样，你就建立了一个与门。虽然您可以使用类似的过程来构建NAND或or门，但我们将稍微改变一下实现。</p>
+			<h3 id="_idParaDest-51"><a id="_idTextAnchor051"/>引入权重和偏差</h3>
+			<p>虽然与门的上述实现简单且易于理解，但我们将为后续部分将其更改为不同的实现，将等式(2.1)中的<em class="italics"> θ </em>转换为-b，并在等式(2.2)中表示感知器的行为:</p>
+			<table id="table002" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_2.4a.png" alt="2"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(2.2)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>尽管符号的符号已经改变，但方程(2.1)和(2.2)表示完全相同的东西。这里，b称为偏置，<em class="italics"> w </em> 1和<em class="italics"> w </em> 2称为<strong class="bold">权重</strong>。如等式(2.2)所示，感知器对乘以权重和偏差的输入信号值求和。如果总和超过0，则输出1，否则输出0。现在，让我们用NumPy来实现等式(2.2)。我们将使用Python解释器逐个检查结果:</p>
+			<pre>&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; x = np.array([0, 1]) # Input
+&gt;&gt;&gt; w = np.array([0.5, 0.5]) # Weight
+&gt;&gt;&gt; b = -0.7	# Bias
+&gt;&gt;&gt; w*x
+array([ 0. ,  0.5])
+&gt;&gt;&gt; np.sum(w*x)
+0.5
+&gt;&gt;&gt; np.sum(w*x) + b
+-0.19999999999999996 # About -0.2 (Operation error with floatingpoint numbers)</pre>
+			<p>如此示例所示，当NumPy数组相乘时，如果两个数组具有相同数量的元素，则它们的每个元素都会相乘。所以在计算<code>w*x</code>的时候，每个元素都要相乘，([0，1] * [0.5，0.5] = &gt; [0，0.5])。在<code>np.sum(w*x)</code>中，对每个元素求和。当偏差被加到这个加权和上时，等式(2.2)的计算就完成了。</p>
+			<h3 id="_idParaDest-52"><a id="_idTextAnchor052"/>带权重和偏差的实现</h3>
+			<p>您可以使用权重和偏差来实现与门，如下所示:</p>
+			<pre>def AND(x1, x2):
+    x = np.array([x1, x2])
+    w = np.array([0.5, 0.5])
+    b = -0.7
+    tmp = np.sum(w*x) + b
+    if tmp &lt;= 0:
+        return 0
+    else:
+        return 1</pre>
+			<p>这里，- <em class="italics"> θ </em>称为偏置，<em class="italics"> b </em>。请注意，偏压的工作方式与重量不同，<em class="italics"> w </em> 1和<em class="italics"> w </em> 2。具体来说，<em class="italics"> w </em> 1和<em class="italics"> w </em> 2用作控制输入信号重要性的参数，而bias用作调整触发难易程度的参数，即输出信号为1的可能性有多大。例如，如果<em class="italics"> b </em>为-0.1，当输入信号的加权和超过0.1时，神经元就会触发。另一方面，如果<em class="italics"> b </em>为-20.0，则只有当输入信号的加权和超过20.0时，神经元才会触发。因此，偏差值决定了神经元放电的难易程度。尽管<em class="italics"> w </em> 1和<em class="italics"> w </em> 2被称为“权重”，而<em class="italics"> b </em>被称为“偏差”，但根据上下文的不同，所有参数(即<em class="italics"> b </em>、<em class="italics"> w </em> 1和<em class="italics"> w </em> 2)有时也被称为“权重”。</p>
+			<h4>注意</h4>
+			<p class="callout">“偏向”这个词也有“填充”的意思它表示如果没有输入(如果输入为0)，则输出增加。实际上，如果输入<em class="italics"> x </em> 1和<em class="italics"> x </em> 2为0，则输出就是等式(2.2)中计算<em class="italics">b</em>+<em class="italics">w</em>1<em class="italics">x</em>1+<em class="italics">w</em>2<em class="italics">x</em>2时的偏置值。</p>
+			<p>现在，让我们实现与非门和或门:</p>
+			<pre>def NAND(x1, x2):
+    x = np.array([x1, x2])
+    <code>w = np.array([-0.5, -0.5])</code> # Only the weights and bias are different from AND!
+    <code>b = 0.7</code>
+    tmp = np.sum(w*x) + b
+    if tmp &lt;= 0:
+        return 0
+    else:
+        return 1
+def OR(x1, x2):
+    x = np.array([x1, x2])
+    <code>w = np.array([0.5, 0.5])</code> # Only the weights and bias are different from AND!
+    <code>b = -0.2</code>
+    tmp = np.sum(w*x) + b
+    if tmp &lt;= 0:
+        return 0
+    else:
+        return 1</pre>
+			<p>如前一节所述，感知器的与门、与非门和或门在结构上是相同的，不同之处仅在于权重参数的值。当实现与非门和或门时，只有权重和偏置的值不同于与门。</p>
+			<h2 id="_idParaDest-53"><a id="_idTextAnchor053"/>感知器的局限性</h2>
+			<p>如上所述，我们可以用感知器来实现“与”、“与非”和“或”逻辑门。在下一节中，您将考虑XOR门。</p>
+			<h3 id="_idParaDest-54"><a id="_idTextAnchor054"/>异或门</h3>
+			<p>异或门是一种门电路，也称为<em class="italics">异或</em>。如图<em class="italics">图2.5 </em>所示，当<em class="italics"> x </em> 1或<em class="italics"> x </em> 2中任一个为1时输出为1(“独占”表示“仅限一人”)。用感知器实现异或门的权值应该是多少？</p>
+			<div><div><img src="img/fig02_5.jpg" alt="Figure 2.5: Truth table of an XOR gate&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.5:异或门的真值表</h6>
+			<p>事实上，我们无法通过使用我们目前所了解的感知机来构建这个异或门。为什么我们虽然能造AND和OR门，却不能造XOR？</p>
+			<p>首先，让我们直观地研究一下or门的行为。一个OR门满足<em class="italics">图2.5 </em>中的真值表当权重参数为(<em class="italics"> b </em>，<em class="italics"> w </em> 1，<em class="italics"> w </em> 2) = (-0.5，1.0，1.0)时，例如。在这种情况下，感知器由等式(2.3)表示:</p>
+			<table id="table003" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div>T33<img src="img/Firgure_2.5a.png" alt="3"/>T35】T36】</div></td>
+						<td class="No-Table-Style">
+							<p>(2.3)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>由等式(2.3)表示的感知器生成由直线划分的两个区域-0.5+<em class="italics">x</em>1+<em class="italics">x</em>2 = 0。被直线分割的区域之一输出1，而另一个输出0。<em class="italics">图2.6 </em>以图形方式显示了这一点:</p>
+			<div><div><img src="img/fig02_6.jpg" alt="Figure 2.6: Visualizing a perceptron – the perceptron outputs 0 in the gray area, which satisfies the characteristics of an OR gate&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.6:可视化感知器——感知器在灰色区域输出0，满足或门的特征</h6>
+			<p>当(<em class="italics"> x </em> 1、<em class="italics"> x </em> 2) = (0，0)时，或门输出0，当(<em class="italics"> x </em> 1、<em class="italics"> x </em> 2) = (0，1)、(1，0)和(1，1)时，或门输出1。这里，圆圈表示0，三角形表示1。要创建一个或门，我们必须用一条直线在圆形和三角形之间划分。直线其实可以正确划分四个点。</p>
+			<p>那么，异或门的情况如何呢？我们能创造出用直线在圆形和三角形之间划分的区域吗，就像或门的情况一样？</p>
+			<div><div><img src="img/fig02_7.jpg" alt="Figure 2.7: Circles and triangles indicate the outputs of an XOR gate. &#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.7: Ci <a id="_idTextAnchor055"/>圆圈和三角形表示异或门的输出。</h6>
+			<p>无论你如何努力解决这个问题，你都不能用一条直线来区分圆形和三角形。一条直线不能把它们分开。</p>
+			<h3 id="_idParaDest-55"><a id="_idTextAnchor056"/>线性和非线性</h3>
+			<p>你不能用一条直线来区分圆形和三角形。然而，如果你能消除“直线”的限制，你就可以把它们分开例如，您可以创建在圆形和三角形之间划分的区域，如图<em class="italics">图2.8 </em>所示。</p>
+			<p>感知器的局限性在于，它只能表示由一条直线划分的区域。它不能代表曲线，如图<em class="italics">图2.8 </em>所示。<em class="italics">图2.8 </em>中被曲线分割的区域称为<em class="italics">非线性</em>区域，被直线分割的区域称为<em class="italics">线性</em>区域。机器学习中经常用到<em class="italics">线性</em>和<em class="italics">非线性</em>这两个词。您可以用<em class="italics">图2.6 </em>和<em class="italics">图2.8 </em>来形象化它们:</p>
+			<div><div><img src="img/fig02_8.jpg" alt="Figure 2.8: A curve can divide between circles and triangles&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.8:曲线可以分为圆形和三角形</h6>
+			<h2 id="_idParaDest-56"><a id="_idTextAnchor057"/>多层感知器</h2>
+			<p>不幸的是，我们不能用感知器来表示异或门。然而，这并不是什么可怕的消息。实际上，感知器的优点在于多层感知器可以堆叠在一起(这一节的大纲是多层可以表示异或)。我们稍后将查看堆叠层。这里，我们可以从另一个角度考虑异或门的问题。</p>
+			<h3 id="_idParaDest-57"><a id="_idTextAnchor058"/>合并现有的门</h3>
+			<p>有一些方法可以用来制作异或门。其中一个是将我们迄今为止创造的与门、与非门和或门结合起来，并连接起来。这里，与门、与非门和或门用符号显示在<em class="italics">图2.9 </em>中。图2.9 中<em class="italics">与非门顶端的圆圈表示输出已经反转。</em></p>
+			<div><div><img src="img/fig02_9.jpg" alt="Figure 2.9: Symbols of the AND, NAND, and OR gates&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.9:与门、与非门和或门的符号</h6>
+			<p>现在，让我们考虑一下如何连接AND、NAND和OR来创建一个XOR门。注意你可以给每个<em class="italics">？</em>符号在<em class="italics">图2.10 </em>中完成一个异或门:</p>
+			<div><div><img src="img/fig02_10.jpg" alt="Figure 2.10: Replace the &quot;?&quot; symbols with an AND, NAND, or OR gate to complete an XOR gate!&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.10:替换“？”符号与一个与，与非，或或门完成一个异或门！</h6>
+			<p>具体来说，上一节描述的感知器的局限性在于，感知器的单层不能表示异或门或划分非线性区域。在这里，我们将看到XOR门可以通过组合感知器(即堆叠层)来构建。</p>
+			<p><em class="italics">图2.11 </em>中的布线可以构建一个异或门。这里，<em class="italics"> x </em> 1和<em class="italics"> x </em> 2表示输入信号，而<em class="italics"> y </em>表示输出信号。<em class="italics"> x </em> 1和<em class="italics"> x </em> 2是与非门和或门的输入，与非门和或门的输出是与门的输入:</p>
+			<div><div><img src="img/fig02_11.jpg" alt="Figure 2.11: A combination of the AND, NAND, and OR gates constructs an XOR gate&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.11:与门、与非门和或门的组合构成了一个异或门</h6>
+			<p>让我们检查一下<em class="italics">图2.11 </em>中的布线是否真的能构成异或门。假设NAND的输出为<em class="italics"> s </em> 1，OR的输出为<em class="italics"> s </em> 2，我们将完成真值表。<em class="italics">图2.12 </em>显示了结果。当我们查看<em class="italics"> x </em> 1、<em class="italics"> x </em> 2和<em class="italics"> y </em>时，我们可以看到它们代表XOR的输出:</p>
+			<div><div><img src="img/fig02_12.jpg" alt="Figure 2.12: Truth table of an XOR gate&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.12:异或门的真值表</h6>
+			<h3 id="_idParaDest-58"><a id="_idTextAnchor059"/>实现异或门</h3>
+			<p>现在，我们将使用Python实现<em class="italics">图2.11 </em>中布线表示的异或门。通过使用我们之前定义的AND、NAND和OR函数，我们可以实现如下:</p>
+			<pre>def XOR(x1, x2):
+    s1 = NAND(x1, x2)
+    s2 = OR(x1, x2)
+    y = AND(s1, s2)
+    return y</pre>
+			<p>XOR函数按预期输出结果:</p>
+			<pre>XOR(0, 0) # 0 (output)
+XOR(1, 0) # 1 (output)
+XOR(0, 1) # 1 (output)
+XOR(1, 1) # 0 (output)</pre>
+			<p>现在，我们可以建立一个异或门。这样做之后，我们将表示我们刚刚用感知器实现的XOR(通过显式显示神经元)。<em class="italics">图2.13 </em>显示了这种表示。</p>
+			<p>异或是一个多层网络，如图<em class="italics">图2.13所示。</em>在这里，我们将最左边的列称为<code>Layer 0</code>，下一列称为<code>Layer 1</code>，最右边称为<code>Layer 2</code>。</p>
+			<p><em class="italics">图2.13 </em>中的感知器在形状上不同于我们到目前为止看过的AND和OR感知器(<em class="italics">图2.1 </em>)。AND和OR感知器是单层的，而XOR感知器是双层的。多层感知器有时被称为<strong class="bold">多层感知器</strong>:</p>
+			<div><div><img src="img/fig02_13.jpg" alt="Figure 2.13: Representation of an XOR by perceptrons&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.13:感知器对异或运算的表示</h6>
+			<h4>注意</h4>
+			<p class="callout">虽然<em class="italics">图2.13 </em>中的感知器由三层组成，但我们会称之为“两层感知器”，因为只有两层(0层和1层之间以及1层和2层之间)有权重。有些文献称<em class="italics">图2.13 </em>中的感知器为“三层感知器”，因为它由三层组成。</p>
+			<p>一个两层感知器，如图<em class="italics">图2.13 </em>所示，在第0层和第1层的神经元之间，然后在第1层和第2层之间发送和接收信号。下面更详细地描述了这种行为:</p>
+			<ol>
+				<li>第0层的两个神经元接收输入信号，并向第1层的神经元发送信号。</li>
+				<li>第1层的神经元向第2层的神经元发送信号，后者输出y。</li>
+			</ol>
+			<p>这个两层感知器的行为可以比作一个通过管道的程序集。第一级(或第一层)的工人处理到达的“组件”,并在任务完成时将其传递给第二级(第二层)的工人。第二层中的工人处理从第一层中的工人接收的“组件”,以完成并运送(输出)它。</p>
+			<p>因此，异或门中的感知器在工人之间“传递组件”。这种两层结构使感知器能够构建异或门。这可以解释为“单层感知器做不到的，加一层就能做到。”感知器可以通过堆叠层(加深层)来提供更灵活的表示。</p>
+			<h2 id="_idParaDest-59"><a id="_idTextAnchor060"/>从NAND到电脑</h2>
+			<p>多层感知器可以创造出比我们目前所研究的更复杂的电路。例如，可以用感知器创建将数字相加的加法器电路。将二进制数转换为十进制数的编码器和满足特定条件时输出1的电路(奇偶校验电路)可以用感知器来表示。事实上，我们甚至可以用感知器来代表计算机。</p>
+			<p>计算机是一种处理信息的机器。当计算机收到输入信号时，它以某种方式进行处理并输出结果。以某种方式处理意味着计算机和感知器都有输入和输出，并根据固定的规则计算它们。</p>
+			<p>虽然看起来计算机内部进行非常复杂的过程，但事实上(令人惊讶的是)，与非门的组合可以复制计算机所做的事情。令人惊讶的事实是，我们只需要与非门就可以创造一台计算机，这意味着感知器也可以代表计算机，因为与非门本身可以用感知器来制造。简单来说，如果我们可以通过组合与非门来创建一台计算机，那么我们也可以通过只组合感知器来表示一台计算机(感知器的组合可以表示为一个多层感知器)。</p>
+			<h4>注意</h4>
+			<p class="callout">你可能很难相信与非门的组合能创造出一台计算机。如果你对这个话题感兴趣，推荐阅读<em class="italics">《计算系统的要素:从基本原理构建现代计算机》</em>(麻省理工学院出版社)。这本书旨在深入理解计算机。在“从NAND到俄罗斯方块”的口号下，它使用NAND创建了一台运行俄罗斯方块的计算机。如果你读了这本书，你会意识到计算机可以由简单的元素——也就是“与非”创造出来。</p>
+			<p>因此，多层感知器可以实现像创建计算机一样复杂的表示。那么，什么感知器结构可以代表计算机呢？创造一台电脑需要多少层？</p>
+			<p>答案是，从理论上讲，可以用两层感知器创建一台计算机。已经证明，任何函数都可以用两层感知器来表示(准确地说，当激活函数是非线性sigmoid函数时——详见下一章)。然而，通过在两层感知器的结构中指定适当的权重来创建计算机将是一项非常费力的工作。实际上，要从诸如NAND之类的低级组件开始创建计算机，一步一步地创建所需的组件(模块)是很自然的——从AND和OR门开始，前进到半加法器和全加器、<strong class="bold">算术和逻辑单元</strong> ( <strong class="bold"> ALUs </strong>)以及CPU。因此，在用感知器表示计算机时，创建多层结构是一种自然的方式。</p>
+			<p>虽然我们不会在本书中创建计算机，但请记住，多层感知器支持非线性表示，并且原则上它们可以表示计算机做的事情。</p>
+			<h2 id="_idParaDest-60"><a id="_idTextAnchor061"/>总结</h2>
+			<p>在这一章中，我们讨论了感知机。感知器是一个非常简单的算法，所以你应该能够很快理解它是如何工作的。感知器是神经网络的基础，我们将在下一章学习。这些要点可以总结如下:</p>
+			<ul>
+				<li>感知器是一种有输入和输出的算法。当它接收到某个输入时，它输出一个固定值。</li>
+				<li>感知器有“权重”和“偏差”参数。</li>
+				<li>你可以用感知器来表示逻辑电路，如与门和或门。</li>
+				<li>异或门不能用单层感知器来表示。</li>
+				<li>两层感知器可以用来表示异或门。</li>
+				<li>单层感知器只能表示线性区域，多层感知器可以表示非线性区域。</li>
+				<li>多层感知器可以代表一台计算机(理论上)。</li>
+			</ul>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+	
+
+</body></html>

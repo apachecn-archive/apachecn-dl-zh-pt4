@@ -1,0 +1,453 @@
+<html><head/><body>
+
+
+	
+		<title>C11865_02_ePub_Final_SZ</title>
+		
+	
+	
+		<div><h1 id="_idParaDest-26"><em class="italics"> <a id="_idTextAnchor030"/>第二章</em></h1>
+		</div>
+		<div><h1 id="_idParaDest-27"><a id="_idTextAnchor031"/>神经网络的构建模块</h1>
+		</div>
+		<div><h2>学习目标</h2>
+			<p>本章结束时，您将能够:</p>
+			<ul>
+				<li class="bullets">识别神经网络的优点和缺点</li>
+				<li class="bullets">区分神经网络解剖中的不同组件</li>
+				<li class="bullets">认识最流行的神经网络架构，并了解它们的主要用途</li>
+				<li class="bullets">使用技术准备要输入神经网络的数据</li>
+				<li class="bullets">使用简单的架构解决回归问题</li>
+				<li class="bullets">通过解决高偏差或高方差来提高模型的性能</li>
+			</ul>
+			<p>在这一章中，我们将看看神经网络的基本构件。我们将探索不同的架构来解决各种各样的任务。最后，我们将学习如何使用PyTorch构建神经网络。</p>
+		</div>
+		<div><h2 id="_idParaDest-28"><a id="_idTextAnchor032"/>简介</h2>
+			<p>尽管神经网络理论是在几十年前发展起来的，并且这个概念是从感知器的概念发展而来的，但是最近已经创建了不同的架构来解决不同的数据问题。这主要是由于现实生活中的数据问题中存在不同的数据格式，如文本、音频和图像。本章的目的是介绍神经网络的主题及其主要优点和缺点，以便更好地理解何时以及如何使用它们。然后，本章将继续解释最流行的神经网络架构的构建模块:<strong class="keyword">人工神经网络</strong> ( <strong class="keyword"> ANNs </strong>)、<strong class="keyword">卷积神经网络</strong> ( <strong class="keyword"> CNNs </strong>)和<strong class="keyword">递归神经网络</strong> ( <strong class="keyword"> RNNs </strong>)。</p>
+			<p>接下来，将通过解决现实生活中的回归问题来解释建立有效模型的过程。这包括准备要馈送给神经网络的数据(也称为数据预处理)、定义要使用的神经网络架构，以及最后评估模型的性能，目的是确定如何对其进行改进以获得最佳解决方案。</p>
+			<p>考虑到每个数据问题的解决方案应该使用对所讨论的数据类型表现最佳的体系结构，上述过程将使用在前一章中学习的神经网络体系结构之一来完成。其他架构将在后续章节中使用，以解决更复杂的数据问题，包括使用图像和文本序列作为输入数据。</p>
+			<h4>注意</h4>
+			<p class="callout">提醒一下，包含本章使用的所有代码的GitHub资源库可以在以下链接找到:<a href="https://github.com/TrainingByPackt/Applied-Deep-Learning-with-PyTorch ">https://GitHub . com/TrainingByPackt/Applied-Deep-Learning-with-py torch</a></p>
+			<h2 id="_idParaDest-29"><a id="_idTextAnchor033"/>神经网络简介</h2>
+			<p>几十年前开发的神经网络需要从训练数据中学习，而不是被编程为遵循一组规则来解决特定任务。学习过程可以遵循以下方法之一:</p>
+			<ul>
+				<li>监督学习:这是最简单的学习形式，因为它由一个带标签的数据集组成，神经网络需要找到解释特征和目标之间关系的模式。学习过程中的迭代旨在最小化预测值和实际值之间的差异。这方面的一个例子是根据叶子的属性对植物进行分类。</li>
+				<li><strong class="keyword">无监督学习</strong>:与前面的方法相反，无监督学习包括用未标记的数据(意味着没有目标值)训练模型。这样做的目的是为了更好地理解输入数据，一般来说，网络获取输入数据，对其进行编码，然后从编码版本中重建内容，理想情况下保留相关信息。例如，给定一个段落，神经网络可以映射单词，以便输出那些实际上是关键的单词，这些单词可以用作描述该段落的标签。</li>
+				<li><strong class="keyword">Reinforcement learning</strong>: This methodology consists of learning from the data at hand, with the main objective of maximizing a reward function in the long run. Hence, decisions are not made based on the immediate reward, but on the accumulation of it in the entire learning process, such as allocating resources to different tasks, with the objective of minimizing bottlenecks that would slow down general performance.<h4><a id="_idTextAnchor034"/>注</h4><p class="callout">从提到的学习方法中，最常用的是监督学习，这是将在后续部分中主要使用的方法。这意味着大多数练习、活动和示例将使用带标签的数据集作为输入数据。</p></li>
+			</ul>
+			<h3 id="_idParaDest-30"><a id="_idTextAnchor035"/>什么是神经网络？</h3>
+			<p>简单地说，神经网络是一种基于人脑解剖结构的机器学习算法，它使用数学方程从训练数据的观察中学习模式。</p>
+			<p>然而，要真正理解神经网络通常遵循的训练过程背后的逻辑，首先理解感知机的概念是很重要的。</p>
+			<p>感知器是由Frank Rosenblatt在20世纪50年代开发的，它是一种人工神经元，类似于人脑中的神经元，接受几个输入并产生一个二进制输出，该输出成为后续神经元的输入。它们是神经网络的基本组成部分(就像神经元是人脑的组成部分一样)。</p>
+			<div><div><img src="img/02_01.jpg" alt="Figure 2.1: Diagram of a perceptron&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.1:感知器的示意图</h6>
+			<p>这里，X1、X2、X3和X4代表感知器接收的不同输入，并且可以有任意数量的输入。灰色的圆圈是感知器，在这里输入的信息被处理并产生结果。</p>
+			<p>罗森布拉特还引入了权重(w1，w2，…，wn)的概念，权重是表示每个输入的重要性的数字。输出可以是0或1，它取决于输入的加权和是高于还是低于给定的阈值，该阈值可以设置为感知器的参数，如下所示:</p>
+			<div><div><img src="img/02_02.jpg" alt="Figure 2.2: Equation of output for perceptrons&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.2:感知器的输出方程</h6>
+			<h3 id="_idParaDest-31">练习2:执行感知机的计算</h3>
+			<p>以下练习不需要任何类型的编程；相反，它由简单的计算组成，帮助你理解感知器的概念。要执行计算，请考虑以下场景。</p>
+			<p>下周五你所在的城市将举办一场音乐节，但你生病了，正在考虑是否要去(其中0表示你要去，1表示你不去)。为了做出决定，您决定考虑三个因素:</p>
+			<ul>
+				<li>会有好天气吗？(X1)</li>
+				<li>你有人一起去吗？(X2)</li>
+				<li>这音乐你喜欢吗？(X3)</li>
+			</ul>
+			<p>对于前面的因素，如果问题的答案是肯定的，我们将使用1，如果答案是否定的，我们将使用0。此外，由于您病得很重，与天气相关的因素高度相关，您决定给予该因素两倍于其他2个因素的权重。因此，因子的权重为4 (w1)、2 (w2)和2 (w3)。现在，考虑5的阈值:</p>
+			<ol>
+				<li>根据给定的信息，计算感知器的输出，考虑到下周五天气不好，但你们都有人一起去，并且喜欢音乐节上的音乐:</li>
+			</ol>
+			<div><div><img src="img/02_03.jpg" alt="Figure 2.3: Output of the perceptron&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.3:感知器的输出</h6>
+			<p>考虑到产量小于阈值，最终结果将等于1，这意味着你不应该去参加节日，以避免病情加重的风险。</p>
+			<p>恭喜你！你已经成功地完成了感知机的计算。</p>
+			<h3 id="_idParaDest-32"><a id="_idTextAnchor037"/>多层感知机</h3>
+			<p>考虑到上述情况，多层网络的概念由堆叠在一起的多个感知器(也称为节点或神经元)组成，如下所示:</p>
+			<div><div><img src="img/02_04.jpg" alt="Figure 2.4: Diagram of a multi-layer perceptron&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.4:多层感知器的示意图</h6>
+			<h4>不是<a id="_idTextAnchor038"/> e</h4>
+			<p class="callout">引用神经网络中各层的符号如下:第一层也称为输入层，最后一层也称为输出层，中间的所有层都称为隐藏层。</p>
+			<p>这里，再次使用一组输入来训练模型，但是它们不是馈送给单个感知器，而是馈送给第一层中的所有感知器(神经元)。接下来，从这一层获得的输出被用作后续层中的感知器的输入，等等，直到到达负责输出结果的最后一层。</p>
+			<p>值得一提的是，感知器的第一层通过加权输入来处理简单的决策过程，而后续层可以根据前一层的输出来处理更复杂和抽象的决策，因此深度神经网络(使用许多层的网络)在复杂数据问题上具有最先进的性能。</p>
+			<p>与传统的感知器不同，神经网络已经发展到能够在输出层具有一个或多个节点，以便能够以二进制或多类的形式呈现结果。</p>
+			<h3 id="_idParaDest-33"><a id="_idTextAnchor039"/>神经网络的学习过程</h3>
+			<p>一般来说，神经网络是多个神经元的连接，其中每个神经元计算一个线性函数以及一个激活函数，以基于一些输入获得输出。该输出与一个权重相关联，该权重表示其重要性级别，用于下一层的计算。</p>
+			<p>此外，这些计算是在网络的整个体系结构中进行的，在那里得到最终输出。该输出用于确定网络相对于地面实况的性能，然后用于调整网络的不同参数以重新开始计算过程。</p>
+			<p>考虑到这一点，可以将神经网络的训练过程视为一个迭代过程，该过程通过网络的各个层向前和向后进行，以达到最佳结果，这可以在下图中看到，并将在下面详细解释:</p>
+			<div><div><img src="img/02_05.jpg" alt="Figure 2.5: Diagram of the learning process of a neural network&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.5:神经网络的学习过程图</h6>
+			<p><strong class="bold">正向传播</strong></p>
+			<p>这是从左到右遍历网络架构的过程，同时使用输入数据执行计算，以得出可与地面实况进行比较的预测。这意味着网络中的每个神经元将根据与其相关联的权重和偏差来转换输入数据(初始数据或从前一层接收的数据),并将输出发送到下一层，直到到达最后一层并做出预测。</p>
+			<p>每个神经元中执行的计算包括一个线性函数，该函数将输入数据乘以一些权重加上一个偏差，然后通过一个激活函数传递。激活函数的主要目的是打破模型的线性，考虑到使用神经网络解决的大多数现实生活数据问题不是由直线定义的，而是由复杂的函数定义的，这是至关重要的。公式可在此处找到:</p>
+			<div><div><img src="img/02_06.jpg" alt="Figure 2.6: Calculations performed by each neuron&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.6:每个神经元执行的计算</h6>
+			<p>这里，如前所述，X指的是输入数据，W是确定输入数据的重要性级别的权重，b是偏差值，sigma ( <img src="img/02_32.png" alt=""/>)表示应用于线性函数的激活函数。</p>
+			<p>激活的目的是给模型引入非线性。有不同的激活功能可供选择，现在最常用的功能列表如下:</p>
+			<ul>
+				<li><strong class="keyword"> Sigmoid </strong>:这是S型的，基本上是把数值转换成0到1之间的简单概率，其中Sigmoid函数得到的大部分输出会接近0和1的极值:</li>
+			</ul>
+			<div><div><img src="img/02_07.jpg" alt="Figure 2.7: Sigmoid activation function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.7:乙状结肠激活功能</h6>
+			<div><div><img src="img/02_08.jpg" alt="Figure 2.8: Graphical representation of the sigmoid activation function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.8:乙状结肠激活函数的图示</h6>
+			<ul>
+				<li><strong class="keyword"> Softmax </strong>:类似于sigmoid函数，它计算一个事件在n个事件上的概率分布，意味着它的输出不是二进制的。简而言之，此函数计算与其他类相比，输出成为目标类之一的概率:</li>
+			</ul>
+			<div><div><img src="img/02_09.jpg" alt="Figure 2.9: Softmax activation function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.9: Softmax激活功能</h6>
+			<p>考虑到它的输出是一个概率，这个激活函数经常出现在分类网络的输出层。</p>
+			<ul>
+				<li><strong class="keyword"> Tanh </strong>:该函数表示双曲正弦和双曲余弦之间的关系，结果在-1和1之间。这个激活函数的主要优点是负值可以更容易地处理:</li>
+			</ul>
+			<div><div><img src="img/02_10.jpg" alt="Figure 2.10: Tanh activation function.&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.10: Tanh激活函数。</h6>
+			<div><div><img src="img/02_11.jpg" alt="Figure 2.11: Graphical representation of the tanh activation function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.11:双曲正切函数激活函数的图示</h6>
+			<ul>
+				<li><strong class="keyword">整流线性函数(ReLU) </strong>:这基本上激活了一个节点，假设线性函数的输出大于0，否则其输出将为0。如果线性函数的输出大于0，则该激活函数的结果将是它作为输入接收的原始数字:</li>
+			</ul>
+			<div><div><img src="img/02_12.jpg" alt="Figure 2.12: ReLU activation function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.12: ReLU激活功能</h6>
+			<p>通常，该激活功能用于所有隐藏层:</p>
+			<div><div><img src="img/02_13.jpg" alt="Figure 2.13: Graphical representation of the ReLU activation function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.13:ReLU激活功能的图示</h6>
+			<p><strong class="bold">损失函数的计算</strong></p>
+			<p>前向传播完成后，训练过程的下一步是计算损失函数，通过比较预测相对于地面真实值的好坏程度来估计模型的误差。考虑到这一点，要达到的理想值是0，这意味着两个值之间没有差异。</p>
+			<p>这意味着训练过程的每次迭代的目标将是通过改变用于在前向传递期间执行计算的参数(权重和偏差)来最小化损失函数。</p>
+			<p>同样，有多个损失函数可供选择。但是，回归和分类任务中最常用的损失函数如下:</p>
+			<ul>
+				<li><strong class="keyword">均方误差(MSE) </strong>:广泛用于测量回归模型的性能，MSE函数计算实际值和预测值之间的距离之和:</li>
+			</ul>
+			<div><div><img src="img/02_14.jpg" alt="Figure 2.14: Mean squared error loss function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.14:均方误差损失函数</h6>
+			<p>这里，<em class="italics"> n </em>是样本数，<img src="img/02_30.png" alt=""/>是地面真值，<img src="img/02_31.png" alt=""/>是预测值。</p>
+			<ul>
+				<li><strong class="keyword">交叉熵/多类交叉熵</strong>:该函数通常用于二值或多类分类模型。它衡量两个概率分布之间的差异；大的损失函数将代表大的散度。因此，这里的目标也是最小化损失函数:</li>
+			</ul>
+			<div><div><img src="img/02_15.jpg" alt="Figure 2.15: Cross entropy loss function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.15:交叉熵损失函数</h6>
+			<p>同样，n是指样本数。<img src="img/02_301.png" alt=""/>和<img src="img/02_311.png" alt=""/>分别是地面真实值和预测值。</p>
+			<p><strong class="bold">反向传播</strong></p>
+			<p>训练过程的最后一步包括在网络结构中从右到左计算损失函数相对于每层中的权重和偏差的偏导数，以便更新这些参数(权重和偏差),从而在下一个迭代步骤中，损失函数更低。</p>
+			<p>此外，优化算法的最终目标是找到损失函数达到最小可能值的全局最小值，如下图所示:</p>
+			<h4>注意</h4>
+			<p class="callout">提醒一下，局部最小值指的是函数域的一部分内的最小值。另一方面，全局最小值指的是函数的整个定义域的最小值。</p>
+			<div><div><img src="img/02_16.jpg" alt="Figure 2.16: Loss function optimization through the iteration steps. &#13;&#10;Two-dimensional space.&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.16:迭代步骤中的损失函数优化。二维空间。</h6>
+			<p>这里，最左边的点(A)是在任何优化之前损失函数的初始值。曲线底部最右边的点(B)是几个迭代步骤后的损失函数，其值已经最小化。从一个点到另一个点的过程称为<strong class="keyword">步骤</strong>。</p>
+			<p>然而，重要的是要提到损失函数并不总是像前一个那样平滑，这可能会在优化过程中引入达到局部最小值的风险。</p>
+			<p>这个过程也被称为优化，有不同的算法，不同的方法来实现相同的目标。接下来将解释最常用的优化算法。</p>
+			<p><strong class="keyword">梯度下降</strong></p>
+			<p>梯度下降是数据科学家中使用最广泛的优化算法，也是许多其他优化算法的基础。在计算出每个神经元的梯度之后，权重和偏差在梯度的相反方向上更新，这应该乘以学习率(用于控制每次优化中所采取的步骤的大小)，如下面的等式所示。</p>
+			<p>学习率在训练过程中是至关重要的，因为它防止权重和偏差的更新过冲/下冲，过冲/下冲可能分别防止模型达到收敛或延迟训练过程。</p>
+			<p>梯度下降算法中权重和偏差的优化如下:</p>
+			<div><div><img src="img/02_17.jpg" alt="Figure 2.17: Optimization of parameters in the gradient descent algorithm&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.17:梯度下降算法中参数的优化</h6>
+			<p>这里，α指的是学习速率，dw/db表示给定神经元中权重或偏差的梯度。从权重或偏差的原始值中减去这两个值的乘积，以便惩罚较高的值，这有助于计算大的损失函数。</p>
+			<p>对梯度下降算法的一种改进称为随机梯度下降，它基本上遵循相同的过程，区别在于它以随机批次而不是一个块的方式获取输入数据，这在达到出色性能的同时改善了训练时间。此外，这种方法允许使用更大的数据集，因为通过使用小批量的数据集作为输入，我们不再受计算资源的限制。</p>
+			<h3 id="_idParaDest-34"><a id="_idTextAnchor040"/>优缺点</h3>
+			<p>以下是对神经网络的优点和缺点的解释。</p>
+			<p><strong class="bold">优点</strong></p>
+			<p>神经网络在过去几年变得越来越流行，主要有四个原因:</p>
+			<ul>
+				<li><strong class="bold">数据</strong>:神经网络因其利用大量数据的能力而广为人知，由于硬件和软件的进步，现在可以回忆和存储大规模数据库。随着越来越多的数据输入神经网络，这使得神经网络显示出了它们真正的潜力。</li>
+				<li><strong class="bold">复杂数据问题</strong>:如前所述，神经网络在解决其他机器学习算法无法解决的复杂数据问题方面表现出色。这主要是由于它们处理大型数据集和揭示复杂模式的能力。</li>
+				<li><strong class="bold">计算能力</strong>:技术的进步也增加了目前可用的计算能力，这对训练使用数百万条数据的神经网络模型至关重要。</li>
+				<li><strong class="bold">学术研究</strong>:由于上述三点，互联网上出现了大量关于该主题的学术研究，这不仅有助于每天沉浸在新的研究中，也有助于保持算法和硬件/软件需求的更新。</li>
+			</ul>
+			<p><strong class="bold">劣势</strong></p>
+			<p>仅仅因为使用神经网络有很多优点，并不意味着每个数据问题都应该这样解决。这是一个常见的错误。没有一种算法可以很好地解决所有的数据问题，算法的选择应该取决于可用的资源以及数据问题。</p>
+			<p>此外，尽管神经网络被认为优于几乎任何机器学习算法，但考虑它们的缺点也是至关重要的，以权衡什么对数据问题最重要。</p>
+			<ul>
+				<li><strong class="keyword">黑盒</strong>:这是神经网络最常见的缺点之一。它基本上意味着神经网络如何以及为什么达到某个输出是未知的。例如，当一个神经网络错误地将一幅猫的图片预测为一只狗时，就不可能知道错误的原因是什么。</li>
+				<li><strong class="keyword">数据需求</strong>:他们需要大量数据来获得最佳结果，这既是优势也是劣势。神经网络比传统的机器学习算法需要更多的数据，这可能是在一些数据问题上在它们和其他算法之间进行选择的主要原因。当手头的任务受到监督时，这就成了一个更大的问题，这意味着数据需要被标记。</li>
+				<li><strong class="keyword">训练时间</strong>:与前面的缺点联系在一起，对大量数据的需求也使得训练过程比传统的机器学习算法持续更长时间，在某些情况下这不是一个选项。通过使用加速计算的GPU，可以减少训练时间。</li>
+				<li><strong class="keyword">Computationally expensive</strong>: Again, the training process of neural networks is computationally expensive. While one neural network could take weeks to converge, other machine learning algorithms can take hours or minutes to be trained. The amount of computational resources needed depends on the quantity of data at hand, as well as the complexity of the network; deeper neural networks take a longer time to train.<h4>注意</h4><p class="callout">有各种各样的神经网络结构。本章将解释三种最常用的方法，以及它们在后续章节中的实际实现。然而，如果你想了解其他建筑，请访问http://www.asimovinstitute.org/neural-network-zoo/。</p></li>
+			</ul>
+			<h3 id="_idParaDest-35"><a id="_idTextAnchor041"/>人工神经网络简介</h3>
+			<p><strong class="keyword">人工神经网络</strong> ( <strong class="keyword"> ANNs </strong>)，也称为多层感知器，是多个感知器的集合，如前所述。这里，重要的是要提到，感知器之间的连接是通过层发生的，其中一层可以有任意多的感知器，并且它们都连接到前一层和后一层中的所有其他感知器。</p>
+			<p>网络可以有一层或多层。超过四层的网络被认为是深度神经网络，通常用于解决复杂和抽象的数据问题。</p>
+			<p>人工神经网络通常由三个主要元素组成，这在前面已经详细解释过，也可以在<em class="italics">图2.18 </em>中看到:</p>
+			<ol>
+				<li value="1"><strong class="keyword">Input layer</strong>: This is the first layer of the network, conventionally located furthest left in the graphical representation of a network. It receives the input data before any calculation is performed, and completes the first set of calculations, where the most generic patterns are uncovered.<p>对于监督学习问题，输入数据由一对特征和目标组成。网络的工作是揭示输入和输出之间的相关性或依赖性。</p></li>
+				<li><strong class="keyword">Hidden layers</strong>: Next, the hidden layers can be found. A neural network can have as many hidden layers as possible. The more layers it has, the more complex data problems it can tackle, but it will also take longer to train. There are also neural network architectures that do not contain hidden layers at all, which is the case with single-layer networks.<p>在每一层中，基于作为来自前一层的输入而接收的信息来执行计算，以输出将成为后续层的输入的预测。</p></li>
+				<li><strong class="keyword">Output layer</strong>: This is the last layer of the network, located at the far right of the graphical representation of the network. It receives data after being processed by all the neurons in the network to make and display a final prediction. <p>输出层可以有一个或多个神经元。前者指的是解决方案是二进制的模型，以0或1的形式。另一方面，后一种情况由输出实例属于每个可能的类标签(目标)的概率的模型组成，这意味着该层将具有与类标签一样多的神经元。</p></li>
+			</ol>
+			<div><div><img src="img/02_18.jpg" alt="Figure 2.18: Architecture of a neural network with two hidden layers&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.18:具有两个隐藏层的神经网络的架构</h6>
+			<h3 id="_idParaDest-36"><a id="_idTextAnchor042"/>卷积神经网络简介</h3>
+			<p>卷积神经网络(CNN)主要用于计算机视觉领域，近几十年来，机器已经达到了超过人类能力的精度水平，这使得它们越来越受欢迎。</p>
+			<p>受人类大脑的启发，CNN寻求创建模型，使用不同组的神经元来识别图像的不同方面。这些小组应该能够相互交流，这样，他们就可以一起形成大的画面。</p>
+			<p>考虑到这一点，CNN架构中的层划分了它们的识别任务。第一层关注琐碎的模式，网络末端的各层使用这些信息来发现更复杂的模式。</p>
+			<p>例如，当识别照片中的人脸时，前几层着重于寻找将一个特征与另一个特征分开的边缘。接下来，随后的图层强调面部的某些特征，例如鼻子。最后，最后几层使用这些信息来拼出这个人的整张脸。</p>
+			<p>这种使用一组神经元在遇到某些特征时激活的想法是通过使用过滤器或内核来实现的，过滤器或内核是卷积神经网络架构的主要构建块之一。然而，它们不是该架构中存在的唯一元素，这就是为什么将提供CNN所有组件的简要说明:</p>
+			<h4>注意</h4>
+			<p class="callout">在使用CNN时，您可能听说过填充和步幅的概念，这将在本书的后续章节中解释。</p>
+			<ol>
+				<li value="1"><strong class="keyword">Convolutional layers</strong>: In these layers, a convolutional computation occurs between an image (represented as a matrix of pixels) and a filter. This computation produces a feature map as an output that ultimately serves as input for the next layer.<p>该计算采用滤波器的相同形状的图像矩阵的一个子部分，并执行值的乘法。然后，乘积之和被设置为图像该部分的输出，如下图所示:</p><div><img src="img/02_19.jpg" alt="Figure 2.19: Convolution operation between image and filter&#13;&#10;"/></div><h6>图2.19:图像和滤镜之间的卷积运算</h6><p>这里，左边的矩阵是输入数据，中间的矩阵是过滤器，右边的矩阵是计算的输出。这里可以看到用红框突出显示的值进行的计算:</p><div><img src="img/02_20.jpg" alt="Figure 2.20: Convolution of the first section of the image&#13;&#10;"/></div><h6>图2.20:图像第一部分的卷积</h6><p>对图像的所有子部分进行卷积乘法。图2.21显示了同一个例子的另一个卷积步骤:</p><div><img src="img/02_21.jpg" alt="Figure 2.21: Further step in the convolution operation&#13;&#10;"/></div><h6>图2.21:卷积运算的进一步步骤</h6><p>卷积层的一个重要概念是它们是不变的，即每个滤波器都有一个特定的函数，该函数在训练过程中不会变化。例如，负责检测耳朵的过滤器将在整个训练过程中只专注于该功能。</p><p>此外，卷积神经网络通常会有几个卷积层，考虑到它们中的每一个都将专注于识别图像的特定特征，这取决于所使用的滤波器。此外，值得一提的是，通常在两个卷积层之间有一个池层。</p></li>
+				<li><strong class="keyword">Pooling layers</strong>: Although convolutional layers are capable of extracting relevant features from images, their results can become enormous when analyzing complex geometrical shapes, which would make the training process impossible in terms of computational power. Hence the invention of pooling layers.<p>这些层不仅实现了减少卷积层输出的目标，还实现了去除提取的特征中存在的噪声，这最终有助于模型的准确性。</p><p>有两种主要类型的池图层可以应用，其背后的思想是检测在图像中表现出更强影响的区域，以便可以忽略其他区域:</p><ul><li><strong class="keyword">最大池化</strong>:该操作包括获取给定大小的矩阵的一个子部分，并将该子部分中的最大数作为最大池化操作的输出。</li></ul></li>
+			</ol>
+			<div><div><img src="img/02_22.jpg" alt="Figure 2.22: Max pooling operation&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.22:最大池操作</h6>
+			<p>在上图中，通过使用3x3最大池过滤器，获得了右侧的结果。这里，黄色部分(左上角)的最大数量为4，而橙色部分(右上角)的最大数量为5。</p>
+			<ul>
+				<li><strong class="keyword">平均池</strong>:类似地，平均池操作获取矩阵的子部分，并将满足规则的数字作为输出，在这种情况下，这是所讨论的子部分中所有数字的平均值。</li>
+			</ul>
+			<div><div><img src="img/02_23.jpg" alt="Figure 2.23: Average pooling operation&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.23:平均池操作</h6>
+			<p>这里，使用3x3过滤器，我们得到8.6是黄色部分(左上角)所有数字的平均值，而9.6是橙色部分(右上角)所有数字的平均值。</p>
+			<ol>
+				<li value="3"><strong class="keyword">Fully connected layers</strong>: Finally, and considering that the network would be of no use if it was only capable of detecting a set of features without having the capability of classifying them into a class label, fully connected layers are used at the end of CNNs to take the features detected by the previous layer (known as the features map) and output the probability of that group of features of belonging to a class label, which is used to make the final prediction.<p>像人工神经网络一样，全连接层使用感知器根据给定的输入计算输出。此外，必须提到的是，卷积神经网络通常在架构末端有一个以上的全连接层。</p></li>
+			</ol>
+			<p>通过结合所有这些概念，获得了卷积神经网络的传统体系结构，其中每种类型可以有任意多的层，每个卷积层可以有任意多的过滤器(每个过滤器用于特定的任务)，并且汇集层应该具有相同数量的过滤器，如下图所示:</p>
+			<div><div><img src="img/02_24.jpg" alt="Figure 2.24: Diagram of convolutional neural network architecture&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.24:卷积神经网络架构图</h6>
+			<h3 id="_idParaDest-37"><a id="_idTextAnchor043"/>递归神经网络简介</h3>
+			<p>上述神经网络的主要局限性在于，它们仅通过考虑当前事件(正在处理的输入)来学习，而不考虑之前或之后的事件，考虑到我们人类不这样思考，这是不方便的。例如，当阅读一本书时，你可以通过考虑前一段或更多段落的上下文来更好地理解每一句话。</p>
+			<p>由于这一点，并考虑到神经网络旨在优化传统上由人类完成的几个过程，关键是要想到一个能够考虑一系列输入和输出的网络，因此创建了递归神经网络(RNNs)。它们是一种健壮的神经网络，允许通过使用内部存储器来解决复杂的数据问题。</p>
+			<p>简而言之，这些网络中含有环路，允许信息在内存中保留更长时间，即使在处理后续信息集时也是如此。这意味着RNN中的感知器不仅将输出传递给下一个感知器，还将一点信息传递给自己，这对分析下一点信息很有用。这种记忆保持能力使它们能够非常准确地预测接下来会发生什么。</p>
+			<p>类似于其他网络，递归神经网络的学习过程试图映射输入(x)和输出(y)之间的关系，不同之处在于这些模型还考虑了先前输入的全部或部分历史。</p>
+			<p>rnn允许以输入序列、输出序列或两者同时存在的形式处理数据序列，如下图所示:</p>
+			<div><div><img src="img/02_25.jpg" alt="Figure 2.25: Sequence of data handled by RNNs&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.25:RNNs处理的数据序列</h6>
+			<p>这里，每个方框是一个矩阵，箭头代表一个发生的函数。底部的框是输入，顶部的框是输出，中间的框代表RNNs在该点的状态，它保存网络的存储器。</p>
+			<p>下面从左到右解释前面的图表:</p>
+			<ol>
+				<li value="1">不需要求解RNN的典型模型。它有一个固定输入和一个固定输出。例如，这可以指图像分类。</li>
+				<li>这个模型接受一个输入并产生一系列输出。例如，一个模型接收一个图像作为输入，输出应该是一个图像标题。</li>
+				<li>与上面相反，这个模型接受一系列的输入并产生一个单一的结果。这种类型的架构可以在情感分析问题上看到，其中输入是要分析的句子，输出是句子背后的预测情感。</li>
+				<li>最后两个模型接受一系列输入并返回一系列输出，不同之处在于第一个模型首先分析整个输入集，然后生成输出集。例如，对于语言翻译，在进行实际翻译之前，需要理解一种语言的整个句子。另一方面，第二种多对多模型分析输入，同时生成输出。例如，当视频的每一帧被标记时。</li>
+			</ol>
+			<h2 id="_idParaDest-38"><a id="_idTextAnchor044"/>数据准备</h2>
+			<p>在收集数据之后，开发任何深度学习模型的第一步都应该是准备数据。这对于理解手头的数据是至关重要的，因此，能够正确地勾勒出项目的范围。</p>
+			<p>许多数据科学家没有这样做，这导致模型表现不佳，甚至是无用的模型，因为它们没有从一开始就回答数据问题。</p>
+			<p>准备数据的过程可分为三个主要任务:1)了解数据并处理任何潜在问题，2)重新调整要素以确保不会因错误而引入偏差，以及3)拆分数据以准确测量性能。所有这三项任务将在下一节中进一步解释。</p>
+			<h4>注意</h4>
+			<p class="callout">考虑到前面解释的所有任务都是指预先准备数据所需的技术，因此它们对于应用任何机器学习算法都是非常相同的。</p>
+			<h3 id="_idParaDest-39"><a id="_idTextAnchor045"/>处理杂乱的数据</h3>
+			<p>该任务主要包括执行<strong class="keyword">探索性数据分析</strong> ( <strong class="keyword"> EDA </strong>)以了解可用数据，以及检测可能影响模型开发的潜在问题。</p>
+			<p>EDA过程是有用的，因为它帮助开发人员发现对行动之书的定义至关重要的信息。此信息解释如下:</p>
+			<ol>
+				<li value="1"><strong class="keyword">数据量</strong>:指实例的数量和特征的数量。前者对于确定是否有必要甚至有可能使用神经网络甚至深度神经网络来解决数据问题至关重要，因为这种模型需要大量数据来实现高水平的准确性。另一方面，后者有助于确定事先开发一些特征选择方法是否是一种好的做法，以便减少特征的数量，简化模型，并消除任何冗余信息。</li>
+				<li><strong class="keyword">目标特征</strong>:对于监督模型，需要对数据进行标记。考虑到这一点，选择目标要素(我们希望通过构建模型实现的目标)以评估该要素是否有许多缺失值或异常值是非常重要的。此外，这有助于确定开发的目标，该目标应与可用数据一致。</li>
+				<li><strong class="keyword">Noisy data/outliers</strong>: Noisy data refers to values that are visibly incorrect, for instance, a person who is 200 years old. On the other hand, outliers refer to values that, although they may be correct, are very far from the mean, for instance, a 10-year-old college student. <p>没有精确的科学来检测异常值，但是有一些被普遍接受的方法。假设数据集呈正态分布，最流行的方法之一是将任何在两个方向上距离所有值的平均值约3-6个标准差的值确定为异常值。</p><p>识别异常值的一个同样有效的方法是选择第99和第1百分位的值。</p><p>当这些值占某个特征数据的5%以上时，处理这些值非常重要，因为不这样做可能会给模型带来偏差。与任何其他机器学习算法一样，处理这些值的方法是删除异常值或使用均值或回归插补技术分配新值。</p></li>
+				<li><strong class="keyword">缺失值</strong>:与前面提到的类似，考虑到不同的模型会对这些值做出不同的假设，具有许多缺失值的数据集会给模型带来偏差。同样，当缺失值占某个特性值的5%以上时，应通过消除或替换它们来处理，同样使用平均值或回归插补技术。</li>
+				<li><strong class="keyword">Qualitative features</strong>: Finally, checking whether the dataset contains qualitative data is also a key step considering that removing or encoding data may result in more accurate models. <p>此外，在许多研究开发中，为了确定哪种算法的性能更好，需要对相同的数据测试几种算法，其中一些算法不允许使用定性数据，因此必须对它们进行转换或编码，以便能够为所有算法提供相同的数据。</p></li>
+			</ol>
+			<h3 id="_idParaDest-40"><a id="_idTextAnchor046"/>练习3:处理杂乱的数据</h3>
+			<h4>注意</h4>
+			<p class="callout">本章中的所有练习都将使用来自加州大学欧文分校机器学习资源库的<code>Appliances energy prediction Dataset</code>来完成，该资源库可以使用以下URL下载，网址为<code>Data Folder</code>超链接:<a href="https://archive.ics.uci.edu/ml/datasets/Appliances+energy+prediction ">https://archive . ics . UCI . edu/ml/datasets/Appliances+energy+prediction</a></p>
+			<p>在本练习中，我们将使用Python最受欢迎的包之一来研究手头的数据，并了解如何检测缺失值、异常值和定性值:</p>
+			<h4>注意</h4>
+			<p class="callout">对于本章中的练习和活动，您需要使用Python 3.6、Jupyter、NumPy和Pandas(至少0.21版本)。</p>
+			<ol>
+				<li value="1">Open a Jupyter notebook to implement this exercise.<p>打开你的cmd或终端，导航到想要的路径，使用下面的命令打开一个Jupyter笔记本:<code>jupyter notebook</code></p></li>
+				<li>导入熊猫库:<pre>import pandas as pd</pre></li>
+				<li>Use<a id="_idTextAnchor048"/> pandas to read the CSV file containing the dataset previously downloaded from the UC Irvine Machine Learning Repository site.<p>接下来，删除名为<code>date</code>的列，因为我们不想在下面的练习中考虑它。</p><p>最后，打印数据帧的头:</p><pre>data = pd.read_csv("energydata_complete.csv")
+data = data.drop(columns=["date"])
+data.head()</pre></li>
+				<li>Check for categorical features in your dataset:<pre>cols = data.columns
+num_cols = data._get_numeric_data().columns
+list(set(cols) - set(num_cols))</pre><p>结果列表为空，这表明没有要处理的分类要素。</p></li>
+				<li>Use Python's <code>isnull()</code> and <code>sum()</code> functions to find out whether there are any missing values in each column of the dataset:<pre>data.isnull().sum()</pre><p>该命令计算每列中null值的数量。对于正在使用的数据集，不应有任何缺失值。</p></li>
+				<li>Use three standard deviations as the measure to detect outliers for all features in the dataset:<pre>outliers = {}
+for i in range(data.shape[1]):
+    min_t = data[data.columns[i]].mean() – (3 *             data[data.columns[i[[.std())
+    max_t = data[data.columns[i]].mean() + (3 *             data[data.columns[i[[.std())
+    
+    count = 0
+    for j in data[data.columns[i]]:
+        if j &lt; min_t or j &gt; max_t:
+            count += 1
+    
+    percentage = count / data.shape[0]
+    outliers[data.columns[i]] = "%.3f" % percentage</pre><p>生成的字典显示数据集中所有要素的列表，以及异常值的百分比。从这些结果中，可以得出这样的结论:考虑到异常值占不到5%,没有必要处理异常值。</p></li>
+			</ol>
+			<p>恭喜你！您已经成功地浏览了数据集并处理了潜在的问题。</p>
+			<h3 id="_idParaDest-41"><a id="_idTextAnchor049"/>数据重新调整</h3>
+			<p>虽然数据不需要重新调整就可以输入算法进行训练，但这是提高模型准确性的重要一步。这基本上是因为每个特征具有不同的比例可能会导致模型假设某个特征由于具有较高的数值而比其他特征更重要。</p>
+			<p>举个例子，有两个特征:一个测量一个人有几个孩子，另一个显示这个人的年龄。尽管年龄特征可能具有较高的数值，但在推荐学校的研究中，孩子数量特征可能更重要。</p>
+			<p>考虑到这一点，如果所有要素的比例相等，模型实际上可以为那些对目标要素最重要的要素赋予更高的权重，而不是它们所具有的数值。此外，它还可以通过消除模型从数据的不变性中学习的需要来帮助加速训练过程。</p>
+			<p>数据科学家中流行两种主要的重新调整方法，尽管没有选择这一种或那一种的规则，但重要的是要强调它们要单独使用(这一种或那一种)。</p>
+			<p>这两种方法的简要说明可以在下面找到:</p>
+			<ul>
+				<li><strong class="keyword">归一化</strong>:这包括重新调整值，使所有特征的所有值都在0和1之间，使用以下等式:</li>
+			</ul>
+			<div><div><img src="img/02_26.jpg" alt="Figure 2.26: Data normalization&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.26:数据规范化</h6>
+			<ul>
+				<li><strong class="keyword">标准化</strong>:相比之下，这种重新调整方法使用以下等式转换所有值，使其平均值为0，标准偏差等于1:</li>
+			</ul>
+			<div><div><img src="img/02_27.jpg" alt="Figure 2.27: Data standardization&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.27:数据标准化</h6>
+			<h3 id="_idParaDest-42"><a id="_idTextAnchor050"/>练习4:重新调整数据</h3>
+			<p>在本练习中，我们将重新调整上一练习中的数据:</p>
+			<h4>注意</h4>
+			<p class="callout">使用您在上一个练习中使用的Jupyter笔记本。</p>
+			<ol>
+				<li value="1">从目标中分离特征。这样做只是为了重新调整特征数据:<pre>X = data.iloc[:, 1:] Y = data.iloc[:, 0]</pre></li>
+				<li>使用归一化方法重新缩放要素数据。显示结果数据帧的头部以验证结果:<pre>X = (X - X.min()) / (X.max() - X.min()) X.head()</pre></li>
+			</ol>
+			<p>恭喜你！您已经成功地重新调整了数据集。</p>
+			<h3 id="_idParaDest-43"><a id="_idTextAnchor051"/>拆分数据</h3>
+			<p>将数据集分成三个子集的目的是为了在不引入偏差的情况下，对模型进行适当的训练、微调和测量。以下是对每组的解释:</p>
+			<ul>
+				<li><strong class="keyword">训练集</strong>:顾名思义，这个集合被送入待训练的神经网络。对于监督学习，它由特征和目标值组成。如前所述，考虑到神经网络需要大量数据来训练，这通常是三个集合中最大的一个。</li>
+				<li><strong class="keyword">Validation set (dev set)</strong>: This set is used mainly to measure the performance of the model in order to make adjustments to the hyperparameters to improve performance. This fine-tuning process is done to arrive at the configuration of hyperparameters that achieve the best results. <p>尽管该模型不是基于该数据训练的，但是它间接对其有影响，这就是为什么性能的最终测量不应该在其上进行，因为它可能是有偏差的测量。</p></li>
+				<li><strong class="keyword">测试集</strong>:这个测试集对模型没有影响，这就是为什么它被用来对看不见的数据执行模型的最终评估，这成为模型在未来数据集上表现如何的指南。</li>
+			</ul>
+			<p>考虑到每个数据问题都是不同的，并且开发深度学习解决方案通常需要一种试错方法，因此没有关于将数据分成上述三组的完美比例的实际科学。然而，众所周知，考虑到对训练集使用尽可能多的数据是至关重要的，对于较大的数据集(数十万和数百万个实例)，每个数据集应该有98%/1%/1%的拆分比率。对于较小的数据集，传统的拆分比例是60%/20%/20%。</p>
+			<h3 id="_idParaDest-44"><a id="_idTextAnchor052"/>练习5:拆分数据集</h3>
+			<p>在本练习中，我们将把上一个练习中的数据集分成三个子集。出于学习的目的，我们将探索两种不同的方法。首先，将使用索引拆分数据集。接下来，scikit-learn的<code>train_test_split()</code>函数将用于相同的目的，通过两种方法实现相同的结果:</p>
+			<h4>注意</h4>
+			<p class="callout">使用您在之前练习中使用的Jupyter <a id="_idTextAnchor053"/>笔记本。</p>
+			<ol>
+				<li value="1">Print the shape of the dataset in order to determine the split ration to be used.<pre>X.shape</pre><p>t <a id="_idTextAnchor054"/> his操作的输出应该是<code>(19735, 28)</code>。这意味着可以对定型集、验证集和测试集使用60%/20%/20%的拆分比率。</p></li>
+				<li>获取用作定型集和验证集的下限的值。这将用于使用索引分割数据集:<pre>train_end = int(len(X) * 0.6) dev_end = int(len(X) * 0.8)</pre></li>
+				<li>无序播放数据集:<pre>X_shuffle = X.sample(frac=1) Y_shuffle = Y.sample(frac=1)</pre></li>
+				<li>对于特征和目标数据，使用索引将混洗的数据集分成三组:<pre>x_train = X_shuffle.iloc[:train_end,:] y_train = Y_shuffle.iloc[:train_end] x_dev = X_shuffle.iloc[train_end:dev_end,:] y_dev = Y_shuffle.iloc[train_end:dev_end] x_test = X_shuffle.iloc[dev_end:,:] y_test = Y_shuffle.iloc[dev_end:]</pre></li>
+				<li>Print the shapes of all three sets:<pre>print(x_train.shape, y_train.shape)
+print(x_dev.shape, y_dev.shape)
+print(x_test.shape, y_test.shape)</pre><p>前面操作的结果应该如下所示:</p><pre>(11841, 27) (11841, )
+(3947, 27) (3947, )
+(3947, 27) (3947, )</pre></li>
+				<li>从scikit-learn的<code>model_selection</code>模块中导入<code>train_test_split()</code>函数:<pre>from sklearn.model_selection import train_test_split</pre></li>
+				<li>Split the shuffled dataset:<pre>x_new, x_test_2, y_new, y_test_2 = train_test_split(X_shuffle, Y_shuffle, test_size=0.2, random_state=0)
+dev_per = x_test_2.shape[0]/x_new.shape[0]
+x_train_2, x_dev_2, y_train_2, y_dev_2 = train_test_split(x_new, y_new, test_size=dev_per, random_state=0)</pre><p>第一行代码执行初始分割。该函数将两个要分割的数据集(X和Y)、<code>test_size</code>(包含在测试集中的实例的百分比)和<code>random_state</code>作为参数，以确保结果的可重复性。这行代码的结果是将每个数据集(X和Y)分成两个子集。</p><p>为了创建一个额外的集合(验证集)，我们将执行第二次分割。上述代码的第二行负责确定用于第二次分割的<code>test_size</code>,以便测试集和验证集具有相同的形状。</p><p>最后，最后一行代码执行第二次拆分，使用之前计算的值作为<code>test_size</code>。</p></li>
+				<li>Print the shape of all three sets:<pre>print(x_train_2.shape, y_train_2.shape)
+print(x_dev_2.shape, y_dev_2.shape)
+print(x_test_2.shape, y_test_2.shape)</pre><p>前面操作的结果应该如下所示:</p><pre>(11841, 27) (11841, )
+(3947, 27) (3947, )
+(3947, 27) (3947, )</pre><p>可以看出，两种方法得到的集合具有相同的形状。使用哪种方法是个人喜好的问题。</p></li>
+			</ol>
+			<p>恭喜你！您已经成功地将数据集分成了三个子集。</p>
+			<h3 id="_idParaDest-45"><a id="_idTextAnchor055"/>活动2:进行数据准备</h3>
+			<p>在接下来的活动中，我们将准备一个包含歌曲列表的数据集，每首歌曲都有几个属性来帮助确定其发行年份。这一数据准备步骤对于本章中的后续活动至关重要。让我们看看下面的场景。</p>
+			<p>你在一家音乐唱片公司工作，他们希望发现不同时期唱片的特征细节，这就是为什么他们建立了一个包含515，345张唱片数据的数据集，发行年份从1922年到2011年不等。他们让你准备数据集，这样就可以输入神经网络了。</p>
+			<h4>注意</h4>
+			<p class="callout">要下载数据集，请访问以下加州大学欧文分校机器学习资源库URL:<a href="https://archive.ics.uci.edu/ml/datasets/YearPredictionMSD">https://archive.ics.uci.edu/ml/datasets/YearPredictionMSD</a></p>
+			<ol>
+				<li value="1">导入所需的库。</li>
+				<li>使用pandas加载文本文件。由于先前下载的文本文件具有与CSV文件相同的格式，您可以使用<code>read_csv()</code>功能读取它。确保将header参数设置为<code>None</code>。</li>
+				<li>验证数据集中是否存在任何定性数据。</li>
+				<li>Check for missing values.<p>如果您在先前用于此目的的代码行中添加一个额外的<code>sum()</code>函数，您将获得整个数据集中缺失值的总和，而不按列进行区分。</p></li>
+				<li>检查异常值。</li>
+				<li>从目标数据中分离要素。</li>
+				<li>使用标准化方法重新调整数据。</li>
+				<li>Split the data into three sets: training, validation, and testing. Use the approach of your preference.<h4>注意</h4><p class="callout">这项活动的解决方案可在第188页找到。</p></li>
+			</ol>
+			<h2 id="_idParaDest-46"><a id="_idTextAnchor056"/>构建深度神经网络</h2>
+			<p>一般来说，构建神经网络可以在非常简单的层面上实现，使用scikit-learn(不适合深度学习)这样的库为您执行所有的数学运算，没有太大的灵活性；或者在非常复杂的层次上，通过从头开始对训练过程的每一步进行编码，或者通过使用更健壮的框架，这允许了很大的灵活性。</p>
+			<p>另一方面，PyTorch是考虑到该领域许多开发人员的意见而构建的，它的优点是允许在同一个地方进行两种近似。如前所述，它有一个nn模块，允许使用顺序容器轻松预定义简单体系结构的实现，同时允许创建自定义模块，为构建非常复杂的体系结构的过程带来灵活性。</p>
+			<p>在本节中，我们将进一步讨论使用顺序容器来开发深度神经网络，以消除其复杂性。尽管如此，在本书的后面部分，我们将继续探索更复杂和抽象的应用程序，这也可以不费吹灰之力实现。</p>
+			<p>如前所述，顺序容器是一个模块，用于包含遵循一定顺序的模块序列。它包含的每个模块都将对给定的输入进行一些计算，以得出结果。</p>
+			<p>下面解释了一些最常用的模块(层),它们可以在顺序容器中用来开发常规分类模型:</p>
+			<h4>注意</h4>
+			<p class="callout">用于其他类型架构的模块，如卷积神经网络和递归神经网络，将在后续章节中解释。</p>
+			<ul>
+				<li><code>True</code>默认情况下)作为参数。</li>
+				<li><code>False</code> by default.<p><strong class="keyword"> Tanh </strong>:将基于元素的Tanh函数应用于包含输入数据的张量。这不需要任何争论。</p><p><strong class="keyword"> Sigmoid </strong>:将之前解释的Sigmoid函数应用于包含输入数据的张量。这不需要任何争论。</p><p><strong class="keyword"> Softmax </strong>:将Softmax函数应用于包含输入数据的n维张量。输出被重新缩放，使得张量的元素位于0和1之间的范围内，并且总和为1。它将计算softmax函数的维度作为参数。</p></li>
+				<li><code>False</code>默认。这种技术通常用于处理过度拟合的模型，这将在后面进一步解释。</li>
+				<li><strong class="keyword">规范化层</strong>:有不同的方法可用于在顺序容器中添加规范化层。其中一些是BatchNorm1d、BatchNorm2d和BatchNorm3d。这背后的想法是归一化来自前一层的输出，最终在较低的训练时间达到类似的精度水平。</li>
+			</ul>
+			<h3 id="_idParaDest-47"><a id="_idTextAnchor057"/>练习6:使用PyTorch构建深度神经网络</h3>
+			<p>在本练习中，我们将使用PyTorch库来定义四层深度神经网络的架构，然后使用之前准备的数据集对其进行训练:</p>
+			<h4>注意</h4>
+			<p class="callout">使用您在上一个练习中使用的Jupyter笔记本。</p>
+			<ol>
+				<li value="1">Import the PyTorch library, called <code>torch</code>, as well as the <code>nn</code> module from PyTorch:<pre>import torch
+import torch<a id="_idTextAnchor058"/>.nn as nn</pre><h4>注意</h4><p class="callout">尽管不同的包和库被导入，因为它们是实际学习所需要的，但是在代码的开始导入它们总是一个好的习惯。</p></li>
+				<li>对于上一练习中创建的每个集合，将特征列与目标列分开。此外，将最终数据帧转换成张量:<pre>x_train = torch.tensor(x_train.values).float() y_train = torch.tensor(y_train.values).float() x_dev = torch.tensor(x_dev.values).float() y_dev = torch.tensor(y_dev.values).float() x_test = torch.tensor(x_test.values).float() y_test = torch.tensor(y_test.values).float()</pre></li>
+				<li>Define the network architecture using the <code>sequential()</code> container. Make sure to create a four-layer network.<p>考虑到我们正在处理一个回归问题，对前三层使用ReLU激活函数，对最后一层不使用激活函数。</p><p>每层的单位数应为:100、50、25和1:</p><pre>model = nn.Sequential(nn.Linear(x_train.shape[1], 100),
+                      nn.ReLU(),
+                      nn.Linear(100, 50),
+                      nn.ReLU(),
+                      nn.Linear(50, 25),
+                      nn.ReLU(),
+                      nn.Linear(25, 1))</pre></li>
+				<li>将损失函数定义为均方误差:<pre>loss_function = torch.nn.<a id="_idTextAnchor059"/>MSELoss()</pre></li>
+				<li>将优化器算法定义为Adam优化器:<pre>optimizer = torch.optim.A<a id="_idTextAnchor060"/>dam(model.parameters(), lr=0.01)</pre></li>
+				<li>使用<code>for</code>循环通过100个迭代步骤的训练数据训练网络:<pre>for i in range(100):     y_pred = model(x_train)     loss = loss_function(y_pred, y_train)     print(i, loss.item())     optimizer.zero_grad()     loss.backward()     optimizer.step()</pre></li>
+				<li>To test out the model, perform a prediction on the first instance of the testing set, and compare it to the ground truth (target value):<pre>pred = model(x_test[0])
+print(y_test[0], pred)</pre><p>从该结果可以看出，考虑到目标值与预测值相差很大，模型表现不佳。在本书的后续章节中，您将学习如何提高模型的性能。</p></li>
+			</ol>
+			<p>恭喜你！您已经成功创建并训练了一个深度神经网络来解决一个回归问题。</p>
+			<h3 id="_idParaDest-48"><a id="_idTextAnchor061"/>活动3:为回归问题开发深度学习解决方案</h3>
+			<p>在下面的练习中，我们将创建并训练一个四个隐藏层的神经网络来解决前面练习中提到的回归问题。让我们看看下面的场景:</p>
+			<p>您继续在音乐唱片公司工作，在看到您在准备数据集方面所做的出色工作后，他们委托您定义网络的架构和代码，并使用准备好的数据集对其进行训练:</p>
+			<h4>注意</h4>
+			<p class="callout">使用您在之前活动中使用的Jupyter笔记本。</p>
+			<ol>
+				<li value="1">导入所需的库。</li>
+				<li>针对前一活动中创建的所有三组数据，从目标中分割要素。将数据帧转换成张量。</li>
+				<li>定义网络的架构。随意尝试层数和每层单元数的不同组合。</li>
+				<li>定义损失函数和优化算法。</li>
+				<li>使用一个<code>for</code>循环来训练100个迭代步骤的网络。</li>
+				<li>通过对测试集的第一个实例执行预测并将其与实际情况进行比较来测试您的模型。</li>
+			</ol>
+			<p>您的输出应该如下所示:</p>
+			<div><div><img src="img/02_28.jpg" alt="Figure 2.28: Output of the activity&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图2.28:活动的输出</h6>
+			<h4>注意</h4>
+			<p class="callout">这项活动的解决方案可在第190页找到。</p>
+			<h2 id="_idParaDest-49"><a id="_idTextAnchor062"/>总结</h2>
+			<p>诞生神经网络的理论是由弗兰克·罗森布拉特在几十年前提出的。它始于感知器的定义，感知器是一种受人类神经元启发的单元，它将数据作为输入来执行转换。它包括为输入数据分配权重以执行计算，因此最终结果不是这个就是那个，取决于结果。</p>
+			<p>最广为人知的神经网络形式是由一系列感知器创建的，这些感知器层叠在一起，其中一列感知器(层)的输出是下一列感知器的输入。</p>
+			<p>据此，解释了神经网络的典型学习过程。在这个问题上，有三个主要过程需要考虑:向前传播、损失函数的计算和向后传播。</p>
+			<p>该过程的最终目标是通过更新伴随神经网络的每个输入值的权重和偏差来最小化损失函数。这是通过一个可能需要几分钟、几小时甚至几周的迭代过程来实现的，具体取决于数据问题的性质。</p>
+			<p>还讨论了三类神经网络的主要结构:人工神经网络、卷积神经网络和递归神经网络。第一个用于解决传统的分类问题，第二个因其解决计算机视觉问题(图像分类)的能力而广受欢迎，最后一个能够按顺序处理数据，对于语言翻译等任务非常有用。</p>
+		</div>
+	
+
+</body></html>

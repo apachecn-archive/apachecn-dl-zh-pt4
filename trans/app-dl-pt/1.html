@@ -1,0 +1,211 @@
+<html><head/><body>
+
+
+	
+		<title>C11865_01_ePub_Final_SZ</title>
+		
+	
+	
+		<div><h1 id="_idParaDest-12"><em class="italics"> <a id="_idTextAnchor013"/>第一章</em></h1>
+		</div>
+		<div><h1 id="_idParaDest-13"><a id="_idTextAnchor014"/>深度学习和PyTorch简介</h1>
+		</div>
+		<div><h2>学习目标</h2>
+			<p>本章结束时，您将能够:</p>
+			<ul>
+				<li class="bullets">解释什么是深度学习，它的重要性，以及它如何融入AI和ML</li>
+				<li class="bullets">确定可以使用深度学习解决的数据问题的种类</li>
+				<li class="bullets">通过了解PyTorch库的优点和缺点，将其与其他机器学习库区分开来</li>
+				<li class="bullets">使用PyTorch创建单层神经网络</li>
+			</ul>
+			<p>在这一章中，我们将了解深度学习如何与人工智能和机器学习产生共鸣。通过对PyTorch的介绍，我们将探索应用PyTorch语法知识的基本编程练习。</p>
+		</div>
+		<div><h2 id="_idParaDest-14"><a id="_idTextAnchor015"/>简介</h2>
+			<p>深度学习是机器学习的一个子集，专注于使用深度神经网络解决复杂的数据问题。如今它变得越来越受欢迎，这要归功于软件和硬件的进步，允许收集和处理大量数据(我们正在谈论数百万和数十亿的条目)，考虑到神经网络是目前唯一能够通过向模型提供更多数据来达到更高精确度的算法。</p>
+			<p>考虑到这一点，对更快处理时间的需求是不可避免的。PyTorch诞生于2017年，其主要特点依赖于它使用GPU的能力来使用张量运行数据。这允许算法以非常高的速度运行，同时它为其用户提供了灵活性和标准语法，以获得许多数据问题的最佳结果。</p>
+			<p>这本书的重点是使用PyTorch揭开神经网络的神秘面纱，以消除人们对神经网络架构复杂性的恐惧。</p>
+			<p>考虑到这一点，本章重点介绍深度学习和PyTorch两个主题。在这里，您将了解什么是深度学习，它如何融入机器学习和人工智能的世界，它如何在一般情况下工作，最后是一些当今最受欢迎的应用。此外，您将了解PyTorch如何工作，它的一些主要模块和特性是什么，以及它给用户带来的一些主要优点和缺点。</p>
+			<h2 id="_idParaDest-15"><a id="_idTextAnchor016"/>了解深度学习</h2>
+			<p>为了理解什么是深度学习以及为什么它现在变得如此流行，重要的是首先定义什么是人工智能和机器学习，以及深度学习如何适应那个世界。</p>
+			<div><div><img src="img/C11865_01_01.jpg" alt="Figure 1.1: A diagram of artificial intelligence, machine learning, and deep learning&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图1.1:人工智能、机器学习和深度学习的示意图</h6>
+			<p>如上图所示，<strong class="keyword">人工智能</strong> ( <strong class="keyword"> AI </strong>)是一个概括了机器学习和深度学习的范畴。它指的是机器表现出的最终导致解决问题的任何智能。这些技术包括遵循一组规则或逻辑，或者从以前的数据中学习，等等。考虑到这一点，人工智能解决方案可能拥有也可能不拥有实现最优解决方案的学习能力。</p>
+			<p>拥有学习能力的人工智能解决方案属于机器学习子集。简单来说，<strong class="keyword">机器学习</strong>只是实现人工智能的方式之一，它由具有学习能力的算法组成，而无需显式编程来这样做。这意味着算法能够解析数据，从中学习，并相应地做出决策(预测)。这种机器学习方法被称为“监督学习”，它基本上意味着算法既有输入数据又有目标值(期望的结果)。</p>
+			<p>机器学习的另一种方法被称为“无监督学习”，与前面提到的不同，只有输入数据被提供，而与输出没有任何关系。此处算法的目标是理解手头的数据，以便找到相似之处。</p>
+			<p>最后，<strong class="keyword">深度学习</strong>是使用多层神经网络(大型神经网络)的机器学习的子集，受人脑生物结构的启发，一层中的神经元接收一些输入数据，对其进行处理，并将输出发送到下一层。这些神经网络可以由成千上万个互连的节点(神经元)组成，大多组织在不同的层中，其中一个节点连接到前一层中的几个节点，从那里接收输入数据，以及连接到下一层中的几个节点，在处理后将输出数据发送到下一层。</p>
+			<p>神经网络的结构和功能将在本书的后续章节中进一步解释。</p>
+			<h3 id="_idParaDest-16"><a id="_idTextAnchor017"/>深度学习为什么重要？为什么会流行起来？</h3>
+			<p>总的来说，它的流行是由于准确性的问题。对于非常复杂的数据问题，深度学习已经达到了比以往任何时候都更高的准确性水平。这种出色表现的能力已经达到了机器可以超越人类的水平，这使得模型不仅可以优化流程，还可以提高质量。由于这一点，一些革命性领域取得了进展，在这些领域，准确性对于安全至关重要，例如无人驾驶汽车。</p>
+			<p>而且，尽管神经网络在几十年前就被理论化了，但它们最近变得流行有两个主要原因:</p>
+			<ul>
+				<li>Neural networks require, and actually capitalize on, vast amounts of labeled data to achieve an optimal solution. This means that for the algorithm to create an outstanding model, it is required to have hundreds of thousands of entries (and even millions for some data problems), containing both the features and the target values.<h4>注意</h4><p class="callout">标记数据是指包含一组特征(描述实例的特征)和一个目标值(要达到的值)的数据。</p></li>
+			</ul>
+			<div><div><img src="img/C11865_01_02.jpg" alt=""/>
+				</div>
+			</div>
+			<h6>图1.2:在数据量方面，深度学习相对于其他算法的性能</h6>
+			<p>由于软件的进步允许这种粒度的收集，而硬件的进步允许对其进行处理，这在今天是可能的。</p>
+			<ul>
+				<li>Neural networks require considerable computing power to be able to process such amounts of data, as mentioned before. This is crucial as, otherwise, it would take weeks (or even longer) for a traditional network to be trained, and considering that the process of achieving the best possible model is based on trial-and-error, it is necessary to be able to run the training process as efficiently as possible.<p>这可以通过使用GPU来实现，GPU可以将神经网络的训练时间从数周缩短到数小时。</p><h4>注意</h4><p class="callout">此外，为了加速深度学习，以便能够利用大量训练数据和构建最先进的模型，主要云计算提供商，如AWS、微软Azure和谷歌，正在开发FPGAs(现场可编程门阵列)和TPU(张量处理单元)。</p></li>
+			</ul>
+			<h3 id="_idParaDest-17"><a id="_idTextAnchor019"/>深度学习的应用</h3>
+			<p>正如我们所知，深度学习正在彻底改变技术，因为基于其应用的许多发展正在影响我们目前的生活。此外，据认为，在未来5至10年内，许多流程的处理方式将发生巨大变化。</p>
+			<p>此外，深度学习可以应用于各种各样的情况，从医疗和安全目的到更琐碎的任务，如彩色黑白图像或实时翻译文本。</p>
+			<p>深度学习的一些正在开发或正在使用的应用程序可以在这里找到:</p>
+			<ul>
+				<li><strong class="bold">自动驾驶汽车</strong>:谷歌等几家公司一直致力于开发部分或完全自动驾驶汽车，这些汽车通过使用数字传感器识别周围的物体来学习驾驶。</li>
+			</ul>
+			<div><div><img src="img/C11865_01_03.jpg" alt="Figure 1.3: Google’s self-driving car&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图1.3:谷歌的自动驾驶汽车</h6>
+			<ul>
+				<li><strong class="bold">医疗诊断</strong>:深度学习通过提高脑癌、乳腺癌等晚期疾病的诊断准确率，正在重新定义这个行业。这是通过对新患者的图像进行分类来实现的，基于来自患有或未患有癌症的先前患者的标记图像。</li>
+				<li><strong class="bold">语音助手</strong>:这可能是当今最受欢迎的应用之一，这要归功于各种不同的语音激活智能助手的激增，比如苹果的Siri、谷歌Home和亚马逊的Alexa。</li>
+			</ul>
+			<div><div><img src="img/C11865_01_04.jpg" alt="Figure 1.4: Amazon’s Alexa intelligent assistant&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图1.4:亚马逊的Alexa智能助手</h6>
+			<ul>
+				<li><strong class="bold">自动文本生成</strong>:这包括根据输入的句子生成新文本。这在电子邮件写作中被广泛使用，电子邮件提供商根据到目前为止所写的文本向用户建议接下来的几个单词。</li>
+			</ul>
+			<div><div><img src="img/C11865_01_05.jpg" alt="Figure 1.5: Gmail’s text generation feature&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图1.5: Gmail的文本生成功能</h6>
+			<ul>
+				<li><strong class="bold">广告</strong>:这里的主要思想是通过瞄准正确的受众或创造更有效的广告等方法来增加广告的投资回报。</li>
+				<li><strong class="bold">价格预测</strong>:对于初学者来说，这是一个通过使用机器学习算法可以实现的典型例子。价格预测包括基于真实数据训练模型，真实数据例如包括真实状态、财产特征及其最终价格，以便能够仅基于财产特征预测未来条目的价格。</li>
+			</ul>
+			<h2 id="_idParaDest-18"><a id="_idTextAnchor020"/> PyTorch简介</h2>
+			<div><div><img src="img/C11865_01_06.jpg" alt="Figure 1.6: PyTorch library logo&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图1.6: PyTorch库徽标</h6>
+			<p>PyTorch是一个开源库，主要由脸书的人工智能研究小组开发，作为Torch的Python版本，于2017年1月首次向公众发布。它利用<strong class="keyword">图形处理器</strong>(<strong class="keyword">GPU</strong>)的能力来加速张量的计算，从而加快复杂模型的训练时间。</p>
+			<p>该库有一个C++后端，结合了Torch的深度学习框架，允许比具有许多深度学习功能的原生Python库快得多的计算。另一方面，它的前端是Python，考虑到该库的新数据科学家可以毫不费力地构建非常复杂的神经网络，这有助于它的流行。由于与Python的集成，PyTorch可以与其他流行的Python包一起使用。</p>
+			<p>虽然这个库相当新，但它很快就受到欢迎，因为它是使用该领域许多专家的反馈开发的，这些专家将它转换为一个为用户创建的库。下一节将讨论使用它的许多优点和缺点。</p>
+			<h3 id="_idParaDest-19"><a id="_idTextAnchor021"/>优势</h3>
+			<p>现在有几个库可以用于开发深度学习解决方案，那么为什么要使用PyTorch呢？因为PyTorch是一个动态库，它允许用户非常灵活地开发非常复杂的体系结构，以适应每个特定的数据问题。</p>
+			<p>正因为如此，它已经被大量的研究人员和人工智能开发人员采用，这使得它成为在机器学习领域获得工作的一个必须条件。</p>
+			<p>这里显示了需要强调的关键方面:</p>
+			<ul>
+				<li><strong class="bold">易用性</strong>:关于API，PyTorch有一个简单的接口，使得开发和运行模型变得非常容易。许多早期采用者认为它比其他库更直观，比如TensorFlow。它本质上是Python的，这意味着它与Python集成在一起，如前所述，这使得它非常直观和易于使用，即使该库对许多开发人员来说是新的。这种集成还允许使用许多Python包，如NumPy和SciPy，来扩展它的功能。</li>
+				<li><strong class="bold">Speed</strong>: PyTorch makes use of GPUs that allow GPU-accelerated tensor computations. This enables the library to train faster than other deep learning libraries. This is especially useful when different approximations have to be tested in order to achieve the best possible model, and speed is a crucial matter. Additionally, even though other libraries may also have the option to accelerate computations with GPUs, PyTorch achieves this operation by typing just a couple of simple lines of code.<h4>注意</h4><p class="callout">以下URL包含不同深度学习框架上的速度基准(考虑到在处理非常大量的训练数据时，训练时间的差异很明显):</p><p class="callout"><a href="https://github.com/u39kun/deep-learning-benchmark">https://github.com/u39kun/deep-learning-benchmark</a></p></li>
+				<li><strong class="bold">便利性</strong> : PyTorch灵活。它使用动态计算图，允许您随时改变网络。此外，它在构建架构时提供了很大的灵活性，因为很容易对传统架构进行调整。</li>
+				<li><strong class="bold">祈使</strong> : PyTorch也是祈使。每一行代码都是单独执行的，允许您实时跟踪模型，并以一种非常方便的方式调试模型。</li>
+				<li><strong class="bold">预训练模型</strong>:最后，它包含许多预训练模型，非常易于使用，是一些数据问题的良好起点。</li>
+			</ul>
+			<h3 id="_idParaDest-20"><a id="_idTextAnchor022"/>缺点</h3>
+			<p>虽然优点很多，但还是有一些缺点需要考虑，下面解释一下:</p>
+			<ul>
+				<li><strong class="bold">小社区</strong>:与其他一些库相比，这个库的适配器社区非常小，比如TensorFlow。然而，向公众开放仅两年，今天它是实现深度学习解决方案的第三大最受欢迎的库，其社区与日俱增。</li>
+				<li><strong class="bold">参差不齐的文档</strong>:考虑到库是新的，文档不如一些比较成熟的库完整，比如TensorFlow。然而，随着库的特性和功能的增加，文档也在扩展。此外，随着社区的不断发展，互联网上将会提供更多的信息。</li>
+				<li><strong class="bold">未做好生产准备</strong>:尽管对该库的许多抱怨都集中在它无法部署用于生产，但在1.0版本发布后，该库包含了生产功能，能够导出最终模型并在生产环境中使用它们。</li>
+			</ul>
+			<h3 id="_idParaDest-21"><a id="_idTextAnchor023"/>什么是张量？</h3>
+			<p>PyTorch与NumPy类似，使用张量来表示数据，是一种<em class="italics"> n </em>维的类矩阵结构，如图<em class="italics">图1.7 </em>所示，区别在于张量可以在GPU上运行，有助于加速数值计算。此外，重要的是要提到，对于张量，维数被称为秩。</p>
+			<div><div><img src="img/C11865_01_07.jpg" alt="Figure 1.7: Visual representation of tensors of different dimensions&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图1.7:不同维度张量的可视化表示</h6>
+			<p>与矩阵相反，张量是包含在结构中的数学实体，它可以与其他数学实体交互。当一个张量变换另一个张量时，前者也带有自己的变换。</p>
+			<p>这意味着张量不仅仅是数据结构，而是容器，当输入一些数据时，可以以多线性方式与其他张量进行映射。</p>
+			<h3 id="_idParaDest-22"><a id="_idTextAnchor024"/>练习1:使用PyTorch创建不同等级的张量</h3>
+			<h4>注意</h4>
+			<p class="callout">所有练习和活动将主要在Jupyter笔记本上进行。建议为不同的作业准备一个单独的笔记本，除非有人建议不要这样做。</p>
+			<p>在本练习中，我们将使用PyTorch库创建一阶、二阶和三阶张量。</p>
+			<h4>注意</h4>
+			<p class="callout">对于本章中的练习和活动，您需要具备Python 3.6、Jupyter、Matplotlib和PyTorch 1.0。</p>
+			<h4>注意</h4>
+			<p class="callout">要克隆包含本书中所有练习和活动的存储库，请在导航到所需路径后，在CMD或终端中使用以下命令:</p>
+			<p class="callout"><a href="git clone https://github.com/TrainingByPackt/Applied-Deep-Learning-with-PyTorch.git "> <code>git clone https://github.com/TrainingByPackt/Applied-Deep-Learning-with-PyTorch.git</code> </a></p>
+			<ol>
+				<li>Open a Jupyter notebook to implement this exercise. <p>打开CMD或终端，导航到所需的路径，使用以下命令打开Jupyter笔记本:<code>jupyter notebook</code>。</p><h4>注意</h4><p class="callout">根据您的操作系统及其配置，此命令可能会有所不同。</p></li>
+				<li>导入名为<code>torch</code> : <pre>import torch</pre>的PyTorch库</li>
+				<li>Create tensors of the following ranks: 1, 2, and 3.<p>使用0到1之间的值来填充张量。假设等级创建正确，张量的大小可以根据需要定义:</p><pre>tensor_1 = torch.tensor([0.1,1,0.9,0.7,0.3])
+tensor_2 = torch.tensor([[0,0.2,0.4,0.6],[1,0.8,0.6,0.4]])
+tensor_3 = torch.tensor([[[0.3,0.6],[1,0]], [[0.3,0.6],[0,1]]])</pre><p>使用支持GPU的机器时，使用以下脚本创建张量:</p><pre>tensor_1 = torch.cuda.tensor([0.1,1,0.9,0.7,0.3])
+tensor_2 = torch.cuda.tensor([[0,0.2,0.4,0.6],[1,0.8,0.6,0.4]])
+tensor_3 = torch.cuda.tensor([[[0.3,0.6],[1,0]], [[0.3,0.6],[0,1]]])</pre></li>
+				<li>Print the shape of each of the tensors using the <code>shape</code> property, just as you would do with NumPy arrays:<pre>print(tensor_1.shape)
+print(tensor_2.shape)
+print(tensor_3.shape)</pre><p>每个张量的最终形状应该如下:</p><pre>torch.Size([5])
+torch.Size([2, 4])
+torch.Size([2, 2, 2])</pre></li>
+			</ol>
+			<p>恭喜你！您已经成功创建了不同等级的张量。</p>
+			<h3 id="_idParaDest-23"><a id="_idTextAnchor025"/>py torch的关键元素</h3>
+			<p>像任何其他库一样，PyTorch有各种各样的模块、库和包，用于开发不同的功能。在本节中，将解释构建深度神经网络的三个最常用的元素，以及一个简单的语法示例。</p>
+			<p><strong class="bold"> PyTorch亲笔签名库</strong></p>
+			<p><code>autograd</code>库由一种叫做自动微分的技术组成。它的目的是数值计算一个函数的导数。这对于我们将在下一章学习的反向传播概念至关重要，反向传播是在训练神经网络时进行的。</p>
+			<h4>注意</h4>
+			<p class="callout">关于神经网络的详细解释将在随后的章节中进行，解释训练模型所采取的不同步骤。</p>
+			<p>要计算梯度，只需调用<code>backward()</code>函数，如下所示:</p>
+			<pre>a = torch.tensor([5.0, 3.0], requires_grad=True)
+b = torch.tensor([1.0, 4.0])
+ab = ((a + b) ** 2).sum()
+ab.backward()</pre>
+			<p>在前面的代码中，创建了两个张量。我们在这里使用<code>requires_grad</code>参数来告诉PyTorch计算这个张量的梯度。但是，在构建神经网络时，此参数不是必需的。</p>
+			<p>接下来，使用两个张量的值定义一个函数。最后，使用<code>backward()</code>函数来计算梯度。</p>
+			<p><strong class="bold">py torch nn模块</strong></p>
+			<p>考虑到更复杂的部分(梯度的计算)已经被考虑在内，单独的<code>autograd</code>库可以用来构建简单的神经网络。然而，这种方法可能是麻烦的，因此引入了神经网络模块。</p>
+			<p>nn模块是一个完整的PyTorch模块，用于创建和训练神经网络，通过使用不同的元素，允许非常简单和非常复杂的开发。例如，<code>Sequential()</code>容器允许轻松创建遵循一系列预定义模块(或层)的网络架构，而不需要太多知识。</p>
+			<h4>注意</h4>
+			<p class="callout">可用于每个神经网络架构的不同层将在后续章节中进一步解释。</p>
+			<p>此外，该模块还具有定义损失函数来评估模型的能力，以及本书将讨论的许多更高级的功能。</p>
+			<p>将神经网络体系结构构建为一系列预定义模块的过程只需几行代码即可完成，如下所示:</p>
+			<pre>import torch.nn as nn
+model = nn.Sequential(nn.Linear(input_units, hidden_units),       <a id="_idTextAnchor026"/>  nn.ReLU(),         nn.Linear(hidden_units, output_units),         nn.Sigmoid())
+loss_funct = torch.nn.MSELoss()</pre>
+			<p>首先，导入模块。接下来，定义模型架构。<code>input_units</code>指输入数据包含的特征数，<code>hidden_units</code>指隐含层的节点数，<code>output_units</code>指输出层的节点数。</p>
+			<p>可以看出，网络的架构包含一个具有ReLU激活函数的隐藏层和一个具有sigmoid激活函数的输出层。</p>
+			<p>最后，损失函数被定义为<strong class="keyword">均方误差</strong> ( <strong class="keyword"> MSE </strong>)。</p>
+			<h4>注意</h4>
+			<p class="callout">为了创建不遵循现有模块序列的模型，使用定制nn模块。我们将在本书的后面介绍这些。</p>
+			<p><strong class="bold">py torch optim包</strong></p>
+			<p><code>optim</code>包用于定义优化器，该优化器将使用由<code>autograd</code>模块计算的梯度来更新每次迭代中的参数(这将在后面的章节中进一步解释)。在这里，可以从可用的优化算法中进行选择，例如亚当、<strong class="keyword">随机梯度下降</strong> ( <strong class="keyword"> SGD </strong>)和RMSprop等。</p>
+			<p>要设置要使用的优化器，以下代码行就足够了:</p>
+			<pre>optimizer = torch.optim.SGD(model.parameters(), lr=0.01)</pre>
+			<p>这里，<code>model.parameters()</code>参数指的是先前创建的模型的权重和偏差，<code>lr</code>指的是学习率，它被设置为<code>0.01</code>。</p>
+			<p>接下来，这里显示了运行100次迭代的优化过程，正如您所见，它使用了由nn模块创建的模型和由<code>autograd</code>库计算的梯度:</p>
+			<pre>for i i<a id="_idTextAnchor027"/>n range(100):
+    # Call to to the model to perform a prediction
+    y_pred = model(x)
+    # Calculation of loss function based on y_pred and y
+    loss = loss_func(y_pred, y)
+    # Zero the gradients so that previous ones don't accumulate
+    optimizer.zero_grad()
+    # Calculate the gradients of the loss function
+    loss.backward()
+    # Call to the optimizer to perform an update of the parameters
+    optimizer.step()</pre>
+			<p>对于每次迭代，模型被调用以获得预测(<code>y_pred</code>)。该预测和基本事实值(<code>y</code>)被馈送给损失函数，以便确定模型逼近基本事实的能力。</p>
+			<p>接下来，将梯度归零，并使用<code>backward()</code>函数计算损失函数的梯度。</p>
+			<p>最后，调用<code>step()</code>函数，根据优化算法和之前计算的梯度更新权重和偏差。</p>
+			<h3 id="_idParaDest-24"><a id="_idTextAnchor028"/>活动1:创建单层神经网络</h3>
+			<p>对于此活动，我们将创建一个单层神经网络，这将是我们在未来活动中创建深度神经网络的起点。让我们看看下面的场景。</p>
+			<p>你正在申请一家大型科技公司的工作，并且已经通过了所有的筛选面试。招聘过程的下一步是在面试中实时展示你的编程机器学习技能。他们要求您使用PyTorch构建一个单层神经网络:</p>
+			<ol>
+				<li value="1">导入所需的库。</li>
+				<li>Create dummy input data (<code>x</code>) of random values and dummy target data (<code>y</code>) that only contains 0s and 1s. Store the data in tensors. Tensor <code>x</code> should have a size of (100,5), while the size of <code>y</code> should be (100,1).<h4>注意</h4><p class="callout">PyTorch张量可以像NumPy数组一样操作。使用<code>torch.randn(number_instances</code>，数字特征)创建<code>x</code>。使用<code>torch.randint(low=0, high, size)</code>创建<code>y</code>。考虑到<code>randint</code>是上限独占。确保将<code>y</code>张量转换为<code>FloatTensor</code>类型，因为这是nn模块处理的默认类型。为此使用<code>.type(torch.FloatTensor)</code>。</p></li>
+				<li>定义模型的架构，并将其存储在名为<code>model</code>的变量中。记得创建一个单层模型。</li>
+				<li>Define the loss function to be used. <p>使用均方误差损失函数。</p></li>
+				<li>Define the optimizer of your model. <p>使用Adam优化器。</p></li>
+				<li>Run the optimization for 100 iterations. In each iteration, print and save the loss value.<h4>注意</h4><p class="callout">使用下面一行代码将每个迭代步骤的损失值附加到先前在for循环之外创建的列表中(损失):<code>losses.append(loss.item())</code></p></li>
+				<li>打印最终重量和偏差的值。总共应该有五个权重(输入数据的每个特征一个)和一个偏差值:<pre>model.state_dict()</pre></li>
+				<li>Make a line plot to display the loss value for each iteration step.<h4>注意</h4><p class="callout">这项活动的解决方案可在第186页找到。</p></li>
+			</ol>
+			<h2 id="_idParaDest-25"><a id="_idTextAnchor029"/>总结</h2>
+			<p>人工智能这个术语在过去几年里变得越来越流行。我们在电影中见过，在现实生活中也见过，它基本上是指机器以优化人类任务为目的而展示的任何形式的智能。人工智能的一个子类，专注于那些有能力从数据中学习的算法，被称为机器学习。</p>
+			<p>反过来，深度学习是受人脑生物结构启发的机器学习的子集。它使用深度神经网络，通过使用大量数据来解决复杂的数据问题。尽管该理论是几十年前开发的，但由于硬件和软件的进步，它最近才被使用，这使得数百万条数据的收集和处理成为可能。</p>
+			<p>随着深度学习解决方案的流行，已经开发了许多深度学习库。其中，最近的一个就是PyTorch。PyTorch使用C++后端来帮助加速计算，同时使用Python前端来保持库的易用性。</p>
+			<p>它使用张量来存储数据，张量是n排序的类似矩阵的结构，可以在GPU上运行以加快处理速度。它提供了三个主要元素，对于轻松创建复杂的神经网络架构非常有用。</p>
+			<p><code>autograd</code>库可以计算函数的导数，这些导数被用作梯度来优化模型的权重和偏差。此外，<code>nn</code>模块帮助您轻松地将模型的架构定义为一系列预定义的模块，以及确定用于测量模型的损失函数。最后，使用<code>optim</code>包选择优化算法，用于更新参数，考虑之前计算的梯度。</p>
+		</div>
+	
+
+</body></html>

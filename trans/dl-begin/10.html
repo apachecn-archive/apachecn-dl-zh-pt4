@@ -1,0 +1,262 @@
+<html><head/><body>
+
+
+    
+        <title>Deep Autoencoders</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    Deep Autoencoders
+                
+            
+            
+                
+<p class="mce-root">本章介绍了深度信念网络的概念和这种深度无监督学习的意义。它通过引入深度自动编码器以及两种有助于创建健壮模型的正则化技术来解释这些概念。这些正则化技术，批量归一化和丢弃，已知可以促进深度模型的学习，并已被广泛采用。我们将在MNIST和包含彩色图像的CIFAR-10数据集上展示深度自动编码器的强大功能。</p>
+<p>在本章结束时，通过观察建模的容易程度和它们提供的输出质量，你会体会到构建深度信念网络的好处。您将能够实现自己的深度自动编码器，并向自己证明，对于大多数任务，深度模型比深度模型更好。您将熟悉用于优化模型和最大化性能的批处理规范化和剔除策略。</p>
+<p>本章组织如下:</p>
+<ul>
+<li>引入深度信念网络</li>
+<li>制作深度自动编码器</li>
+<li>用深度自动编码器探索潜在空间</li>
+</ul>
+<h1 id="uuid-3d43aa1f-7d2b-4bb9-bb56-44e5748fe426">引入深度信念网络</h1>
+<p>在机器学习中，有一个领域在谈到<strong>深度学习</strong> ( <strong> DL </strong>)时经常被讨论，叫做<strong>深度信念网络</strong> ( <strong> DBNs </strong> ) (Sutskever，I .和Hinton，G. E. (2008))。一般来说，这个术语也用于一种基于图的机器学习模型，例如众所周知的<strong>受限玻尔兹曼机器</strong>。然而，dbn通常被认为是DL家族的一部分，深度自动编码器是该家族最著名的成员之一。</p>
+<p class="mce-root"/>
+<p>深度自动编码器被认为是dbn，在某种意义上说，有潜在的变量，只有在前进方向的单层可见。与只有一对层的自动编码器相比，这些层的数量通常很多。一般来说，DL和DBNs的一个主要原则是，在学习过程中，不同的知识在不同的层次上表现出来。这种知识表示通过<em>特征学习</em>来学习，而不会偏向特定的类别或标签。此外，已经证明这种知识似乎是分等级的。例如，考虑图像；通常，更靠近输入层的层学习低阶特征(即边缘)，而更深的层学习高阶特征，即定义明确的形状、图案或对象(Sainath，T. N .，et al .(2012))。</p>
+<p>在DBNs中，如同在大多数DL模型中一样，特征空间的可解释性可能是困难的。通常，查看第一层的权重可以提供关于所学特征和/或特征图外观的信息；然而，由于深层的高度非线性，特征图的可解释性一直是个问题，需要仔细考虑(Wu，k .等人(2016))。然而，尽管如此，dbn在特征学习方面表现出优异的结果。在接下来的几节中，我们将深入探讨高度复杂数据集上的自动编码器版本。我们将引入一些新的图层类型来展示一个模型的深度。</p>
+<h1 id="uuid-30315061-3136-47d3-b4c9-99058f78cfaf">制作深度自动编码器</h1>
+<p>一个自动编码器可以被称为<em> deep </em>，只要它有一对以上的层(编码层和解码层)。在autoencoder中将层堆叠在彼此之上是一种很好的策略，可以提高其在寻找独特的潜在空间方面的特征学习能力，这些潜在空间在分类或回归应用中具有很高的歧视性。然而，在<a href="480521d9-845c-4c0a-b82b-be5f15da0171.xhtml">第7章</a>、<em>自动编码器</em>中，我们介绍了如何将层堆叠到自动编码器上，我们将再次这样做，但这一次我们将使用几个新类型的层，超出了我们一直使用的密集层。这些是<strong>批正常化</strong>和<strong>漏失</strong>层。</p>
+<p>这些层中没有神经元；然而，它们在学习过程中充当具有非常具体的目的的机制，可以通过防止过度拟合或减少数值不稳定性来导致更成功的结果。让我们来讨论一下其中的每一项，然后我们将继续在几个重要的数据集上对这两项进行实验。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mceNonEditable"/>
+<p class="mceNonEditable"/>
+<p class="mceNonEditable"/>
+<h2 id="uuid-48fd4d7f-7e15-4125-a333-71df1e1c69c5">批量标准化</h2>
+<p>自2015年推出以来，批处理规范化一直是DL不可或缺的一部分(Ioffe，s .和Szegedy，C. (2015))。它是一个重大的游戏改变者，因为它有几个很好的属性:</p>
+<ul>
+<li>它可以防止称为<strong>消失梯度</strong>或<strong>爆炸梯度</strong>的问题，这在递归网络中非常常见(Hochreiter，S. (1998))。</li>
+<li>它可以通过作为学习模型的正则化来加快训练速度(Van Laarhoven，T. (2017))。</li>
+</ul>
+<p>这些属性的总结和我们用来表示批量标准化的块图像如图8.1 所示:</p>
+<div><img src="img/37f526d5-f4cd-42bf-b81a-c1f884b173bb.png" style="width:29.58em;height:8.00em;"/></div>
+<p>图8.1-批量标准化层主要属性</p>
+<p>数据科学家通常称之为<em> batch norm </em>的作者引入了这种简单的机制，通过为梯度的计算以及它们如何影响不同层神经元的权重更新提供稳定性，来加速训练或模型收敛。这是因为它们可以防止梯度消失或爆炸，这是基于梯度的优化在DL模型上操作的自然结果。也就是说，模型越深，渐变影响层的方式和更深层中的单个单元可能具有大更新或非常小更新的效果，这可能导致变量溢出或数值为零。</p>
+<p class="mce-root"/>
+<p>如<em>图8.2 </em>顶部所示，批量标准化能够通过标准化输入数据来调整输入数据的边界，从而使输出符合正态分布。图的底部说明了应用批量标准化的位置，即在将输出发送到下一层之前的神经元内:</p>
+<div><img src="img/a4f3dd44-a3c2-4505-8287-996983c125dc.png" style="width:35.67em;height:28.50em;"/></div>
+<p>图8.2–简单自动编码器上的批量标准化</p>
+<p>考虑有一个大小为<img class="fm-editor-equation" src="img/f575e97f-0ad0-4d83-b281-0f35baff870a.png" style="width:0.67em;height:0.75em;"/>的(小)批数据<img class="fm-editor-equation" src="img/4e0de339-6188-4267-a7d6-f8310f64141f.png" style="width:0.67em;height:0.75em;"/>，这允许我们定义以下等式。首先，在第<img class="fm-editor-equation" src="img/e5cd3a66-efd6-4e6f-9fce-a8fdd940b0bd.png" style="width:0.42em;height:1.08em;"/>层，批次的平均值可计算如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/30413e7c-0c75-4ebe-9c23-f8005cae11eb.png" style="width:8.33em;height:3.92em;"/></p>
+<p>相应的标准差计算如下:</p>
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/cdb6c81f-6cb2-4c00-9901-f0389a4bc6c1.png" style="width:11.67em;height:3.50em;"/>。</p>
+<p class="mce-root">然后，我们可以将层<img style="font-size: 1em;width:0.42em;height:1.08em;" class="fm-editor-equation" src="img/cb840e84-cf93-45a2-a7b2-29bb2eae0783.png"/>中的每个单元<img class="fm-editor-equation" src="img/76f8290e-3700-4064-9e45-9d2ee62a754e.png" style="width:0.50em;height:1.25em;"/>归一化如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/a0fa2623-dd01-4b71-88d1-5d93f35557dc.png" style="width:10.67em;height:5.33em;"/></p>
+<p>这里，<img class="fm-editor-equation" src="img/1227909d-af4a-4fac-b9ec-397992525707.png" style="width:4.58em;height:0.92em;"/>是仅为数值稳定性而引入的常数，但是可以根据需要改变。最后，在进入激活函数之前，层<img class="fm-editor-equation" src="img/474e8170-88cb-4656-9737-d964b318a040.png" style="width:0.42em;height:1.08em;"/>、<img src="img/db17d453-c78e-44b6-9c54-265c14cb0674.png" style="width:1.92em;height:1.58em;"/>中每个单元<img class="fm-editor-equation" src="img/90c9d851-81ed-4cda-8c3e-7f34a7552b23.png" style="width:0.50em;height:1.25em;"/>的归一化神经输出可以计算如下:</p>
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/3443d3f0-ccf0-422c-81a3-f8af404ca4c8.png" style="width:13.50em;height:1.75em;"/></p>
+<p>这里，<img class="fm-editor-equation" src="img/4cb094b3-7c28-451f-bce4-1cd64bdd67e1.png" style="width:0.58em;height:0.92em;"/>和<img class="fm-editor-equation" src="img/1ac6ba44-eb6b-43d4-aac8-e42df3047cea.png" style="width:0.50em;height:0.92em;"/>是每个神经单元需要学习的参数。在此之后，在层<img class="fm-editor-equation" src="img/6e5c045c-0614-444b-acd3-7110b61ada78.png" style="width:0.42em;height:1.08em;"/>中的单元<img class="fm-editor-equation" src="img/899c2cb8-2ba1-4548-9d22-37a526fb0f50.png" style="width:0.50em;height:1.25em;"/>处的激活函数的任何选择将接收归一化的输入<sub> <img class="fm-editor-equation" src="img/c8199dba-4ba0-4160-99f1-f26f0912be69.png" style="width:3.75em;height:1.33em;"/> </sub>，并产生最优归一化的输出以最小化损失函数。</p>
+<p>查看好处的一个简单方法是想象归一化过程:虽然它发生在每个单元，但学习过程本身决定了使模型性能最大化(损失最小化)所需的最佳归一化。因此，如果对于某些特征或潜在空间来说不必要，它具有消除归一化效果的能力，或者它也可以使用归一化效果。要记住的重要一点是，当使用批量归一化时，学习算法将学习最佳地使用归一化。</p>
+<p>我们可以使用<kbd>tensorflow.keras.layers.BatchNormalization</kbd>创建一个批量标准化层，如下所示:</p>
+<pre>from tensorflow.keras.layers import BatchNormalization<br/>...<br/>bn_layer = BatchNormalization()(prev_layer)<br/>...</pre>
+<p>这显然是使用函数范式完成的。考虑以下对应于电影评论的数据集示例，称为<em> IMDb </em> (Maas，A. L .等人(2011))，我们将在<a href="a6e892c5-e890-4c0a-ad92-c5442328a64a.xhtml">第十三章</a>、<em>递归神经网络</em>中更详细地解释。在本例中，我们只是试图证明添加批处理规范化层与没有批处理规范化层相比的效果。仔细看看下面的代码片段:</p>
+<pre>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import Dense, Activation, Input<br/>from tensorflow.keras.layers import <strong>BatchNormalization</strong><br/>from keras.datasets import imdb<br/>from keras.preprocessing import sequence<br/>import numpy as np<br/><br/>inpt_dim = 512    #input dimensions<br/>ltnt_dim = 256    #latent dimensions<br/><br/># -- the explanation for this will come later --<br/>(x_train, y_train), (x_test, y_test) = imdb.load_data()<br/>x_train = sequence.pad_sequences(x_train, maxlen=inpt_dim)<br/>x_test = sequence.pad_sequences(x_test, maxlen=inpt_dim)<br/># ----------------------------------------------</pre>
+<p class="mce-root">我们继续构建模型:</p>
+<pre>x_train = x_train.astype('float32') <br/>x_test = x_test.astype('float32')<br/><br/># model with batch norm<br/>inpt_vec = Input(shape=(inpt_dim,))<br/>el1 = Dense(ltnt_dim)(inpt_vec)        #dense layer followed by<br/>el2 = <strong>BatchNormalization</strong>()(el1)        #batch norm<br/>encoder = Activation('sigmoid')(el2)<br/>decoder = Dense(inpt_dim, activation='sigmoid') (encoder)<br/>autoencoder = Model(inpt_vec, decoder)<br/><br/># compile and train model with bn<br/>autoencoder.compile(loss='binary_crossentropy', optimizer='adam')<br/>autoencoder.fit(x_train, x_train, epochs=20, batch_size=64, <br/>                shuffle=True, validation_data=(x_test, x_test))</pre>
+<p class="mce-root">在这个代码片段中，批处理规范化就放在激活层之前。因此，这将标准化激活函数的输入，在这种情况下是一个<kbd>sigmoid.</kbd>。类似地，我们可以如下构建没有批处理标准化层的相同模型:</p>
+<pre># model without batch normalization<br/>inpt_vec = Input(shape=(inpt_dim,))<br/>el1 = Dense(ltnt_dim)(inpt_vec) #no batch norm after this<br/>encoder = Activation('sigmoid')(el1)<br/>latent_ncdr = Model(inpt_vec, encoder)<br/>decoder = Dense(inpt_dim, activation='sigmoid') (encoder)<br/>autoencoder = Model(inpt_vec, decoder)<br/><br/># compile and train model with bn<br/>autoencoder.compile(loss='binary_crossentropy', optimizer='adam')<br/>autoencoder.fit(x_train, x_train, epochs=20, batch_size=64, <br/>                shuffle=True, validation_data=(x_test, x_test))</pre>
+<p class="mce-root"/>
+<p>如果我们训练这两个模型，并在它们最小化损失函数时绘制它们的性能，我们将很快注意到批量归一化是有回报的，如图<em>图8.3 </em>所示:</p>
+<div><img src="img/12072ed9-ec0b-4784-a47d-b726124dc480.png" style="width:29.92em;height:17.92em;"/></div>
+<p>图8.3–使用和不使用批量标准化的学习进度对比</p>
+<p>该图表明，批量标准化具有在训练和数据验证集中减少损失函数的效果。这些结果与你可以自己尝试的许多其他实验是一致的！但是，我们之前说过，不一定保证会一直这样。这是一种相对现代的技术，迄今为止已被证明功能正常，但这并不意味着它对我们所知的一切都有效。</p>
+<p>我们强烈建议，在您的所有模型中，您首先尝试使用没有批量标准化的模型来解决问题，然后一旦您对您拥有的性能感到满意，再回来使用批量标准化，看看您是否可以在<strong>性能</strong>和<strong>训练速度</strong>方面获得轻微提升。</p>
+<p class="mce-root"/>
+<p>假设您尝试了批处理规范化，并获得了性能和/或速度的提升，但是您现在发现您的模型一直在过度拟合。不要害怕！还有一种有趣而新颖的技术，叫做<strong>辍学</strong>。正如我们将在下一节中讨论的，这可以为模型提供一种减少过度拟合的替代方法。</p>
+<h2 id="uuid-4e9b8362-071a-4bef-9aea-f072e8f94133">拒绝传统社会的人</h2>
+<p>辍学是2014年发表的一项技术，该年后不久便开始流行(Srivastava，n .，Hinton，g .，et al .(2014))。它作为一种替代方法来对抗过度拟合，过度拟合是其主要特性之一，可总结如下:</p>
+<ul>
+<li>可以减少过度拟合的几率。</li>
+<li>它可以导致更好的概括。</li>
+<li>可以降低支配神经元的作用。</li>
+<li>可以促进神经元多样性。</li>
+<li>可以促进更好的神经元协同工作。</li>
+</ul>
+<p>我们将用于删除的块图像及其主要属性如<em>图8.4 </em>所示:</p>
+<div><img src="img/20c83967-c1c8-4cbc-a56d-0702da606ca5.png" style="width:34.17em;height:7.58em;"/></div>
+<p>图8.4–脱落层属性</p>
+<p>退出策略之所以有效，是因为它使网络能够通过断开代表网络本身内某些假设(或模型)的特定数量的神经元，来搜索替代假设以解决问题。看待这一策略的一个简单方法是思考以下问题:想象一下，你有许多专家，他们的任务是判断一幅图像是包含一只猫还是一把椅子。可能有很多专家适度地相信图像中有一把椅子，但是只需要一个专家特别大声，并且完全相信有一只猫来说服决策者听这个特别大声的专家，而忽略其他人。在这个类比中，专家就是神经元。</p>
+<p class="mce-root"/>
+<p>可能有一些神经元特别确信(有时是不正确的，由于过度拟合不相关的特征)关于信息的某个事实，并且与该层中的其余神经元相比，它们的输出值特别高，以至于更深的层学会更多地倾听该特定层，从而使更深的层上的过度拟合永久化。<strong> Dropout </strong>是一种机制，它将选择一个层中的许多神经元，并将它们与该层完全断开，这样既没有输入流入这些神经元，也没有输出从这些神经元出来，如图<em>图8.5 </em>所示:</p>
+<div><img src="img/7b2a57b2-b790-49fc-9060-b8f35c0a5ced.png" style="width:37.75em;height:29.67em;"/></div>
+<p>图8.5–第一个隐藏层上的脱落机制。这里的脱落将一个神经元从层中断开</p>
+<p>在上图中，第一个隐藏层的辍学率为三分之一。这意味着，完全随机地，三分之一的神经元将被断开。<em>图8.5 </em>给出了第一个隐层的第二个神经元断开时的例子:输入层没有输入进去，也没有输出出来。模型完全不知道它的存在；实际上，这是一个不同的神经网络！</p>
+<p class="mce-root">然而，断开的神经元仅在一个训练步骤中断开:它们的权重在一个训练步骤中保持不变，而所有其他权重都被更新。这有几个有趣的含义:</p>
+<p class="mce-root">由于神经元的随机选择，那些倾向于支配(过度适应)特定特征的<em>麻烦制造者</em>必然会在某个时候被选择出来，其余的神经元将学习处理没有那些<em>麻烦制造者</em>的特征空间。这导致防止和减少过度拟合，同时促进擅长不同事物的不同神经元之间的协作。</p>
+<p>由于神经元的不断无知/断开，网络有可能从根本上不同——这几乎就像我们在每一步中训练多个神经网络，而实际上不必制作许多不同的模型。这一切都是因为辍学。</p>
+<ul>
+<li>通常建议在更深的网络中使用压差来改善DL中常见的传统过拟合问题。</li>
+<li>为了显示使用dropout时的性能差异，我们将使用与上一节完全相同的数据集，但我们将在自动编码器中添加一个额外的层，如下所示:</li>
+</ul>
+<p>这段代码中，掉线率为10%，意味着密集层<kbd>e14</kbd>中有10%的神经元在训练过程中被随机断开多次。</p>
+<p>解码器与之前完全相同，基线模型不包含漏失层:</p>
+<pre>from tensorflow.keras.layers import <strong>Dropout</strong><br/>...<br/># encoder with dropout<br/>inpt_vec = Input(shape=(inpt_dim,))<br/>el1 = Dense(inpt_dim/2)(inpt_vec)</pre>
+<p class="mce-root">如果我们选择<kbd>'adagrad'</kbd>，并且我们执行超过100个时期的训练并比较性能结果，我们可以获得如图8.6 所示的性能:</p>
+<pre><br/>el2 = Activation('relu')(el1)<br/><strong>el3 = Dropout(0.1)(el2)</strong><br/>el4 = Dense(ltnt_dim)(el3)<br/>encoder = Activation('relu')(el4)</pre>
+<p>图8.6–自动编码器重建损耗对比有无丢包模型</p>
+<pre># without dropout<br/>inpt_vec = Input(shape=(inpt_dim,))<br/>el1 = Dense(inpt_dim/2)(inpt_vec)<br/>el2 = Activation('relu')(el1)<br/>el3 = Dense(ltnt_dim)(el2)<br/>encoder = Activation('relu')(el3)</pre>
+<p>以下是完整的代码:</p>
+<div><img src="img/e582e979-2bb1-45a8-989d-454a99610665.png" style="width:36.50em;height:22.33em;"/></div>
+<p>然后我们这样定义这个模型:</p>
+<p>然后，我们编译它，训练它，存储训练历史，并清除变量以重复使用它们，如下所示:</p>
+<pre>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import Dense, Activation, Input<br/>from tensorflow.keras.layers import <strong>Dropout</strong><br/>from keras.datasets import imdb<br/>from keras.preprocessing import sequence<br/>import numpy as np<br/>import matplotlib.pyplot as plt<br/><br/>inpt_dim = 512<br/>ltnt_dim = 128<br/><br/>(x_train, y_train), (x_test, y_test) = imdb.load_data()<br/>x_train = sequence.pad_sequences(x_train, maxlen=inpt_dim)<br/>x_test = sequence.pad_sequences(x_test, maxlen=inpt_dim)<br/><br/>x_train = x_train.astype('float32') <br/>x_test = x_test.astype('float32')</pre>
+<p>然后我们对一个没有辍学的模型做了同样的事情:</p>
+<pre><strong># with dropout</strong><br/>inpt_vec = Input(shape=(inpt_dim,))<br/>el1 = Dense(inpt_dim/2)(inpt_vec)<br/>el2 = Activation('relu')(el1)<br/><strong>el3 = Dropout(0.1)(el2)</strong><br/>el4 = Dense(ltnt_dim)(el3)<br/>encoder = Activation('relu')(el4)<br/><br/># model that takes input and encodes it into the latent space<br/>latent_ncdr = Model(inpt_vec, encoder)<br/><br/>decoder = Dense(inpt_dim, activation='relu') (encoder)<br/><br/># model that takes input, encodes it, and decodes it<br/>autoencoder = Model(inpt_vec, decoder)</pre>
+<p>接下来，我们收集训练数据，并将其绘制如下:</p>
+<pre>autoencoder.compile(loss='binary_crossentropy', optimizer='<strong>adagrad</strong>')<br/><br/>hist = autoencoder.fit(x_train, x_train, epochs=100, batch_size=64, <br/>                       shuffle=True, validation_data=(x_test, x_test))<br/><br/>bn_loss = hist.history['loss']<br/>bn_val_loss = hist.history['val_loss']<br/><br/>del autoencoder<br/>del hist</pre>
+<p>从<em>图8.6 </em>中我们可以看出，有dropout的模型性能优于没有dropout的模型。这表明没有辍学的训练有更高的机会过度拟合，原因是当不使用辍学时，学习曲线在验证集上更差。</p>
+<pre><strong># now without dropout</strong><br/>inpt_vec = Input(shape=(inpt_dim,))<br/>el1 = Dense(inpt_dim/2)(inpt_vec)<br/>el2 = Activation('relu')(el1)<br/>el3 = Dense(ltnt_dim)(el2)<br/>encoder = Activation('relu')(el3)<br/><br/># model that takes input and encodes it into the latent space<br/>latent_ncdr = Model(inpt_vec, encoder)<br/><br/>decoder = Dense(inpt_dim, activation='relu') (encoder)<br/><br/># model that takes input, encodes it, and decodes it<br/>autoencoder = Model(inpt_vec, decoder)<br/><br/>autoencoder.compile(loss='binary_crossentropy', optimizer='<strong>adagrad</strong>')<br/><br/>hist = autoencoder.fit(x_train, x_train, epochs=100, batch_size=64, <br/>                       shuffle=True, validation_data=(x_test, x_test))</pre>
+<p>如前所述，已经为这个特定的任务选择了<kbd>adagrad</kbd>优化器。我们做出这个决定是因为学习更多的优化器对你来说很重要，一次一个。Adagrad是一种自适应算法；它根据特征的频率进行更新(Duchi，j .等人(2011))。如果特性频繁出现，则更新较小，而对于不寻常的特性，则进行较大的更新。</p>
+<pre>loss = hist.history['loss']<br/>val_loss = hist.history['val_loss']<br/><br/>fig = plt.figure(figsize=(10,6))<br/>plt.plot(bn_loss, color='#785ef0')<br/>plt.plot(bn_val_loss, color='#dc267f')<br/>plt.plot(loss, '--', color='#648fff')<br/>plt.plot(val_loss, '--', color='#fe6100')<br/>plt.title('Model reconstruction loss')<br/>plt.ylabel('Binary Cross-Entropy Loss')<br/>plt.xlabel('Epoch')<br/>plt.legend(['With Drop Out - Training', <br/>            'With Drop Out - Validation', <br/>            'Without Drop Out - Training', <br/>            'Without Drop Out - Validation'], loc='upper right')<br/>plt.show()</pre>
+<p>当<strong>数据集稀疏</strong>时，建议使用Adagrad。例如，在单词嵌入的情况下，如本例中的情况，频繁使用的单词将导致小的更新，而不常用的单词将需要较大的更新。</p>
+<p>As mentioned earlier, the <kbd>adagrad</kbd> optimizer has been chosen for this particular task. We made this decision because it is important for you to learn more optimizers, one at a time. Adagrad is an adaptive algorithm; it performs updates with respect to the frequency of features (Duchi, J., et al. (2011)). If features occur frequently, the updates are small, while larger updates are done for features that are out of the ordinary. </p>
+<p>最后，值得一提的是<kbd>Dropout(rate)</kbd>属于<kbd>tf.keras.layers.Dropout</kbd>类。作为参数的速率对应于神经元在每一个单独的训练步骤中随机断开的速率，在该训练步骤中使用了脱落。</p>
+<p class="mce-root">建议您使用介于<strong> 0.1和0.5 </strong>之间的退出率来实现网络性能的显著改变。并且建议只在深度网络中使用dropout <strong>。然而，这些都是经验发现，你自己的实验是必要的。</strong></p>
+<p>既然我们已经解释了这两个相对较新的概念，丢弃和批量标准化，我们将创建一个深度自动编码器网络，该网络相对简单，但在寻找不偏向特定标签的潜在表示方面功能强大。</p>
+<p>用深度自动编码器探索潜在空间</p>
+<p>正如我们在第七章、<em>自动编码器</em>中定义的，潜在空间在DL中非常重要，因为它们可以导致基于假定的丰富潜在表征的强大决策系统。并且，再一次，使自动编码器(和其他无监督模型)产生的潜在空间在它们的表示中丰富的是它们不偏向特定的标签。</p>
+<h1 id="uuid-70ad4673-ce72-4dc1-bc4c-28d3cb1004f5">在<a href="480521d9-845c-4c0a-b82b-be5f15da0171.xhtml">第7章</a>、<em>自动编码器</em>中，我们探索了MNIST数据集，这是DL中的标准数据集，并表明我们可以很容易地找到非常好的潜在表示，编码器中只有四个密集层，整个自动编码器模型有八个层。在下一节中，我们将学习一个更加困难的数据集，称为CIFAR-10，然后我们将回来探索<kbd>IMDB</kbd>数据集的潜在表示，我们已经在本章的前面几节中简要地探讨过了。</h1>
+<p>CIFAR-10</p>
+<p>2009年，<em>加拿大高级研究所(CIFAR) </em>发布了一个非常大的图像集合，可以用来训练DL模型识别各种物体。我们将在这个例子中使用的是广为人知的CIFAR-10，因为它只有10个类和总共60，000个图像；<em>图8.7 </em>描绘了每个等级的样本:</p>
+<h2 id="uuid-89392767-457c-41e6-a01e-8c666ff9f982">CIFAR-10</h2>
+<p>In 2009, the <em>Canadian Institute for Advanced Research (CIFAR)</em> released a very large collection of images that can be used to train DL models to recognize a variety of objects. The one we will use in this example is widely known as CIFAR-10, since it has only 10 classes and a total of 60,000 images; <em>Figure 8.7</em> depicts samples of each class:</p>
+<p class="mce-root"/>
+<p class="mce-root">图8.7–来自CIFAR-10数据集的样本图像。为方便起见，数字表示分配给每个类别的数值</p>
+<p class="mce-root">数据集中的每个图像都是32×32像素，使用3个维度来跟踪颜色细节。从图中可以看出，这些小图像包含除了那些被标记的对象之外的其他对象，例如文本、背景、结构、风景和其他部分被遮挡的对象，同时保留了前景中感兴趣的主要对象。这使得它比MNIST更具挑战性，在那里背景总是黑色的，图像是灰度的，并且每个图像中只有一个数字。如果你从未从事过计算机视觉应用，你可能不知道，与MNIST相比，处理CIFAR-10要复杂得多。因此，与MNIST的模型相比，我们的模型需要更加稳健和深入。</p>
+<div><img src="img/4e66fc36-252d-4f4b-b881-690e8d57122c.png" style="width:33.83em;height:16.08em;"/></div>
+<p>在TensorFlow和Keras中，我们可以使用以下代码轻松加载和准备数据集:</p>
+<p>上述代码输出以下内容:</p>
+<p>In TensorFlow and Keras, we can easily load and prepare our dataset with the following code:</p>
+<pre>import numpy as np<br/>from tensorflow.keras.datasets import <strong>cifar10</strong><br/><br/>(x_train, y_train), (x_test, y_test) = cifar10.load_data()<br/>x_train = x_train.astype('float32') / 255.<br/>x_test = x_test.astype('float32') / 255.<br/>x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))<br/>x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))<br/><br/>print('x_train shape is:', x_train.shape)<br/>print('x_test shape is:', x_test.shape)</pre>
+<p>这意味着我们有六分之一的数据集(~16%)被分离出来用于测试目的，而其余的用于训练。3072个维度来源于像素数和通道数:<img class="fm-editor-equation" src="img/13725260-8e91-4e8f-bb67-204f0f8917c4.png" style="width:9.67em;height:1.00em;"/>。前面的代码还将范围从[0，255]到[0.0，1.0]的数据规范化为浮点数。</p>
+<pre>x_train shape is: (50000, 3072)<br/>x_test shape is: (10000, 3072)</pre>
+<p class="mce-root">继续我们的例子，我们将提出一个深度自动编码器，其架构如图<em>图8.8 </em>所示，它将接受3072维输入，并将其编码为64维:</p>
+<p>图8.8–CIFAR-10数据集上深度自动编码器的架构</p>
+<p>这种架构在编码器中使用17层，在解码器中使用15层。图中的密集层具有写在相应块中的神经元数量。可以看出，该模型在编码输入数据的整个过程中实现了一系列战略性批量标准化和剔除策略。在本例中，所有辍学层的辍学率均为20%。</p>
+<div><img src="img/a5b1d547-5beb-43a1-8ce4-eda0b318876d.png" style="width:42.00em;height:24.58em;"/></div>
+<p>如果我们使用标准的<kbd>adam</kbd>优化器和标准的二进制交叉熵损失对模型进行200个时期的训练，我们可以获得如图<em>图8.9 </em>所示的训练性能:</p>
+<p>This architecture uses 17 layers in the encoder and 15 layers in the decoder. Dense layers in the diagram have the number of neurons written in their corresponding block. As can be seen, this model implements a series of strategic batch normalization and dropout strategies throughout the process of encoding the input data. In this example, all dropout layers have a 20% dropout rate.</p>
+<p>If we train the model for 200 epochs using the standard <kbd>adam</kbd> optimizer and the standard binary cross-entropy loss, we could obtain the training performance shown in <em>Figure 8.9</em>:</p>
+<p class="mce-root"/>
+<p class="mce-root">图8.9–CIFAR-10上深度自动编码器模型损失的重建</p>
+<p class="mce-root">以下是完整的代码:</p>
+<div><img src="img/39b4e755-a820-4fe6-9432-eaf516ec6a13.png" style="width:32.92em;height:20.67em;"/></div>
+<p>我们将模型定义如下:</p>
+<p>接下来，我们将模型的解码器部分定义如下:</p>
+<pre>from tensorflow import keras<br/>from tensorflow.keras.datasets import cifar10<br/>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import Dense, <strong>Dropout</strong>, Activation, Input<br/>from tensorflow.keras.layers import <strong>BatchNormalization<br/></strong>import matplotlib.pyplot as plt<br/>import numpy as np<br/><br/>inpt_dim = 32*32*3<br/><strong>ltnt_dim = 64</strong><br/><br/># The data, split between train and test sets:<br/>(x_train, y_train), (x_test, y_test) = cifar10.load_data()<br/>x_train = x_train.astype('float32') / 255.<br/>x_test = x_test.astype('float32') / 255.<br/>x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))<br/>x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))<br/>print('x_train shape:', x_train.shape)<br/>print('x_test shape:', x_test.shape)</pre>
+<p>我们将它放在一个自动编码器模型中，编译并训练它，如下所示:</p>
+<pre>inpt_vec = Input(shape=(inpt_dim,))<br/>el1 = Dense(2048)(inpt_vec)<br/>el2 = Activation('relu')(el1)<br/>el3 = Dense(1024)(el2)<br/>el4 = <strong>BatchNormalization</strong>()(el3)<br/>el5 = Activation('relu')(el4)<br/>el6 = <strong>Dropout</strong>(0.2)(el5)<br/><br/>el7 = Dense(512)(el6)<br/>el8 = Activation('relu')(el7)<br/>el9 = Dense(256)(el8)<br/>el10 = <strong>BatchNormalization</strong>()(el9)<br/>el11 = Activation('relu')(el10)<br/>el12 = <strong>Dropout</strong>(0.2)(el11)<br/><br/>el13 = Dense(128)(el12)<br/>el14 = Activation('relu')(el13)<br/>el15 = <strong>Dropout</strong>(0.2)(el14)<br/>el16 = Dense(ltnt_dim)(el15)<br/>el17 = <strong>BatchNormalization</strong>()(el16)<br/>encoder = Activation('tanh')(el17)<br/><br/># model that takes input and encodes it into the latent space<br/>latent_ncdr = Model(inpt_vec, encoder)</pre>
+<p><em>图8.9 </em>中所示的模型性能收敛良好，训练集和测试集的损失都在衰减，这意味着模型没有过度拟合，并随着时间的推移继续适当调整权重。为了可视化模型在不可见数据(测试集)上的性能，我们可以简单地从测试集中随机选取样本，例如图8.10 中的<em>样本，它们产生图8.11 </em>中的<em>输出:</em></p>
+<pre>dl1 = Dense(128)(encoder)<br/>dl2 = <strong>BatchNormalization</strong>()(dl1)<br/>dl3 = Activation('relu')(dl2)<br/><br/>dl4 = <strong>Dropout</strong>(0.2)(dl3)<br/>dl5 = Dense(256)(dl4)<br/>dl6 = Activation('relu')(dl5)<br/>dl7 = Dense(512)(dl6)<br/>dl8 = <strong>BatchNormalization</strong>()(dl7)<br/>dl9 = Activation('relu')(dl8)<br/><br/>dl10 = <strong>Dropout</strong>(0.2)(dl9)<br/>dl11 = Dense(1024)(dl10)<br/>dl12 = Activation('relu')(dl11)<br/>dl13 = Dense(2048)(dl12)<br/>dl14 = <strong>BatchNormalization</strong>()(dl13)<br/>dl15 = Activation('relu')(dl14)<br/>decoder = Dense(inpt_dim, activation='sigmoid') (dl15)</pre>
+<p>图8.10–来自CIFAR-10测试集的样本输入</p>
+<pre># model that takes input, encodes it, and decodes it<br/>autoencoder = Model(inpt_vec, decoder)<br/><br/># setup RMSprop optimizer<br/>opt = keras.optimizers.<strong>RMSprop</strong>(learning_rate=0.0001, decay=1e-6, )<br/><br/>autoencoder.compile(loss='binary_crossentropy', optimizer=opt)<br/><br/>hist = autoencoder.fit(x_train, x_train, epochs=200, batch_size=10000, <br/>                       shuffle=True, validation_data=(x_test, x_test))<br/><br/># and now se visualize the results<br/>fig = plt.figure(figsize=(10,6))<br/>plt.plot(hist.history['loss'], color='#785ef0')<br/>plt.plot(hist.history['val_loss'], color='#dc267f')<br/>plt.title('Model reconstruction loss')<br/>plt.ylabel('Binary Cross-Entropy Loss')<br/>plt.xlabel('Epoch')<br/>plt.legend(['Training Set', 'Test Set'], loc='upper right')<br/>plt.show()</pre>
+<p>图8.11-图8.10中给出的样本的样本输出(重建)</p>
+<div><img src="img/a502db01-f2ff-4c8f-987d-d8877f7c0e70.png" style="width:36.75em;height:19.08em;"/></div>
+<p>从<em>图8.11 </em>中可以看出，重建正确地处理了输入数据的色谱。然而，很明显，就重建而言，这个问题比MNIST要困难得多。形状是模糊的，尽管它们看起来处于正确的空间位置。重建过程中明显缺少细节。我们可以把自动编码器做得更深，或者训练得更久，但是这个问题可能不会得到很好的解决。我们可以用这样一个事实来证明这种性能，即我们故意选择寻找一个大小为64的潜在表示，它比一个5乘5的小图像还要小:<img class="fm-editor-equation" src="img/861e2ca8-20e9-4276-94b4-bb24d061553c.png" style="width:7.33em;height:1.00em;"/>。如果你仔细想想，很明显这几乎是不可能的，因为3，072比64代表2.08%的压缩率！</p>
+<div><img src="img/5befa42e-5531-46a3-89c2-6fedf3830087.png" style="width:38.00em;height:19.75em;"/></div>
+<p>对此的解决方案不是将模型做得更大，而是承认潜在表示的大小可能不够大，不足以捕捉输入的相关细节来进行良好的重建。当前模型在降低特征空间的维度方面可能过于激进。如果我们使用UMAP将64维的潜在向量在2维中可视化，我们将得到如图<em>图8.12 </em>所示的图:</p>
+<p>You can see from <em>Figure 8.11</em> that the reconstructions correctly address the color spectrum of the input data. However, it is clear that the problem is much harder in reconstruction terms than MNIST. Shapes are blurry although they seem to be in the correct spatial position. A level of detail is evidently missing in the reconstructions. We can make the autoencoder deeper, or train for longer, but the problem might not be properly solved. We can justify this performance with the fact that we deliberately chose to find a latent representation of size 64, which is smaller than a tiny 5 by 5 image: <img class="fm-editor-equation" src="img/861e2ca8-20e9-4276-94b4-bb24d061553c.png" style="width:7.33em;height:1.00em;"/>. If you think about it and reflect on this, then it is clear that it is nearly impossible, as 3,072 to 64 represents a 2.08% compression! </p>
+<p>图8.12–测试集中潜在向量的UMAP二维表示</p>
+<p class="mce-root">我们之前没有谈到UMAP，但我们将简要说明，这是一个突破性的数据可视化工具，最近已经提出，并开始获得关注(麦金尼斯等人(2018))。在我们的例子中，我们简单地使用UMAP来可视化数据分布，因为我们没有使用自动编码器来编码到二维。<em>图8.12 </em>表明类别的分布没有足够清晰地定义，因此我们无法观察到分离或定义明确的集群。这证实了深度自动编码器没有捕获足够的信息用于类分离；然而，在潜在空间的某些部分中仍然存在明确定义的组，例如底部中间和左侧的集群，其中一个集群与例如一组飞机图像相关联。这个<strong>深度信念网络</strong>已经很好地获得了关于输入空间的知识，足以辨认出输入的一些不同方面；例如，它知道飞机与青蛙非常不同，或者至少它们可能出现在不同的条件下，也就是说，青蛙将在绿色背景下出现，而飞机可能在背景中有蓝色的天空。</p>
+<div><img src="img/c9f94d24-4eb7-457f-9ae4-4d0d8dbbefe2.png" style="width:36.08em;height:31.92em;"/></div>
+<p>Figure 8.12 – UMAP two-dimensional representation of the latent vectors in the test set</p>
+<p><em>图8.8 </em>中介绍的模型可以使用功能方法生产；编码器可以定义如下:</p>
+<p class="mce-root"/>
+<div><strong>Convolutional neural networks</strong> (<strong>CNNs</strong>)<strong> </strong>are a much better alternative for most computer vision and image analysis problems such as this one. We will get there in due time in <a href="c36bdee9-51f3-4283-8f15-6dd603d071a1.xhtml">Chapter 12</a>, <em>Convolutional Neural Networks</em>. Be patient for now as we gently introduce different models one by one. You will see how we can make a convolutional autoencoder that can achieve much better performance than an autoencoder that uses fully connected layers. For now, we will continue with autoencoders for a little longer.</div>
+<p>The model introduced in <em>Figure 8.8</em> can be produced using the functional approach; the encoder can be defined as follows:</p>
+<pre>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import Dense, Dropout, Activation, Input<br/>from tensorflow.keras.layers import BatchNormalization, MaxPooling1D<br/>import numpy as np<br/><br/>inpt_dim = 32*32*3<br/>ltnt_dim = 64<br/><br/>inpt_vec = Input(shape=(inpt_dim,))<br/>el1 = Dense(2048)(inpt_vec)<br/>el2 = Activation('relu')(el1)<br/>el3 = Dense(1024)(el2)<br/>el4 = <strong>BatchNormalization</strong>()(el3)<br/>el5 = Activation('relu')(el4)<br/>el6 = <strong>Dropout</strong>(0.2)(el5)<br/><br/>el7 = Dense(512)(el6)<br/>el8 = Activation('relu')(el7)<br/>el9 = Dense(256)(el8)<br/>el10 = <strong>BatchNormalization</strong>()(el9)<br/>el11 = Activation('relu')(el10)<br/>el12 = <strong>Dropout</strong>(0.2)(el11)<br/><br/>el13 = Dense(128)(el12)<br/>el14 = Activation('relu')(el13)<br/>el15 = <strong>Dropout</strong>(0.2)(el14)<br/>el16 = Dense(ltnt_dim)(el15)<br/>el17 = <strong>BatchNormalization</strong>()(el16)<br/>encoder = Activation('tanh')(el17)<br/><br/># model that takes input and encodes it into the latent space<br/>latent_ncdr = Model(inpt_vec, encoder)</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root">请注意，所有辍学层每次都有20%的比率。这17层从映射一个<kbd>inpt_dim=3072</kbd>维度的输入到映射<kbd>ltnt_dim = 64</kbd>维度的输入。编码器的最后一个激活函数是双曲正切<kbd>tanh</kbd>，它提供[-1，1]范围内的输出；这种选择只是为了方便视觉化潜在空间。</p>
+<p class="mceNonEditable">接下来，解码器的定义如下:</p>
+<p>解码器最后一层有一个<kbd>sigmoid</kbd>激活函数，映射回输入空间范围，即【0.0，1.0】。最后，我们可以使用<kbd>binary_crossentropy</kbd>损失和<kbd>adam</kbd>优化器对之前定义的<kbd>autoencoder</kbd>模型进行200个时期的训练，如下所示:</p>
+<p>结果已在图8.9 至图8<em>中显示。<em> 11 </em>。然而，重新访问MNIST是很有趣的，但这次使用了深度自动编码器，我们将在接下来讨论。</em></p>
+<pre>dl1 = Dense(128)(encoder)<br/>dl2 = <strong>BatchNormalization</strong>()(dl1)<br/>dl3 = Activation('relu')(dl2)<br/><br/>dl4 = <strong>Dropout</strong>(0.2)(dl3)<br/>dl5 = Dense(256)(dl4)<br/>dl6 = Activation('relu')(dl5)<br/>dl7 = Dense(512)(dl6)<br/>dl8 = <strong>BatchNormalization</strong>()(dl7)<br/>dl9 = Activation('relu')(dl8)<br/><br/>dl10 = <strong>Dropout</strong>(0.2)(dl9)<br/>dl11 = Dense(1024)(dl10)<br/>dl12 = Activation('relu')(dl11)<br/>dl13 = Dense(2048)(dl12)<br/>dl14 = <strong>BatchNormalization</strong>()(dl13)<br/>dl15 = Activation('relu')(dl14)<br/>decoder = Dense(inpt_dim, activation='sigmoid') (dl15)<br/><br/># model that takes input, encodes it, and decodes it<br/>autoencoder = Model(inpt_vec, decoder)</pre>
+<p>The last layer of the decoder has a <kbd>sigmoid</kbd> activation function that maps back to the input space range, that is, [0.0, 1.0]. Finally, we can train the <kbd>autoencoder</kbd> model as previously defined using the <kbd>binary_crossentropy</kbd> loss and <kbd>adam</kbd> optimizer for 200 epochs like so:</p>
+<pre>autoencoder.compile(loss='binary_crossentropy', optimizer='adam')<br/><br/>hist = autoencoder.fit(x_train, x_train, epochs=200, batch_size=5000, <br/>                       shuffle=True, validation_data=(x_test, x_test))</pre>
+<p>MNIST</p>
+<p class="mce-root"><kbd>MNIST</kbd>数据集是一个没有CIFAR-10复杂的数据集的好例子，可以用深度自动编码器来处理。之前，在<a href="480521d9-845c-4c0a-b82b-be5f15da0171.xhtml">第7章</a>、<em>自动编码器</em>中，我们讨论了浅层自动编码器，并展示了添加层是有益的。在本节中，我们将进一步展示具有丢弃和批量标准化层的深度自动编码器可以更好地产生丰富的潜在表示。图8.13显示了建议的架构:</p>
+<h2 id="uuid-aa4bf8ed-378a-4af5-b927-a9cf544bbad6">图8.13–MNIST深度自动编码器</h2>
+<p>层数和层数顺序同<em>图8.8</em>；然而，致密层中神经元的数量和潜在表征维度发生了变化。压缩率从784到2，即0.25%:</p>
+<div><img src="img/45e95b72-b8c6-4ea4-9c14-742b2d699963.png" style="width:29.00em;height:17.00em;"/></div>
+<p>图8.14–测试集的MNIST原始样本数字</p>
+<p>然而，重建非常好，如图<em>图8.14 </em>和<em>图8.15 </em>所示:</p>
+<div><img src="img/a6763900-9f9b-405e-a06e-928342690342.png" style="width:20.58em;height:10.67em;"/></div>
+<p>图8.15–图8.14 中显示的原始测试集的重构MNIST数字</p>
+<p>图中显示的重建显示了非常好的细节水平，尽管边缘看起来模糊。该模型似乎很好地捕捉到了手指的大致形状。测试集的相应潜在表示如图<em>图8.16 </em>所示:</p>
+<div><img src="img/6842fab6-7196-442d-9768-48f4f29ab489.png" style="width:19.92em;height:10.33em;"/></div>
+<p>图8.16–测试集中MNIST数字的潜在表示，部分显示在图8.14 中</p>
+<p>The reconstructions shown in the figure show a level of detail that is very good, although it seems blurry around the edges. The general shape of the digits seems to be captured well by the model. The corresponding latent representations of the test set are shown in <em>Figure 8.16</em>:</p>
+<div><img src="img/a3ad8424-e567-49ed-808e-d340eac53c77.png" style="width:28.50em;height:24.50em;"/></div>
+<p>从前面的图中，我们可以看到有定义明确的集群；然而，重要的是要指出，自动编码器对标签一无所知，这些聚类仅从数据中学习。这就是自动编码器的最大威力。如果将编码器模型拆开并用标签重新训练，该模型可能会表现得更好。然而，现在，我们将把它留在这里，继续讨论第9章中的<a href="c7b8496e-70e6-47ab-8746-d5893a10493d.xhtml">生成型模型，接下来是<em>变型自动编码器</em>。</a></p>
+<p class="mce-root">摘要</p>
+<p>这中间的一章展示了深度自动编码器在与正则化策略(如丢弃和批量规范化)结合使用时的强大功能。我们实现了一个超过30层的自动编码器！那就是<em>深</em>！我们看到，在困难的问题中，深度自动编码器可以提供高度复杂数据的无偏潜在表示，就像大多数深度信念网络一样。我们研究了辍学如何通过在每个学习步骤中随机忽略(断开)一小部分神经元来降低过度拟合的风险。此外，我们了解到批量标准化可以通过逐渐调整一些神经元的响应来为学习算法提供稳定性，以便激活函数和其他连接的神经元不会在数字上饱和或溢出。</p>
+<h1 id="uuid-3ede9249-acac-46ba-a12a-0561c0d2350a">此时，您应该对在深度自动编码器模型中应用批处理规范化和丢弃策略充满信心。您应该能够创建自己的深度自动编码器，并将其应用于不同的任务，这些任务需要丰富的潜在表示以实现数据可视化、数据压缩或降维问题，以及需要低维表示的其他类型的数据嵌入。</h1>
+<p><a href="c7b8496e-70e6-47ab-8746-d5893a10493d.xhtml">第9章</a>、<em>变型自动编码器、</em>将继续使用自动编码器，但是从<em>生成</em> <em>建模</em>的角度。生成模型具有通过采样一个概率密度函数来生成数据的能力，这是非常有趣的。我们将具体讨论在存在噪声数据的情况下，作为深度自动编码器的更好替代方案的变分自动编码器模型。</p>
+<p>At this point, you should feel confident applying batch normalization and dropout strategies in a deep autoencoder model. You should be able to create your own deep autoencoders and apply them to different tasks where a rich latent representation is required for data visualization purposes, data compression or dimensionality reduction problems, and other types of data embeddings where a low-dimensional representation is required.</p>
+<p>问题和答案</p>
+<p class="mce-root"><strong>本章讨论的哪种正则化策略可以减轻深度模型中的过度拟合？</strong></p>
+<h1 id="uuid-60d2ea9e-5716-4f84-ae0f-5a5ce267dffe">辍学。</h1>
+<ol>
+<li><strong>增加一个批量归一化层是否使得学习算法必须学习更多的参数？</strong></li>
+</ol>
+<p style="padding-left: 60px">实际上，没有。对于使用dropout的每个层，每个神经元只会学习两个参数:<img src="img/5db1f077-f826-4c6a-8b08-ca701527c5c0.png" style="width:2.50em;height:1.25em;"/>。如果你计算一下，新参数的增加是相当小的。</p>
+<ol start="2">
+<li>还有哪些深层的信念网络？</li>
+</ol>
+<p style="padding-left: 60px">例如，受限玻尔兹曼机器是深度信念网络的另一个非常流行的例子。<a href="https://cdp.packtpub.com/deep_learning_for_beginners/wp-admin/post.php?post=33&amp;action=edit">第10章</a>、<em>受限玻尔兹曼机器</em>，将更详细地介绍这些。</p>
+<ol start="3">
+<li><strong>为什么深度自动编码器在MNIST上比在CIFAR-10上表现得更好？</strong></li>
+</ol>
+<p style="padding-left: 60px">事实上，我们没有客观的方法来说深度自动编码器在这些数据集上更好。我们偏向于从聚类和数据标签的角度来考虑这个问题。我们对图8.12 和图8.16 中的潜在表征的偏见使得我们无法考虑其他可能性。考虑一下CIFAR-10:如果autoencoder正在学习根据纹理表示数据会怎么样？还是调色板？还是几何性质？回答这些问题是理解autoencoder内部发生了什么，以及为什么它正在学习以这种方式表示数据，但需要更高级的技能和时间的关键。综上所述，在回答这些问题之前，我们无法确定它是否表现不佳；否则，如果我们戴上我们的阶级、群体和标签的眼镜，那么它可能只是看起来那样。</p>
+<ol start="4">
+<li><strong>How come deep autoencoders perform better on MNIST than on CIFAR-10?</strong></li>
+</ol>
+<p style="padding-left: 60px">Actually, we do not have an objective way of saying that deep autoencoders are better on these datasets. We are biased in thinking about it in terms of clustering and data labels. Our bias in thinking about the latent representations in <em>Figure 8.12</em> and <em>Figure 8.16</em> in terms of labels is precluding us from thinking about other possibilities. Consider the following for CIFAR-10: what if the autoencoder is learning to represent data according to textures? Or color palettes? Or geometric properties? Answering these questions is key to understanding what is going on inside the autoencoder and why it is learning to represent the data in the way it does, but requires more advanced skills and time. In summary, we don't know for sure whether it is underperforming or not until we answer these questions; otherwise, if we put on our lenses of classes, groups, and labels, then it might just seem that way.</p>
+<p class="mce-root">参考</p>
+<p class="mce-root">Sutskever，I .，&amp; Hinton，G. E. (2008年)。深而窄的sigmoid信念网络是通用的近似器。<em>神经计算</em>，20(11)，2629-2636。</p>
+<h1 id="uuid-3663e959-56a2-49fe-8d2c-2dd35a74c0b5">塞纳特，金斯伯里，b .，&amp;拉马巴德兰，B. (2012年3月)。使用深度信念网络的自动编码器瓶颈特征。2012年<em> IEEE声学、语音和信号处理国际会议(ICASSP) </em>(第4153-4156页)。IEEE。</h1>
+<ul>
+<li>吴，k .，，Magdon-Ismail，M. (2016)。用于可解释特征的逐节点贪婪深度学习。<em> arXiv预印本</em> arXiv:1602.06183。</li>
+<li>约夫，s .，&amp;塞格迪，C. (2015年6月)。批量标准化:通过减少内部协变量转移加速深度网络训练。在<em>机器学习国际会议(ICML) </em>(第448-456页)。</li>
+<li>Srivastava，h . hint on，g . Krizhevsky，a .，Sutskever，I .，&amp; Salakhutdinov，R. (2014)。辍学:防止神经网络过度拟合的简单方法。<em>《机器学习研究杂志</em>，15卷1期，1929-1958年。</li>
+<li>j .杜奇、e .哈赞和y .辛格(2011年)。在线学习和随机优化的自适应次梯度方法。<em>机器学习研究杂志</em>，12期(7月)，2121-2159。</li>
+<li>麦金尼斯，l .，希利，j .，&amp;乌玛普，J. M. (2018)。降维的一致流形逼近和投影。arXiv预印本 arXiv:1802.03426。</li>
+<li>(2011年6月)。学习用于情感分析的词向量。在<em>计算语言学协会第49届年会会议录</em> : <em>人类语言技术</em>-第1卷(第142-150页)。计算语言学协会。</li>
+<li>Hochreiter，S. (1998年)。递归神经网络学习中的消失梯度问题及解决方案。《国际不确定性杂志》，<em>模糊性和基于知识的系统</em>，6(02)，107-116。</li>
+<li>t . van Laarhoven(2017年)。L2正规化与批次和重量正规化。arXiv预印本 arXiv:1706.05350。</li>
+<li>Hochreiter, S. (1998). The vanishing gradient problem during learning recurrent neural nets and problem solutions. International Journal of Uncertainty, <em>Fuzziness and Knowledge-Based Systems</em>, 6(02), 107-116.</li>
+<li>Van Laarhoven, T. (2017). L2 regularization versus batch and weight normalization. <em>arXiv preprint</em> arXiv:1706.05350.</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

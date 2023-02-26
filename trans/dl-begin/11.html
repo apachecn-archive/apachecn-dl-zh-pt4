@@ -1,0 +1,304 @@
+<html><head/><body>
+
+
+    
+        <title>Variational Autoencoders</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    Variational Autoencoders
+                
+            
+            
+                
+<p>自动编码器在寻找丰富的潜在空间方面非常强大。他们几乎是不可思议的，对吗？如果我们告诉你<strong>变型自动编码器</strong> ( <strong> VAEs </strong>)更令人印象深刻呢？嗯，他们是。他们继承了传统自动编码器的所有优点，并增加了从参数分布中生成数据的能力。</p>
+<p class="mce-root">在这一章中，我们将介绍无监督深度学习领域中生成模型背后的哲学以及它们在新数据产生中的重要性。我们将提出VAE作为深度自动编码器的更好的替代方案。在这一章的结尾，你将会知道vae来自哪里和他们的目的是什么。你将能够看到深层和浅层VAE模型之间的差异，你将能够欣赏VAEs的生成属性。</p>
+<p>本章组织如下:</p>
+<ul>
+<li>引入深度生成模型</li>
+<li>审视VAE模式</li>
+<li>比较MNIST上的深和浅阀门</li>
+<li>对生成模型伦理意蕴的思考</li>
+</ul>
+<h1 id="uuid-4251f2f4-5e2c-4841-b254-d754facd1157">引入深度生成模型</h1>
+<p>深度学习对一般的机器学习社区有非常有趣的贡献，特别是在深度判别和生成模型方面。我们熟悉什么是辨别模型——例如，<strong>多层感知器</strong> ( <strong> MLP </strong>)就是其中之一。在判别模型中，我们的任务是在给定输入数据<em> <img class="fm-editor-equation" src="img/36b66f81-9b91-46e6-9cc5-c91817249c39.png" style="width:0.75em;height:0.83em;"/> </em>的情况下，猜测、预测或逼近期望的目标<sub> <img class="fm-editor-equation" src="img/2c8c7283-b742-4625-b194-d682a0dae077.png" style="width:0.58em;height:0.83em;"/> </sub>。在统计理论术语中，我们正在对条件概率密度函数进行建模，<img src="img/4af3a90c-1525-4445-a4ec-ddade5cbafce.png" style="width:2.58em;height:1.08em;"/>。另一方面，通过生成模型，这是大多数人的意思:</p>
+<p><em>基于输入或刺激<img class="fm-editor-equation" src="img/e5b5b6ea-6bfd-48d7-bd48-19b814924ab4.png" style="width:0.67em;height:0.83em;"/>能够生成遵循特定分布的数据<img class="fm-editor-equation" src="img/36b66f81-9b91-46e6-9cc5-c91817249c39.png" style="width:0.75em;height:0.83em;"/>的模型。</em></p>
+<p>在深度学习中，我们可以建立一个神经网络，可以很好地模拟这个生成过程。在统计术语中，神经模型近似于条件概率密度函数<img src="img/8c63f596-488c-4e73-a7aa-7e08c2fa3fac.png" style="width:2.33em;height:1.00em;"/>。虽然今天有几种生成模型，但在本书中，我们将特别讨论三种。</p>
+<p>首先，我们将讨论VAEs，这将在下一节中讨论。第二，<a href="6ec46669-c8d3-4003-ba28-47114f1515df.xhtml">第十章</a>，<em>受限玻尔兹曼机</em>，将介绍一种图解方法及其性质(Salakhutdinov，r .等人(2007))。最后一种方法将在<a href="7b09fe4b-078e-4c57-8a81-dc0863eba43d.xhtml">第14章</a>、<em>生成敌对网络中讨论。</em>这些网络正在改变我们对模型稳健性和数据生成的看法(Goodfellow，I .，<em> et al. </em> (2014))。</p>
+<p class="mce-root"/>
+<h1 id="uuid-eea46287-2f6b-406d-b1fa-0125e358410c">审视VAE模式</h1>
+<p>VAE是一种特殊类型的自动编码器(Kingma，D. P .，&amp; Welling，M. (2013))。它从贝叶斯方法中学习数据集的特定统计属性。先把<sub> <img class="fm-editor-equation" src="img/83389b96-e277-4cf3-8778-7c1450d525ac.png" style="width:2.33em;height:1.17em;"/> </sub>定义为一个随机潜变量的先验概率密度函数，<sub> <img class="fm-editor-equation" src="img/52cbb884-6c5d-4cfc-9d26-f0eb85c61622.png" style="width:3.08em;height:1.17em;"/> </sub>。那么，我们可以描述一个条件概率密度函数，<sub> <img src="img/a04acbe7-4f47-4fd3-9d94-2a97e8e478b8.png" style="width:2.50em;height:0.92em;"/> </sub>，可以解释为一个可以产生数据的模型——比如说，<sub> <img src="img/7b2a4e2f-4402-4293-b890-0ab54f1f0694.png" style="width:5.25em;height:1.42em;"/> </sub>。因此，我们可以根据条件分布和先验分布来近似后验概率密度函数，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ab9cec77-1f80-41d4-96d0-67a90fd91a22.png" style="width:13.17em;height:1.67em;"/></p>
+<p>事实证明，精确的后验概率是难以处理的，但这个问题可以通过做一些假设和使用一个有趣的想法来计算梯度，从而得到近似的解决。首先，可以假设先验遵循各向同性高斯分布<img src="img/8732332a-8166-4cbc-b4cf-fca9b6f5b0c9.png" style="width:6.58em;height:1.17em;"/>。我们还可以假设条件分布<img src="img/dc0906a5-b6fc-4f7e-b632-939b6c8585ca.png" style="width:2.92em;height:1.08em;"/>可以使用神经网络来参数化和建模；也就是给定一个潜在向量<img class="fm-editor-equation" src="img/e5b5b6ea-6bfd-48d7-bd48-19b814924ab4.png" style="width:0.67em;height:0.83em;"/>，我们用一个神经网络<em>生成</em> <img class="fm-editor-equation" src="img/de19cd96-7891-4682-a488-d8f832e9aeee.png" style="width:0.75em;height:0.83em;"/>。在这种情况下，网络的权重被表示为<sub> <img class="fm-editor-equation" src="img/29d99b0a-5807-4f74-8a55-16b1a1745334.png" style="width:0.33em;height:0.58em;"/> </sub>，并且该网络将等同于<em>解码器</em>网络。如果输出<img class="fm-editor-equation" src="img/cac94549-d340-466d-b3d0-6e71f6c823f4.png" style="width:0.75em;height:0.83em;"/>可能是二进制(或布尔)值，则参数分布的选择可以是高斯分布，其中<img class="fm-editor-equation" src="img/cac94549-d340-466d-b3d0-6e71f6c823f4.png" style="width:0.75em;height:0.83em;"/>可以采用各种各样的值，或者是伯努利分布。接下来，我们必须再次回到另一个神经网络来近似后验，使用<sub> <img class="fm-editor-equation" src="img/80b72202-e128-44ce-ad05-ace625e90357.png" style="width:3.50em;height:1.33em;"/> </sub>与单独的参数，<sub> <img class="fm-editor-equation" src="img/160f2e57-8c5d-4a98-9a12-faf7e05313f1.png" style="width:0.50em;height:0.92em;"/> </sub>。这个网络可以解释为以<img class="fm-editor-equation" src="img/913f83a9-0a47-4629-b4ea-7d16124233b3.png" style="width:0.75em;height:0.83em;"/>为输入并产生潜变量<img class="fm-editor-equation" src="img/f8da3963-6d86-4faf-90ad-0ce4598b25f8.png" style="width:0.67em;height:0.83em;"/>的<em>编码器</em>网络。</p>
+<p>在这种假设下，我们可以定义一个损失函数如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/542e3bf0-5cee-4200-9ed5-1bbbbd27aa4a.png" style="width:23.75em;height:3.00em;"/></p>
+<p>完整的推导可参见Kingma，D. P .，&amp; Welling，M. (2013)。然而，简而言之，我们可以说，在第一项中，<img src="img/6c8220c0-ab8a-49f3-8984-c004e5782ac5.png" style="width:2.50em;height:0.92em;"/>是kull back-lei bler散度函数，旨在衡量先验的分布如何不同，<sub> <img class="fm-editor-equation" src="img/110e5ad7-4d3b-42f3-bd5a-c048eefa31b3.png" style="width:2.50em;height:1.25em;"/> </sub>，相对于后验的分布，<sub> <img class="fm-editor-equation" src="img/68e048a8-5c70-4a2a-b51e-9ded415b10bd.png" style="width:2.17em;height:0.83em;"/> </sub>。这发生在<em>编码器</em>中，我们希望确保<img class="fm-editor-equation" src="img/f1af68c2-2332-4405-bd6f-16ec408d80c3.png" style="width:0.67em;height:0.83em;"/>的先验和后验是紧密匹配的。第二项与解码器网络相关，其目的是基于条件分布<img src="img/84214a05-6ba7-43ae-9981-1c3469e9407a.png" style="width:3.17em;height:1.17em;"/>的负对数似然性，相对于后验概率<img src="img/4e736730-4af1-4524-b200-f64746e7e823.png" style="width:3.17em;height:1.17em;"/>的期望，最小化重建损失。</p>
+<p class="mce-root">让VAE通过梯度下降学习的最后一个技巧是使用一个叫做<strong>重新参数化</strong> <em>的想法。</em>这个技巧是必要的，因为不可能对一个样本<img class="fm-editor-equation" src="img/82260ac8-99f8-4fb4-9f7d-509ac5aefc7c.png" style="width:0.75em;height:0.83em;"/>进行编码，以近似具有0均值和一些方差的各向同性高斯，并从该分布中抽取一个样本<img class="fm-editor-equation" src="img/79de787c-640f-439e-80f7-bbb776fdf0b1.png" style="width:0.58em;height:0.67em;"/>，在那里暂停，然后继续解码并计算梯度，然后返回并进行更新。重新参数化技巧只是一种从<sub> <img class="fm-editor-equation" src="img/35226dc4-445f-4f7e-b5ae-e332f3eedb53.png" style="width:3.50em;height:1.33em;"/> </sub>生成样本的方法，同时，它允许梯度计算。如果我们说<sub> <img class="fm-editor-equation" src="img/1ca0773f-49d4-4a80-8f31-f3e0ae712ee1.png" style="width:5.25em;height:1.25em;"/> </sub>，我们可以用一个辅助变量<img class="fm-editor-equation" src="img/d20928b8-47fc-495e-8597-0c476e80bb92.png" style="width:0.50em;height:0.75em;"/>来表示随机变量<img class="fm-editor-equation" src="img/7bc90bd7-3be3-4e8c-99f2-ecbe53e205e2.png" style="width:0.50em;height:0.58em;"/>，用边际概率密度函数<sub> <img class="fm-editor-equation" src="img/800b5609-ccd9-447d-8da9-add870f8b803.png" style="width:1.17em;height:0.83em;"/> </sub>，这样，<sub><img class="fm-editor-equation" src="img/04fa784b-ebe5-4b9c-9b22-2506e12654a9.png" style="width:4.58em;height:1.08em;"/></sub><sub><img class="fm-editor-equation" src="img/c07036e2-7876-4882-a7df-c93fcdd8a6b2.png" style="width:2.33em;height:1.25em;"/></sub>就是一个由<sub> <img class="fm-editor-equation" src="img/dbeee19b-aca5-4a8f-b802-64dcd61ec13e.png" style="width:0.75em;height:1.33em;"/> </sub>参数化的函数，返回一个向量。这允许对参数<sub> <img class="fm-editor-equation" src="img/6dc7faab-b474-45db-87c2-62cc0e4a321b.png" style="width:0.58em;height:1.00em;"/> </sub>(发生器或解码器)进行梯度计算，并使用任何可用的梯度下降方法对<sub> <img class="fm-editor-equation" src="img/5635e398-101a-4836-9b24-2b94084c779c.png" style="width:0.50em;height:0.92em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/456dbd6d-36b0-42c9-8457-3124c7245a53.png" style="width:0.50em;height:0.83em;"/> </sub>进行更新。</p>
+<p><sub> <img class="fm-editor-equation" src="img/1ca0773f-49d4-4a80-8f31-f3e0ae712ee1.png" style="width:5.75em;height:1.25em;"/> </sub>等式中的<em>波浪号</em>(~)可以解释为<em>遵循</em>的分布。这样，方程可以读作<img class="fm-editor-equation" src="img/7bc90bd7-3be3-4e8c-99f2-ecbe53e205e2.png" style="width:0.75em;height:0.83em;"/>遵循后验分布，<sub> <img class="fm-editor-equation" src="img/a5b1d977-263d-4bda-ba53-00039ad43c93.png" style="width:3.17em;height:1.25em;"/> </sub>。</p>
+<p><em>图9.1 </em>描绘了VAE架构，明确显示了<em>瓶颈</em>中涉及的部分，以及如何解释网络的各个部分:</p>
+<div><img src="img/c6f80791-6557-4162-a6b7-642b28784a67.png" style="width:26.33em;height:33.17em;"/></div>
+<p>图9.1-VAE建筑</p>
+<p>上图显示，在理想的VAE中，分布的参数被精确和完美地学习，以实现精确的重建。然而，这只是一个例子，在实践中，完美的重建可能很难实现。</p>
+<div><strong>Bottlenecks </strong>are the latent representations or parameters that are found in neural networks that go from layers with large numbers of neural units to layers with a decreasing number of neural units. These bottlenecks are known to produce interesting feature spaces (Zhang, Y., <em>et al.</em> (2014)).</div>
+<p>现在，让我们准备一点一点地制作我们的第一个VAE。我们将从描述我们将使用的数据集开始。</p>
+<h2 id="uuid-acf5c806-da57-475d-91ec-41a2e583e012">重新审视心脏病数据集</h2>
+<p>在第3章、<em>准备数据</em>中，我们详细描述了一个名为<strong>克利夫兰心脏病</strong>数据集的属性。在<em>图9.2 </em>中描述了该数据集中两列的屏幕截图。在这里，我们将重新访问这个数据集，目的是将数据的原始13维减少到只有2维。不仅如此，我们还将尝试从生成器(即解码器)生成新数据:</p>
+<div><img src="img/6e25e8f1-e950-4fd6-a7ec-9ac75ecdd0cb.png" style="width:36.42em;height:31.08em;"/></div>
+<p>图9.2–两列克利夫兰心脏病数据集样本</p>
+<p>通过查看<a href="8300fba9-620e-4bc3-8d81-3b02c5043a0d.xhtml">第3章</a>、<em>准备数据</em>中的<em>图3.8 </em>和<em> 3.9 </em>，我们可以很容易地证明我们执行降维的尝试是正确的，并注意到数据可能被处理，以便查看神经网络是否可以使与无疾病心脏相关的数据与其他数据分开聚类。类似地，假设数据集本身只包含303个样本，我们可以证明新数据的生成是合理的。</p>
+<p class="mce-root"/>
+<p>要下载数据，我们只需运行以下代码:</p>
+<pre>#download data<br/>!wget https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data</pre>
+<p>然后，为了将数据加载到数据框中并分离训练数据和目标，我们可以执行以下代码:</p>
+<pre>import pandas as pd<br/>df = pd.read_csv('processed.cleveland.data', header=None)<br/># this next line deals with possible numeric errors<br/>df = df.apply(pd.to_numeric, errors='coerce').dropna()<br/>X = df[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]].values<br/>y = df[13].values</pre>
+<p>我们需要做的下一件事是编码重新参数化技巧，这样我们就可以在训练过程中采样随机噪声。</p>
+<h2 id="uuid-ae145bf0-2581-4b33-a454-0240e39b96b7">重新参数化技巧和采样</h2>
+<p>记住，重新参数化技巧旨在从<sub> <img class="fm-editor-equation" src="img/800b5609-ccd9-447d-8da9-add870f8b803.png" style="width:1.92em;height:1.25em;"/> </sub>而不是<sub> <img class="fm-editor-equation" src="img/35226dc4-445f-4f7e-b5ae-e332f3eedb53.png" style="width:3.50em;height:1.33em;"/> </sub>采样。还有，回忆一下<sub> <img class="fm-editor-equation" src="img/65ff4f78-8d25-4b17-a877-3775474be6a7.png" style="width:6.25em;height:1.17em;"/> </sub>的分布。这将允许我们让学习算法学习<sub> <img class="fm-editor-equation" src="img/35226dc4-445f-4f7e-b5ae-e332f3eedb53.png" style="width:3.50em;height:1.33em;"/> </sub>的参数——即<sub><img class="fm-editor-equation" src="img/3ab31204-0e3f-44a5-97b3-e0829a9a29c0.png" style="width:1.83em;height:0.92em;"/></sub>——我们简单地从<sub> <img class="fm-editor-equation" src="img/57985506-28ec-4d9a-9bdb-499ecfa47d83.png" style="width:6.08em;height:1.00em;"/> </sub>中产生一个样本。</p>
+<p>为了实现这一点，我们可以生成以下方法:</p>
+<pre>from tensorflow.keras import backend as K<br/><br/>def sampling(z_params):<br/>  z_mean, z_log_var = z_params<br/>  batch = K.shape(z_mean)[0]<br/>  dims = K.int_shape(z_mean)[1]<br/>  epsilon = K.random_normal(shape=(batch, dims))<br/>  return z_mean + K.exp(0.5 * z_log_var) * epsilon</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mceNonEditable"/>
+<p><kbd>sampling()</kbd>方法接收<img src="img/c8dc8061-6987-435e-a863-5b8b836b864d.png" style="width:3.83em;height:1.42em;"/>的均值和对数方差(待学习)，并返回从该参数化分布中采样的向量；<img class="fm-editor-equation" src="img/e1c06fa7-5aa1-40cb-8903-2ba1bd71dcac.png" style="width:0.67em;height:1.00em;"/>只是来自具有0均值和单位方差的高斯(<kbd>random_normal</kbd>)分布的随机噪声。为了使该方法与小批量训练完全兼容，根据小批量的大小生成样本。</p>
+<h2 id="uuid-c6df3076-855d-4b63-9f32-426f908467d8">学习编码器中的后验参数</h2>
+<p>后验分布<sub> <img class="fm-editor-equation" src="img/35226dc4-445f-4f7e-b5ae-e332f3eedb53.png" style="width:3.08em;height:1.17em;"/> </sub>本身是难以处理的，但是由于我们使用了重新参数化的技巧，我们实际上可以基于<img class="fm-editor-equation" src="img/18a8f5d8-cb9e-484d-8786-64bc62d3bb16.png" style="width:0.67em;height:1.00em;"/>执行采样。我们现在将制作一个简单的编码器来学习这些参数。</p>
+<p>为了数值稳定性，我们需要缩放输入，使其具有0均值和单位方差。为此，我们可以调用在<a href="8300fba9-620e-4bc3-8d81-3b02c5043a0d.xhtml">第3章</a>、<em>准备数据</em>中学到的方法:</p>
+<pre>from sklearn.preprocessing import StandardScaler<br/>scaler = StandardScaler()<br/>scaler.fit(X)<br/><strong>x_train</strong> = scaler.transform(X)<br/>original_dim = x_train.shape[1]</pre>
+<p><kbd>x_train</kbd>矩阵包含缩放的训练数据。以下变量也将有助于设计VAE的编码器:</p>
+<pre class="mce-root">input_shape = (original_dim, )<br/>intermediate_dim = 13 <br/>batch_size = 18 # comes from ceil(sqrt(x_train.shape[0]))<br/>latent_dim = 2 # useful for visualization<br/>epochs = 500</pre>
+<p>这些变量很简单，除了批量是以样本数量的平方根来表示的。这是一个经验值，被认为是一个好的开始，但在较大的数据集上，它不能保证是最好的。</p>
+<p>接下来，我们可以构建编码器部分，如下所示:</p>
+<pre class="mce-root">from tensorflow.keras.layers import Lambda, Input, Dense, Dropout, BatchNormalization<br/>from tensorflow.keras.models import Model<br/><br/>inputs = Input(shape=input_shape)<br/>bn = BatchNormalization()(inputs)<br/>dp = Dropout(0.2)(bn)<br/>x = Dense(intermediate_dim, activation='sigmoid')(dp)<br/>x = Dropout(0.2)(x)<br/><strong>z_mean</strong> = Dense(latent_dim)(x)<br/><strong>z_log_var</strong> = Dense(latent_dim)(x)<br/>z_params = [<strong>z_mean</strong>, <strong>z_log_var</strong>]<br/>z = Lambda(sampling, output_shape=(latent_dim,))(z_params)<br/>encoder = Model(inputs, [<strong>z_mean, z_log_var, z</strong>])</pre>
+<p>编码器的这种方法利用了<kbd>Lambda</kbd>类，它是<kbd>tensorflow.keras.layers</kbd>集合的一部分。这允许我们使用之前定义的<kbd>sampling()</kbd>方法(或者任何任意的表达式)作为层对象。<em>图9.3 </em>展示了完整VAE的架构，包括前面代码块中描述的编码器层:</p>
+<div><img src="img/c5540457-c546-4297-8aa3-3166a1987073.png" style="width:40.33em;height:36.17em;"/></div>
+<p>图9.3–克里夫兰心脏病数据集的VAE架构</p>
+<p class="mce-root"/>
+<p>编码器使用批量标准化，接着是输入层的<strong>丢失</strong>，接着是具有<strong> Tanh激活</strong>和<strong>丢失</strong>的密集层。从<strong>下降</strong>开始，两个密集层负责模拟潜在变量分布的参数，并从这个参数化的分布中抽取样本。接下来讨论解码器网络。</p>
+<h2 id="uuid-8a86c916-ad3d-41a1-8fe3-6523e70fe6d5">解码器建模</h2>
+<p>相对于你已经知道的自动编码器，VAE的解码器部分是非常标准的。解码器采用VAE中由参数分布产生的潜在变量，然后它应该精确地重构输入。解码器可以指定如下:</p>
+<pre>latent_inputs = Input(shape=(latent_dim,))<br/>x = Dense(intermediate_dim, activation='relu')(latent_inputs)<br/>r_outputs = Dense(original_dim)(x)    # reconstruction outputs<br/>decoder = Model(latent_inputs, r_outputs)</pre>
+<p>在前面的代码中，我们简单地连接了两个密集层——第一个包含一个ReLU激活，而第二个包含线性激活，以便映射回输入空间。最后，我们可以根据编码器和解码器中定义的输入和输出来定义完整的VAE:</p>
+<pre class="mce-root">outputs = decoder(encoder(inputs)[2])   # it is index 2 since we want z<br/><strong>vae</strong> = Model(inputs, outputs)</pre>
+<p class="mce-root">VAE模型如本文所述完成，如图9.3 中的<em>所示。导致该模型训练的下一步包括损失函数的定义，这将在下面讨论。</em></p>
+<h2 id="uuid-98b0bafa-25e7-4569-b389-21bc950ac9a6">最小化损失</h2>
+<p>我们之前解释过，损失函数需要根据编码器和解码器；这是我们讨论过的等式:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/542e3bf0-5cee-4200-9ed5-1bbbbd27aa4a.png" style="width:25.75em;height:3.25em;"/></p>
+<p>如果我们想对这种损失进行编码，我们需要用更实际的东西来编码。应用之前对该问题所做的所有假设，包括重新参数化技巧，允许我们用更简单的术语重写损失的近似值，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/8bddf69c-11f1-415d-be2a-c1766f4a885e.png" style="width:27.00em;height:5.00em;"/></p>
+<p>这是针对<img class="fm-editor-equation" src="img/71d43944-64da-4574-b03d-25570e0ecc86.png" style="width:0.83em;height:0.92em;"/>的所有样本，其中<sub> <img class="fm-editor-equation" src="img/445b73e4-f1f8-49d6-953f-301b73f27395.png" style="width:6.42em;height:1.25em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/ce34c93c-41c6-4549-99f3-1c8eb8a3152c.png" style="width:5.58em;height:1.33em;"/> </sub>。此外，解码器损失部分可以使用任何您喜欢的重建损失来近似计算，例如，<strong>均方误差</strong> ( <strong> MSE </strong>)损失或二进制交叉熵损失。已经证明，最小化这些损失中的任何一个也将最小化后验损失。</p>
+<p>我们可以用MSE来定义重建损失，如下所示:</p>
+<pre>from tensorflow.keras.losses import mse<br/>r_loss = <strong>mse</strong>(inputs, outputs)</pre>
+<p>或者，我们可以用二进制交叉熵损失这样做，像这样:</p>
+<pre>from tensorflow.keras.losses import binary_crossentropy<br/>r_loss = <strong>binary_crossentropy</strong>(inputs, outputs)</pre>
+<p>我们可以做的另一件事是可选的，就是监控重建损失与KL发散损失(与编码器相关的术语)相比有多重要。一个典型的做法是使重建损失乘以潜在维度或输入维度。这实际上使损失增加了一倍。如果我们采取后者，我们可以惩罚重建损失，如下所示:</p>
+<pre>r_loss = <strong>original_dim</strong> * r_loss</pre>
+<p class="mce-root">编码器项的KL-散度损失现在可以用均值和方差来表示，如下所示:</p>
+<pre>kl_loss = 1 + <strong>z_log_var</strong> - K.square(<strong>z_mean</strong>) - K.exp(<strong>z_log_var</strong>)<br/>kl_loss = 0.5 * K.sum(kl_loss, axis=-1)</pre>
+<p class="mce-root">因此，我们可以简单地将总损失添加到模型中，结果如下:</p>
+<pre class="mce-root">vae_loss = K.mean(<strong>r_loss</strong> + <strong>kl_loss</strong>)<br/>vae.add_loss(<strong>vae_loss</strong>)</pre>
+<p class="mce-root"/>
+<p>有了这些，我们就可以继续编译模型并训练它了，如下所述。</p>
+<h2 id="uuid-471295b5-d4b1-4aa9-8598-1b1ed84bd4de">训练VAE</h2>
+<p>最后一步是编制VAE模型，这将把所有的碎片放在一起。在编译过程中，我们将选择一个优化器(梯度下降法)。在这种情况下，我们会选择<em>亚当</em>(金马，D. P .，<em>等人</em> (2014)。</p>
+<p>有趣的事实:VAE的创造者是不久后创造亚当的同一个人。他的名字是Diederik P. Kingma，目前是谷歌大脑的研究科学家。</p>
+<p>为了编译模型并选择优化器，我们执行以下操作:</p>
+<pre class="mce-root">vae.compile(optimizer='<strong>adam</strong>')</pre>
+<p class="mce-root">最后，我们使用500个时期的训练数据进行训练，使用18的批量大小，如下所示:</p>
+<pre class="mce-root">hist = vae.fit(<strong>x_train</strong>, epochs=<strong>epochs</strong>,<br/>               batch_size=<strong>batch_size</strong>,<br/>               validation_data=(x_train, None))</pre>
+<p>请注意，我们使用训练集作为验证集。在大多数情况下，不建议这样做，但在这里，这样做是可行的，因为选择相同的小批量进行训练和验证的机会非常低。此外，这样做通常会被认为是欺骗；然而，重建中使用的潜在表示并不直接来自输入；相反，它来自类似于输入数据的分布。为了证明训练和验证集产生不同的结果，我们绘制了跨时期的训练进度，如图<em>图9.4 </em>所示:</p>
+<p class="mce-root"/>
+<div><img src="img/5bced4db-4f13-4517-8210-33d5982e7a4a.png" style="width:34.50em;height:21.75em;"/></div>
+<p>图9.4-跨时代的VAE培训绩效</p>
+<p>上图不仅表明模型收敛很快，还表明模型不会过度拟合输入数据。通常，这是一个很好的属性。</p>
+<p><em>图9.4 </em>可以用以下代码生成:</p>
+<pre>import matplotlib.pyplot as plt<br/><br/>fig = plt.figure(figsize=(10,6))<br/>plt.plot(hist.history['loss'], color='#785ef0')<br/>plt.plot(hist.history['val_loss'], '--', color='#dc267f')<br/>plt.title('Model reconstruction loss')<br/>plt.ylabel('MSE Loss')<br/>plt.xlabel('Epoch')<br/>plt.legend(['Training Set', 'Validation Set'], loc='upper right')<br/>plt.show()</pre>
+<p>但是，请注意，由于VAE的无监督性质，结果可能会有所不同。</p>
+<p class="mce-root"/>
+<p>接下来，如果我们看一看通过使用在训练期间学习的参数从随机分布中采样而产生的潜在表示，我们可以看到数据看起来像什么。<em>图9.5 </em>描绘了获得的潜在表征:</p>
+<div><img src="img/e59a5b95-6a1a-4f10-8cc4-6f568df25c1c.png" style="width:33.33em;height:29.50em;"/></div>
+<p>图9.5-VAE的二维潜在代表性样本</p>
+<p>该图清楚地表明，对应于没有心脏病迹象的数据聚集在左象限，而对应于心脏病的样本聚集在潜在空间的右象限。图顶部显示的直方图表明存在两个定义明确的聚类。这太棒了！此外，请记住，VAE对标签一无所知:这一点我们怎么强调都不为过！将此处的<em>图9.5 </em>与<a href="8300fba9-620e-4bc3-8d81-3b02c5043a0d.xhtml">第三章</a>、<em>准备数据</em>中的<em>图3.9 </em>进行对比，你会发现VAE的性能优于KPCA。此外，将该图与第3章、<em>准备数据、</em>中的<em>图3.8 </em>进行比较，注意VAE的性能与<strong>线性判别分析</strong> ( <strong> LDA </strong>)相当(如果不是更好的话)，后者使用标签信息来产生低维表示。换句话说，LDA有一点欺骗。</p>
+<p class="mce-root"/>
+<p>VAE最有趣的特性之一是我们可以生成数据；让我们来看看这是如何做到的。</p>
+<h2 id="uuid-3840c30a-f42d-4d17-b9dd-1ccc6c69ce98">从VAE生成数据</h2>
+<p>由于VAE学习潜在空间上的参数分布的参数，其被采样以重建输入数据，我们可以使用这些参数来绘制更多的样本并重建它们。我们的想法是为我们想到的任何目的生成数据。</p>
+<p>让我们从编码原始数据集开始，看看重建与原始数据集有多接近。然后，生成数据应该很简单。为了将输入数据编码到潜在空间中并对其进行解码，我们执行以下操作:</p>
+<pre>encdd = <strong>encoder</strong>.predict(x_train)<br/>x_hat = <strong>decoder</strong>.predict(encdd<strong>[0]</strong>)</pre>
+<p>回想一下<kbd>x_train</kbd>是<img class="fm-editor-equation" src="img/b0c5b964-8583-4007-8807-e18c4b9522ef.png" style="width:0.75em;height:0.83em;"/>，<kbd>x_hat</kbd>是重建，<img class="fm-editor-equation" src="img/6476b534-a425-4523-a577-baeeb7b34df3.png" style="width:0.75em;height:1.08em;"/>。注意，我们使用<kbd>encdd[0]</kbd>作为解码器的输入。其原因是编码器产生三个向量的列表，<kbd>[z_mean, z_log_var, z]</kbd>。因此，在列表中使用0元素是指对应于样本的分布的平均值。事实上，<kbd>encdd[0][10]</kbd>将产生一个二维向量，该向量对应于能够产生数据集中第10个<sup>样本(即<kbd>x_train[10]</kbd>)的分布的平均参数。仔细想想，均值可能是我们能找到的最佳潜在表示，因为它最有可能在解码器中重建输入。</sup></p>
+<p>考虑到这一点，我们可以通过运行以下命令来看看重建效果如何:</p>
+<pre class="mce-root">import numpy as np<br/>print(np.around(scaler.inverse_transform(x_train[0]), decimals=1))<br/>print(np.around(scaler.inverse_transform(x_hat[0]), decimals=1))</pre>
+<p>这将产生以下输出:</p>
+<pre>[ 63.0  1.0  1.0  145.0  233.0  1.0  2.0  150.0  0.0  2.3  3.0  0.0  6.0 ]<br/>[ 61.2  0.5  3.1  144.1  265.1  0.5  1.4  146.3  0.2  1.4  1.8  1.2  4.8 ]</pre>
+<p class="mce-root"/>
+<p>如果输出显示难以阅读的科学符号，尝试暂时禁用它，如下所示:<br/><kbd>import numpy as np</kbd><br/><kbd>np.set_printoptions(suppress=True)</kbd><br/><kbd>print(np.around(scaler.inverse_transform(x_train[0]), decimals=1))</kbd><br/><kbd>print(np.around(scaler.inverse_transform(x_hat[0]), decimals=1))</kbd><br/><kbd>np.set_printoptions(suppress=False)</kbd></p>
+<p>在本例中，我们关注训练集中的第一个数据点，即顶行中的<kbd>x_train[0]</kbd>；它的重建在最下面一行。仔细研究发现，两者之间存在差异；然而，就MSE而言，这些差异可能相对较小。</p>
+<p>这里要指出的另一个重要方面是，数据需要缩放回其原始输入空间，因为它在用于训练模型之前已被缩放。幸运的是，<kbd>StandardScaler()</kbd>类有一个<kbd>inverse_transform()</kbd>方法，可以帮助将任何重构映射回输入空间中每个维度的值的范围。</p>
+<p>为了随意生成更多的数据，我们可以定义一个方法来这样做。以下方法在范围<kbd>[-2, +2]</kbd>内均匀地产生随机噪声，该噪声来自对<em>图9.5 </em>的检查，该图显示潜在空间的范围在该范围内:</p>
+<pre>def generate_samples(N = 10, latent_dim = 2):<br/>  <strong>noise</strong> = np.random.uniform(<strong>-2.0, 2.0</strong>, (N,latent_dim))<br/>  gen = decoder.predict(noise)<br/>  return gen</pre>
+<p>该函数需要根据潜在空间中的值的范围进行调整；此外，可以通过查看潜在空间中的数据分布来调整它。比如潜在空间看起来是正态分布，那么可以这样用一个正态分布:<kbd>noise = np.random.normal(0.0, 1.0, (N,latent_dim))</kbd>，假设均值和单位方差为0。</p>
+<p>我们可以通过执行以下操作调用该函数来生成<em>假</em>数据:</p>
+<pre class="mce-root"><strong>gen</strong> = generate_samples(10, latent_dim)<br/>print(np.around(scaler.inverse_transform(<strong>gen</strong>), decimals=1))</pre>
+<p class="mce-root">这将产生以下输出:</p>
+<p>回想一下，这些数据是由随机噪声产生的。你可以看到这是深度学习社区的一个重大突破。您可以使用这些数据来扩充数据集，并根据需要生成任意多的样本。我们可以查看生成的样本的质量，并自己决定质量是否足以满足我们的目的。</p>
+<pre>[[ 43.0  0.7  2.7  122.2  223.8  0.0  0.4  172.2  0.0  0.3  1.2  0.1  3.6]<br/> [ 57.4  0.9  3.9  133.1  247.6  0.1  1.2  129.0  0.8  2.1  2.0  1.2  6.4]<br/> [ 60.8  0.7  3.5  142.5  265.7  0.3  1.4  136.4  0.5  1.9  2.0  1.4  5.6]<br/> [ 59.3  0.6  3.2  137.2  261.4  0.2  1.2  146.2  0.3  1.2  1.7  0.9  4.7]<br/> [ 51.5  0.9  3.2  125.1  229.9  0.1  0.7  149.5  0.4  0.9  1.6  0.4  5.1]<br/> [ 60.5  0.5  3.2  139.9  268.4  0.3  1.3  146.1  0.3  1.2  1.7  1.0  4.7]<br/> [ 48.6  0.5  2.6  126.8  243.6  0.1  0.7  167.3  0.0  0.2  1.1  0.1  3.0]<br/> [ 43.7  0.8  2.9  121.2  219.7  0.0  0.5  163.8  0.1  0.5  1.4  0.1  4.4]<br/> [ 54.0  0.3  2.5  135.1  264.2  0.2  1.0  163.4  0.0  0.3  1.1  0.3  2.7]<br/> [ 52.5  1.0  3.6  123.3  227.8  0.0  0.8  137.7  0.7  1.6  1.8  0.6  6.2]]</pre>
+<p>现在，假设你和我可能不是心脏病方面的医生，我们可能没有资格确定产生的数据是有意义的；但是如果我们这样做是正确的，它通常是有意义的。为了说明这一点，下一节使用MNIST图像来证明生成的样本是好的，因为我们都可以对数字图像进行视觉评估。</p>
+<p>Now, granted that since you and I may not be medical doctors specializing in heart disease, we might not be qualified to determine with certainty that the data generated makes sense; but if we did this correctly, it generally does make sense. To make this clear, the next section uses MNIST images to prove that the generated samples are good since we can all make a visual assessment of numeral images.</p>
+<p class="mce-root">比较MNIST的深浅VAE</p>
+<h1 id="uuid-15318064-128a-46ee-89ca-4e7401a9a44f">比较浅层和深层模型是找到最佳模型的实验过程的一部分。在对MNIST图像的比较中，我们将实施图9.6 中的<em>所示的架构作为浅层模型，而深度模型架构如图9.7 </em>中的<em>所示:</em></h1>
+<p>图9.6-MNIST上空的VAE浅层建筑</p>
+<div><img src="img/066f2ead-8aeb-434c-b6fc-e6b5081790be.png" style="width:43.50em;height:37.83em;"/></div>
+<p>Figure 9.6 – VAE shallow architecture over MNIST</p>
+<p class="mce-root">如您所知，两个模型在涉及到的层数上有很大的不同。结果，重建的质量将会不同:</p>
+<p>图9.7-MNIST上空的VAE深层建筑</p>
+<div><img src="img/2b345ff5-b67c-4f2d-977d-1dd9834d5b0d.png" style="width:51.50em;height:32.92em;"/></div>
+<p>这些模型将使用浅层VAE的少量历元和深层模型的大量历元进行训练。</p>
+<p>从克利夫兰心脏病数据集中使用的例子可以容易地推断出再现浅层编码器的代码；然而，深层VAE的代码将在接下来的章节中讨论。</p>
+<p>浅薄的VAE</p>
+<h2 id="uuid-608d07d6-b8df-41e7-a18b-a058fb16af6d">我们可以用来比较VAE的第一件事是它的学术表现。<em>图9.8 </em>描绘了训练集的潜在空间投影:</h2>
+<p>图9.8–训练数据集的浅层VAE潜在空间投影</p>
+<div><img src="img/5234c729-7ee3-4c7c-82d2-2a97581675a7.png" style="width:34.67em;height:30.50em;"/></div>
+<p>从上图中，我们可以观察到从中心坐标向外扩散的数据点集群。例如，我们希望看到的是定义明确的集群，它们被理想地分开，以便于分类。在这种情况下，我们看到某些组之间有一点重叠，特别是第4和第9组，这很有意义。</p>
+<p>接下来要考察的是模型的重构能力。<em>图9.9 </em>显示了输入的样本，而<em>图9.10 </em>显示了模型训练后的相应重构:</p>
+<p>图9.9-VAE的样本输入</p>
+<div><img src="img/9a20024e-4abf-44aa-ac42-9314e2d61afb.png" style="width:17.50em;height:9.17em;"/></div>
+<p>对浅层模型的期望是以与模型大小直接相关的方式执行:</p>
+<p>图9.10-相对于图9.9中输入的浅层VAE重建</p>
+<div><img src="img/9de3f378-6e48-4e41-b4e2-7d575ea4d98f.png" style="width:19.92em;height:10.33em;"/></div>
+<p>显然，数字2和数字8的重建似乎存在一些问题，这可以通过观察<em>图9.8 </em>中这两个数字之间显示的大量重叠得到证实。</p>
+<p>Clearly, there seem to be some issues with the reconstruction of the number 2 and number 8, which is confirmed by observing the great deal of overlap shown between these two numerals in <em>Figure 9.8</em>. </p>
+<p class="mce-root">我们可以做的另一件事是，如果我们从潜在空间的范围中提取数字，就可以将VAE产生的数据可视化。<em>图9.11 </em>显示了潜在空间在两个维度上的变化:</p>
+<p>图9.11–二维范围[-4，4]内的浅层VAE潜在空间勘探</p>
+<div><img src="img/b394a3ad-b012-4f4e-bd26-5ee5448e1c6a.png" style="width:37.92em;height:37.25em;"/></div>
+<p>在图9.11 中，我们发现真正有趣的是，我们可以看到当潜在空间被遍历时，数字是如何逐渐转化为其他数字的。如果我们从上到下取中心线，我们可以看到如何从数字0到数字6，然后到数字2，然后到数字8，再到数字1。我们可以通过追踪对角线路径或其他方向来做同样的事情。进行这种类型的可视化还允许我们看到一些在训练数据集中没有看到的工件，如果我们不小心生成数据，这些工件可能会导致潜在的问题。</p>
+<p>What we find really interesting in <em>Figure 9.11</em> is that we can see how numerals are transformed into others progressively as the latent space is traversed. If we take the center line going from top to bottom, we can see how we can go from the number 0 to the number 6, then to the number 2, then to the number 8, down to the number 1. We could do the same by tracing a diagonal path, or other directions. Making this type of visualization also allows us to see some artifacts that were not seen in the training dataset that could cause potential problems if we generate data without care.</p>
+<p class="mce-root">为了看看更深层次的模型是否比这更好，我们将在下一节中实现它。</p>
+<p>深VAE</p>
+<h2 id="uuid-ed14a54f-ae38-4fac-9c0b-3e46e98e4807"><em>图9.7 </em>描绘了一种可以分部分实施的深度VAE架构——首先是编码器，然后是解码器。</h2>
+<p>编码器</p>
+<h3 id="uuid-c0cd0aad-868d-415b-b493-f0d634eb96f0">编码器可以使用函数范例来实现，如下所示:</h3>
+<p>这里，<kbd>inpt_dim</kbd>对应于28×28的MNIST图像的784个尺寸。继续其余部分，我们有以下内容:</p>
+<pre>from tensorflow.keras.layers import Lambda, Input, Dense, Dropout<br/>from tensorflow.keras.layers import Activation, BatchNormalization<br/>from tensorflow.keras.models import Model<br/><br/>inpt_dim = 28*28<br/>ltnt_dim = 2<br/><br/>inpt_vec = Input(shape=(<strong>inpt_dim</strong>,))</pre>
+<p>请注意，编码器模型使用10%丢失率的丢失层。剩下的图层都是我们之前见过的东西，包括批量归一化。这里唯一的新东西是<kbd>Lambda</kbd>函数，它和本章前面定义的完全一样。</p>
+<pre>el1 = Dropout(0.1)(inpt_vec)<br/>el2 = Dense(512)(el1)<br/>el3 = Activation('relu')(el2)<br/>el4 = Dropout(0.1)(el3)<br/>el5 = Dense(512)(el4)<br/>el6 = BatchNormalization()(el5)<br/>el7 = Activation('relu')(el6)<br/>el8 = Dropout(0.1)(el7)<br/><br/>el9 = Dense(256)(el8)<br/>el10 = Activation('relu')(el9)<br/>el11 = Dropout(0.1)(el10)<br/>el12 = Dense(256)(el11)<br/>el13 = BatchNormalization()(el12)<br/>el14 = Activation('relu')(el13)<br/>el15 = Dropout(0.1)(el14)<br/><br/>el16 = Dense(128)(el15)<br/>el17 = Activation('relu')(el16)<br/>el18 = Dropout(0.1)(el17)<br/>el19 = Dense(ltnt_dim)(el18)<br/>el20 = BatchNormalization()(el19)<br/>el21 = Activation('sigmoid')(el20)<br/><br/><strong>z_mean</strong> = Dense(ltnt_dim)(el21)<br/><strong>z_log_var</strong> = Dense(ltnt_dim)(el21)<br/><strong>z</strong> = Lambda(sampling)([z_mean, z_log_var])<br/><strong>encoder</strong> = Model(inpt_vec, [<strong>z_mean, z_log_var, z</strong>])</pre>
+<p>接下来，我们将定义解码器。</p>
+<p>解码器</p>
+<h3 id="uuid-fea8d758-2381-4552-b5a9-8b646cf0b9fc">解码器比编码器短几层。这种层的选择只是为了表明，只要编码器和解码器中密集层的数量几乎相等，在寻找性能提升的实验中，可以省略一些其他层。</h3>
+<p>这是解码器的设计:</p>
+<p>This is the design of the decoder:</p>
+<pre><strong>ltnt_vec</strong> = Input(shape=(<strong>ltnt_dim</strong>,))<br/>dl1 = Dense(128)(ltnt_vec)<br/>dl2 = BatchNormalization()(dl1)<br/>dl3 = Activation('relu')(dl2)<br/><br/>dl4 = Dropout(0.1)(dl3)<br/>dl5 = Dense(256)(dl4)<br/>dl6 = Activation('relu')(dl5)<br/>dl7 = Dense(256)(dl6)<br/>dl8 = BatchNormalization()(dl7)<br/>dl9 = Activation('relu')(dl8)<br/><br/>dl10 = Dropout(0.1)(dl9)<br/>dl11 = Dense(512)(dl10)<br/>dl12 = Activation('relu')(dl11)<br/>dl13 = Dense(512)(dl12)<br/>dl14 = BatchNormalization()(dl13)<br/>dl15 = Activation('relu')(dl14)<br/>dl16 = Dense(inpt_dim, activation='sigmoid') (dl15)<br/><br/><strong>decoder</strong> = Model(<strong>ltnt_vec</strong>, dl16)</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mceNonEditable">同样，这里没有我们以前没有见过的新东西。一层又一层。然后，我们可以将所有这些放在模型中，如下所示:</p>
+<p>就是这样！在这之后，我们可以编译模型，选择我们的优化器，并以与我们在前面章节中所做的完全相同的方式训练模型。</p>
+<pre>outputs = decoder(encoder(<strong>inpt_vec</strong>)<strong>[2]</strong>)<br/><strong>vae</strong> = Model(<strong>inpt_vec</strong>, <strong>outputs</strong>)</pre>
+<p>如果我们想形象化深层VAE的潜在空间，以便与<em>图9.8 </em>进行比较，我们可以查看<em>图9.12 </em>中所示的空间:</p>
+<p>图9.12–训练数据集的深层VAE潜在空间投影</p>
+<div><img src="img/243634d2-d778-484e-8dac-ae717e021a0e.png" style="width:34.92em;height:30.75em;"/></div>
+<p>如你所见，潜在空间的几何形状看起来不同。这很可能是激活函数对特定流形的潜在空间范围的限制作用。观察到的最有趣的事情之一是样本组的分离，即使仍然存在一些重叠——例如，数字9和4。然而，与<em>图9.8 </em>相比，这种情况下的重叠不太严重。</p>
+<p><em>图9.13 </em>显示了与<em>图9.9 </em>中显示的相同输入的重建，但是现在使用了更深的VAE:</p>
+<p>图9.13-相对于图9.9中输入的深层VAE重建。与图9.10相比</p>
+<div><img src="img/c3c397cf-bc79-42f8-b882-7ffecf4360b5.png" style="width:20.00em;height:10.42em;"/></div>
+<p>显然，与浅VAE相比，重建要好得多，也更健壮。为了使事情更清楚，我们还可以通过产生与潜在空间相同范围的随机噪声来遍历潜在空间，从而探索生成器。如图9.14 中的<em>所示:</em></p>
+<p>图9.14–二维范围[-4，4]内的深层VAE潜在空间探索。与图9.11相比</p>
+<div><img src="img/f32052b8-c121-446c-9efe-212cf3ccc400.png" style="width:28.67em;height:28.25em;"/></div>
+<p>Figure 9.14 – Deep VAE latent space exploration in the range [-4,4] in both dimensions. Compare to Figure 9.11</p>
+<p class="mce-root"/>
+<p class="mce-root">从视觉角度来看，VAE深处的潜在空间似乎更丰富多样，也更有趣。如果我们选择最右边的线，从下到上遍历空间，我们可以看到数字1如何变成7，然后变成4，变化越来越小。</p>
+<p>去噪阀</p>
+<h2 id="uuid-cc1d264d-06d8-4b97-97e0-f5aaa6070e75">VAEs在图像去噪应用中也很好(Im，D. I. J .，<em>等人</em> (2017))。这种特性是通过在学习过程中注入噪声来实现的。要了解更多这方面的信息，你可以在网上搜索去噪阀，你会找到关于这个特定主题的资源。我们只是想让你意识到它们，知道它们的存在，如果你需要它们的话。</h2>
+<p>对生成模型伦理意蕴的思考</p>
+<h1 id="uuid-5725e4e5-8d98-4c98-a133-56d4bfe51281">生成模型是当今深度学习中最令人兴奋的话题之一。但是权力越大，责任越大。我们可以将生成模型的力量用于许多有益的事情，例如:</h1>
+<p>扩充您的数据集，使其更加完整</p>
+<ul>
+<li>用看不见的数据训练模型，使其更加稳定</li>
+<li>寻找对立的例子来重新训练你的模型，使它更健壮</li>
+<li>创造看起来像其他事物的事物的新图像，例如艺术或车辆的图像</li>
+<li>创造听起来像其他声音的新的声音序列，例如人说话或鸟唱歌</li>
+<li>为数据加密生成新的安全代码</li>
+<li>只要我们的想象力允许，我们就可以继续下去。我们必须始终记住的是，这些生成模型，如果建模不当，会导致许多问题，如偏见，导致模型的可信度问题。使用这些模型可以很容易地生成一个人说一些他们没有真正说过的话的假音频序列，或者生成一个人做一些他们没有真正做过的事情的面部图像，或者生成一个不属于面部的身体的图像。</li>
+</ul>
+<p>一些最显著的错误包括deepfakes。不值得我们花时间去研究实现这样一个东西的方法，但是可以说，我们的生成模型不应该被用于恶意的目的。很快就会建立国际法来惩罚那些通过恶意生成建模来犯罪的人。</p>
+<p class="mce-root">但是，在制定国际法律和各国采取新政策之前，您在开发模型时必须遵循最佳实践:</p>
+<p class="mce-root">测试你的模型中最常见的偏见类型:历史的，社会的，算法的，等等(Mehrabi，n .，<em> et al. </em> (2019))。</p>
+<p class="mce-root">使用合理的训练集和测试集来训练您的模型。</p>
+<p class="mce-root">注意数据预处理技术；详见<a href="8300fba9-620e-4bc3-8d81-3b02c5043a0d.xhtml">第3章</a>、<em>准备数据</em>。</p>
+<p class="mce-root">确保你的模型产生的输出总是尊重所有人的尊严和价值。</p>
+<p class="mce-root">让您的模型体系结构得到同行的验证。</p>
+<p class="mce-root">记住这一点，继续努力，用你现在拥有的这个新工具:VAEs，尽可能地负责任和有创造性。</p>
+<p class="mce-root">摘要</p>
+<p class="mce-root">这一高级章节向您展示了一个最有趣、最简单的模型，它能够使用自动编码器的配置并通过应用导致VAE的变分贝叶斯原理，从学习到的分布中生成数据。我们查看了模型本身的各个部分，并根据克利夫兰数据集的输入数据对它们进行了解释。然后，我们从学习到的参数分布中生成数据，表明VAEs可以很容易地用于此目的。为了证明VAEs在浅层和深层配置上的鲁棒性，我们在MNIST数据集上实现了一个模型。实验证明，与浅体系结构中的模糊组相反，较深的体系结构产生明确定义的数据分布区域；然而，浅层和深层模型都特别适合学习表征的任务。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root">至此，您应该有信心识别VAE的各个部分，并能够从动机、架构和功能方面区分传统自动编码器和VAE。您应该欣赏vae的生成能力，并准备好实施它们。阅读完本章后，你应该能够编写基本和深度VAE模型的代码，并能够使用它们进行降维和数据可视化，以及在注意潜在风险的同时生成数据。最后，您现在应该熟悉了TensorFlow和Keras中一般用途的<kbd>Lambda</kbd>函数的用法。</p>
+<p class="mceNonEditable">如果到目前为止你喜欢学习无监督模型，请和我在一起，继续学习第10章、<em>、</em>受限玻尔兹曼机器，这将呈现一个植根于所谓图形模型的独特模型。图形模型使用混合了学习理论的图论来执行机器学习。受限玻尔兹曼机器的一个有趣方面是，算法可以在学习过程中前进和后退，以满足连接约束。敬请期待！</p>
+<p class="mce-root">问题和答案</p>
+<p class="mceNonEditable"><strong>随机噪声如何产生数据？</strong></p>
+<p class="mce-root">由于VAE学习参数随机分布的参数，我们可以简单地使用这些参数从这样的分布中进行采样。由于随机噪声通常遵循具有特定参数的正态分布，我们可以说我们正在对随机噪声进行采样。好消息是解码器知道如何处理遵循特定分布的噪声。</p>
+<p class="mceNonEditable">拥有更深的VAE有什么好处？</p>
+<p class="mceNonEditable">在没有数据或不了解应用程序的情况下，很难说有什么优势(如果有的话)。例如，对于克里夫兰心脏病数据集，更深的VAE可能是不必要的；而对于MNIST或国际林业研究中心来说，一个适度大的模型可能是有益的。看情况。</p>
+<p><strong>有办法对损失函数进行修改吗？</strong></p>
+<p>当然，你可以改变损失函数，但是要注意保持它的构建原则。假设一年后，我们找到了一种更简单的方法来最小化负对数似然函数，那么我们可以(也应该)回来编辑损失以采用新的想法。</p>
+<ul>
+<li>Test your models for the most common types of bias: historical, societal, algorithmic, and so on (Mehrabi, N., <em>et al.</em> (2019)).</li>
+<li>Train your models using reasonable training and test sets.</li>
+<li>参考</li>
+<li>金马博士和韦林博士(2013年)。自动编码变分贝叶斯。<em> arXiv预印本</em> arXiv:1312.6114。</li>
+<li>(2007年6月)。用于协同过滤的受限玻尔兹曼机器。在<em>第24届机器学习国际会议论文集</em>(第791-798页)。</li>
+</ul>
+<p>Goodfellow，I .、Pouget-Abadie，j .、Mirza，m .、Xu，b .、Warde-Farley，d .、Ozair，s .、a .和Bengio，Y. (2014年)。生成对抗网络。在<em>神经信息处理系统的进展</em>(第2672-2680页)。</p>
+<h1 id="uuid-18a7c7da-62cb-4446-bd2d-7f1ec723441e">张，杨，张，张和格拉斯(2014年5月)。利用低秩矩阵分解提取深度神经网络瓶颈特征。在<em> 2014 IEEE国际声学、语音和信号处理会议(ICASSP) </em>(第185-189页)。IEEE。</h1>
+<p>金马博士和巴律师(2014年)。亚当:一种随机优化方法。arXiv预印本 arXiv:1412.6980。</p>
+<p class="mce-root">Mehrabi，f . mor statter，n . sa xena，Lerman，k .，&amp; Galstyan，A. (2019年)。机器学习中的偏见和公平问题综述。arXiv预印本 arXiv:1908.09635</p>
+<p class="mce-root">Im，D. I. J .，Ahn，s .，Memisevic，r .，&amp; Bengio，Y. (2017年2月)。变分自动编码框架的去噪准则。在第三十一届AAAI人工智能会议上。</p>
+<p>By this point, you should feel confident in identifying the pieces of a VAE and being able to tell the main differences between a traditional autoencoder and a VAE in terms of its motivation, architecture, and capabilities. You should appreciate the generative power of VAEs and feel ready to implement them. After reading this chapter, you should be able to code both basic and deep VAE models and be able to use them for dimensionality reduction and data visualization, as well as to generate data while being mindful of the potential risks. Finally, you should now be familiarized with the usage of the <kbd>Lambda</kbd> functions for general-purpose use in TensorFlow and Keras.</p>
+<p>If you have liked learning about unsupervised models so far, stay with me and continue to <a href="6ec46669-c8d3-4003-ba28-47114f1515df.xhtml">Chapter 10</a>, <em>Restricted Boltzmann Machines,</em> which will present a unique model that is rooted in what is known as graphical models. Graphical models use graph theory mixed with learning theory to perform machine learning. An interesting aspect of restricted Boltzmann machines is that the algorithm can go forward and backward during learning to satisfy connection constraints. Stay tuned!</p>
+<h1 id="uuid-36e9e947-421e-423c-bc83-df43033ebea2">Questions and answers</h1>
+<ol>
+<li class="mce-root"><strong>How is data generation possible from random noise?</strong></li>
+</ol>
+<p style="padding-left: 60px" class="mce-root">Since the VAE learns the parameters of a parametric random distribution, we can simply use those parameters to sample from such a distribution. Since random noise usually follows a normal distribution with certain parameters, we can say that we are sampling random noise. The nice thing is that the decoder knows what to do with the noise that follows a particular distribution.</p>
+<ol start="2">
+<li class="mce-root"><strong>What is the advantage of having a deeper VAE? </strong></li>
+</ol>
+<p style="padding-left: 60px" class="mce-root">It is hard to say what the advantage is (if there is any) without having the data or knowing the application. For the Cleveland Heart Disease dataset, for example, a deeper VAE might not be necessary; while for MNIST or CIFAR, a moderately large model might be beneficial. It depends.</p>
+<ol start="3">
+<li><strong>Is there a way to make changes to the loss function?</strong></li>
+</ol>
+<p style="padding-left: 60px" class="mce-root">Of course, you can change the loss function, but be careful to preserve the principles on which it is constructed. Let's say that a year from now we found a simpler way of minimizing the negative log likelihood function, then we could (and should) come back and edit the loss to adopt the new ideas.</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<h1 id="uuid-da118869-0467-42b0-89fd-2743bdd2ea85">References</h1>
+<ul>
+<li>Kingma, D. P., &amp; Welling, M. (2013). Auto-encoding variational Bayes. <em>arXiv preprint</em> arXiv:1312.6114.</li>
+<li>Salakhutdinov, R., Mnih, A., &amp; Hinton, G. (2007, June). Restricted Boltzmann machines for collaborative filtering. In <em>Proceedings of the 24th International Conference on Machine Learning</em> (pp. 791-798).</li>
+<li>Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., Courville, A. and Bengio, Y. (2014). Generative adversarial nets. In <em>Advances in Neural Information Processing Systems</em> (pp. 2672-2680).</li>
+<li>Zhang, Y., Chuangsuwanich, E., &amp; Glass, J. (2014, May). Extracting deep neural network bottleneck features using low-rank matrix factorization. In <em>2014 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)</em> (pp. 185-189). IEEE.</li>
+<li>Kingma, D. P., &amp; Ba, J. (2014). Adam: A method for stochastic optimization. <em>arXiv preprint</em> arXiv:1412.6980.</li>
+<li>Mehrabi, N., Morstatter, F., Saxena, N., Lerman, K., &amp; Galstyan, A. (2019). A survey on bias and fairness in machine learning. <em>arXiv preprint</em> arXiv:1908.09635.</li>
+<li>Im, D. I. J., Ahn, S., Memisevic, R., &amp; Bengio, Y. (2017, February). Denoising criterion for variational auto-encoding framework. In <em>Thirty-First AAAI Conference on Artificial Intelligence</em>.</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

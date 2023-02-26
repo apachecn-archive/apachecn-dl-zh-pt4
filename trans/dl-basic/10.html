@@ -1,0 +1,160 @@
+<html><head/><body>
+
+
+	
+		<title>Appendix_SMP1_ePub</title>
+		
+	
+	
+		<div><div/>
+		</div>
+		<div><h1 id="_idParaDest-221"><a id="_idTextAnchor231"/>附录A</h1>
+		</div>
+		<div><h2><a id="_idTextAnchor232"/>关于</h2>
+			<p>本节旨在帮助学生完成书中介绍的活动。它包括学生要完成和实现活动目标的详细步骤。</p>
+		</div>
+		<div><h2 id="_idParaDest-222"><a id="_idTextAnchor233"/>soft max-with-Loss图层的计算图</h2>
+			<p>下图是Softmax-with-Loss层的计算图，并获得了反向传播。我们将把softmax函数称为Softmax层，把交叉熵误差称为<strong class="bold">交叉熵误差</strong>层，把这两个层结合起来称为Softmax-with-Loss层。您可以使用<em class="italics">图A.1 </em>中提供的计算图来表示Softmax-with-Loss层:熵:</p>
+			<div><div><img src="img/Figure_A.1.jpg" alt="Figure A.1: Computational graph of the Softmax-with-Loss layer&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图a . 1:soft max-with-Loss层的计算图</h6>
+			<p><em class="italics">图A.1 </em>所示的计算图，假设有一个神经网络对三类进行分类。来自前一层的输入为(a1，a2，a3)，Softmax层输出为(y1，y2，y3)。标签是(t1，t2，t3)并且交叉熵误差层输出损失l。</p>
+			<p>本附录显示，Softmax-with-Loss层的反向传播结果将为(y1 t1，y2 T2，y3 T3)，如图<em class="italics">图A.1 </em>所示。</p>
+			<h3 id="_idParaDest-223"><a id="_idTextAnchor234"/>正向传播</h3>
+			<p><em class="italics">图A.1 </em>所示的计算图没有显示Softmax层和交叉熵误差层的细节。这里，我们将从描述两层的细节开始。</p>
+			<p>首先，我们来看看Softmax层。我们可以用下面的等式来表示softmax函数:</p>
+			<table id="table001-6" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_A.1a.png" alt="95"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(建议1)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>因此，我们可以用<em class="italics">图A.2 </em>中提供的计算图显示Softmax层。这里，S代表指数的和，也就是等式(A.1)中的分母。最终输出为(y1，y2，y3)。</p>
+			<div><div><img src="img/Figure_A.2.jpg" alt="Figure A.2: Computational graph of the Softmax layer (forward propagation only)&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图a . 2:soft max层的计算图(仅向前传播)</h6>
+			<p>接下来，我们来看看交叉熵误差层。下面的等式显示了交叉熵误差:</p>
+			<table id="table002-5" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_A.2a.png" alt="97"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(建议2)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>基于等式(A.2)，我们可以绘制交叉熵误差层的计算图，如图<em class="italics">图A.3 </em>所示。</p>
+			<p><em class="italics">图A.3 </em>所示的计算图只是将方程(A. 2)作为计算图。因此，我认为这没有什么特别难的。</p>
+			<div><div><img src="img/Figure_A.3.jpg" alt="Figure A.3: Computational graph of the Cross-Entropy Error layer (forward propagation only)&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图A.3:交叉熵误差层的计算图(仅向前传播)</h6>
+			<p>现在，让我们看看反向传播:</p>
+			<h3 id="_idParaDest-224"><a id="_idTextAnchor235"/>反向传播</h3>
+			<p>首先，让我们看看交叉熵误差层的反向传播。我们可以画出交叉熵误差层的反向传播如下:</p>
+			<div><div><img src="img/Figure_A.4.jpg" alt="Figure A.4: Backward propagation of the Cross-Entropy Error layer&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图A.4:交叉熵误差层的反向传播</h6>
+			<p>请注意以下事项，以获得此计算图的向后传播:</p>
+			<ul>
+				<li>反向传播的初始值(<em class="italics">图A.4 </em>中反向传播最右边的值)为1(因为<img src="img/Figure_A.4a.png" alt="98"/>)。</li>
+				<li>对于“x”节点的后向传播，前向传播的输入信号的“反转值”乘以来自上游的导数，被传递到下游。</li>
+				<li>对于“+”节点，来自上游的导数被传递而不改变它。</li>
+				<li>“log”节点的反向传播遵循以下等式:<div> <img src="img/Figure_A.4b.jpg" alt="99"/> </div></li>
+			</ul>
+			<p>基于此，我们可以很容易地获得交叉熵误差层的反向传播。结果，值<img src="img/Figure_A.4d.png" alt="100"/>将是Softmax层的向后传播的输入。</p>
+			<p>接下来，让我们看看Softmax层的反向传播。因为Softmax层有点复杂，所以我想一步一步地检查它的反向传播:</p>
+			<p><strong class="bold">第一步:</strong></p>
+			<div><div><img src="img/Figure_A.5.jpg" alt="Figure A.5: Step 1&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图A.5:步骤1</h6>
+			<p>反向传播的值来自前一层(交叉熵误差层)。</p>
+			<p><strong class="bold">第二步:</strong></p>
+			<div><div><img src="img/Figure_A.6.jpg" alt="Figure A.6: Step 2&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图A.6:步骤2</h6>
+			<p>“x”节点“反转”乘法的正向传播值。这里，执行以下计算:</p>
+			<table id="table003-5" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_A.6a.png" alt="101"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(建议3)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p><strong class="bold">第三步:</strong></p>
+			<div><div><img src="img/Figure_A.7.jpg" alt="Figure A.7: Step 3&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图A.7:步骤3</h6>
+			<p>如果流在前向传播中分支为多个值，则在后向传播中会将分离的值相加。因此，这里增加了三个单独的反向传播值<img src="img/Figure_A.7a.png" alt="102"/>。对附加值进行<em class="italics"> / </em>的反向传播，得到<img src="img/Figure_A.7b.png" alt="103"/>。这里，(<em class="italics"> t </em> 1，<em class="italics"> t </em> 2，<em class="italics"> t </em> 3)是标签，也是一个“独热向量”一个热向量意味着(<em class="italics"> t </em> 1，<em class="italics"> t </em> 2，<em class="italics"> t </em> 3)中的一个为1，其他的都为0。因此，(<em class="italics"> t </em> 1，<em class="italics"> t </em> 2，<em class="italics"> t </em> 3)之和为1。</p>
+			<p><strong class="bold">第四步:</strong></p>
+			<div><div><img src="img/Figure_A.8.jpg" alt="Figure A.8: Step 4&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图A.8:步骤4</h6>
+			<p>“+”节点只传递值而不改变它。</p>
+			<p><strong class="bold">第五步:</strong></p>
+			<div><div><img src="img/Figure_A.9.jpg" alt="Figure A.9: Step 5&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图A.9:步骤5</h6>
+			<p>“x”节点“反转”乘法的值。这里，<img src="img/Figure_A.9a.png" alt="104"/>用于转换方程。</p>
+			<p><strong class="bold">第六步:</strong></p>
+			<div><div><img src="img/Figure_A.10.jpg" alt="Figure A.10: Step 6&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图A.10:步骤6</h6>
+			<p>在“exp”节点中，以下等式成立:</p>
+			<table id="table004-4" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style">
+							<p><img src="img/Figure_A.10a.png" alt="105"/></p>
+						</td>
+						<td class="No-Table-Style">
+							<p>(建议4)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>因此，乘以exp(a1)的两个独立输入之和就是要获得的反向传播。我们可以把这个写成<img src="img/Figure_A.10c.png" alt="106"/>，变换后得到<img src="img/Figure_A.10d.png" alt="107"/>。因此，在正向传播的输入为<img src="img/Figure_A.10e.png" alt="108"/>的节点中，反向传播为<img src="img/Figure_A.10f.png" alt="109"/>。对于<img src="img/Figure_A.10g.png" alt="110"/>和<img src="img/Figure_A.10h.png" alt="111"/>，我们可以使用相同的程序(结果分别为<img src="img/Figure_A.10i.png" alt="112"/>和<img src="img/Figure_A.10j.png" alt="113"/>)。有了这个，很容易说明，即使我们想分类n个类而不是三个类，我们也能达到同样的结果。</p>
+			<h2 id="_idParaDest-225"><a id="_idTextAnchor236"/>总结</h2>
+			<p>这里，详细示出了Softmax-with-Loss层的计算图，并获得了它的反向传播。<em class="italics">图A.11 </em>显示了Softmax-with-Loss层的完整计算图:</p>
+			<div><div><img src="img/Figure_A.11.jpg" alt="Figure A.11: Computational graph of the Softmax-with-Loss layer&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图a . 11:soft max-with-Loss层的计算图</h6>
+			<p><em class="italics">图A.11 </em>所示的计算图看起来很复杂。然而，如果你使用计算图一步一步地前进，获得导数(反向传播的过程)将会少得多。当您遇到看起来复杂的图层(如批处理规范化图层)，而不是此处描述的Softmax-with-Loss图层时，您可以使用此过程。这在实践中会比只看方程更容易理解。</p>
+		</div>
+	
+
+</body></html>

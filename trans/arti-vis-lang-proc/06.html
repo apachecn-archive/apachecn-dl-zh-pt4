@@ -1,0 +1,240 @@
+<html><head/><body>
+
+
+	
+		<title>C13550_06_EPUB_Final_SW</title>
+		
+	
+	
+		<div><h1 id="_idParaDest-106"><em class="italics"> <a id="_idTextAnchor142"/>第六章</em></h1>
+		</div>
+		<div><h1 id="_idParaDest-107"><a id="_idTextAnchor143"/>机器人操作系统(ROS)</h1>
+		</div>
+		<div><h2>学习目标</h2>
+			<p>本章结束时，您将能够:</p>
+			<ul>
+				<li class="bullets">解释机器人操作系统(ROS)的要点和基本概念</li>
+				<li class="bullets">创建机器人操作系统包并使用它们</li>
+				<li class="bullets">用从传感器获得的信息操作虚拟机器人</li>
+				<li class="bullets">开发和实施机器人的工作程序</li>
+			</ul>
+			<p>这一章主要关注ROS和使用它的包的不同方式。您还将学习如何使用ROS根据从传感器接收的信息操作虚拟机器人。</p>
+		</div>
+		<div><h2 id="_idParaDest-108"><a id="_idTextAnchor144"/> <a id="_idTextAnchor145"/> <a id="_idTextAnchor146"/> <a id="_idTextAnchor147"/> <a id="_idTextAnchor148"/>简介</h2>
+			<p>为机器人开发软件不像开发其他类型的软件那么容易。要制造机器人，您需要能够访问传感器信息、控制机器人部件并与机器人连接的方法和功能。这些方法和功能都存在于ROS中，使得构建虚拟机器人变得更加容易。</p>
+			<p><strong class="keyword"> ROS </strong>是一个兼容Ubuntu (Linux)的框架，用于编写机器人软件。它是一组库和工具，通过它们可以构建和创建各种机器人行为。这个框架最有趣的特点之一是开发的代码可以适用于任何其他机器人。ROS也让你有机会同时在几台机器上工作；例如，如果你想用一个机器人来收集苹果，你可以用一台电脑获取苹果的摄像头信息并进行处理，另一台机器启动命令机器人的运动，最后机器人将捡起苹果。通过遵循这一工作流程，计算机将不会执行太多的计算任务，并且执行变得更加流畅。</p>
+			<p>对于研究人员和公司来说，ROS都是机器人领域使用最广泛的工具。它正在成为机器人任务的标准。此外，ROS不断发展以解决新问题，并适应不同的技术。所有这些事实使它成为一个很好的研究和实践的话题。</p>
+			<h2 id="_idParaDest-109"><a id="_idTextAnchor149"/>活性氧概念</h2>
+			<p>如前所述，第一次与ROS合作并不容易。但就像任何其他软件一样，你需要知道ROS是如何工作的，以及如何使用它执行某些任务。为了做到这一点，在安装或使用框架之前，理解它的基本概念是很重要的。ROS功能背后的关键理念有助于您理解其内部流程，此处提及:</p>
+			<ul>
+				<li><strong class="keyword">节点</strong>:ROS节点是负责执行任务和计算的进程。可以使用主题或其他更复杂的工具将它们组合在一起。</li>
+				<li><strong class="keyword">主题</strong>:主题可以定义为单向工作的节点之间的信息通道。这被认为是单向工作流，因为节点可以订阅主题，但是主题不知道哪些节点订阅了它。</li>
+				<li><strong class="keyword">Master</strong>:ROS Master是一个服务，向其余节点提供名称和注册。它的主要功能是使单个节点能够相互定位并建立对等通信。</li>
+				<li><strong class="keyword">包</strong>:包是ROS组织的核心。在这些包中，您可以找到构建机器人应用程序的节点、库、数据集或有用的组件。</li>
+				<li>堆栈:ROS堆栈是一组节点，它们一起提供一些功能。当要开发的功能太复杂时，在节点之间划分任务会很有用。</li>
+			</ul>
+			<p>除了前面提到的概念，还有许多其他概念在使用ROS时会很有用，但是理解这些基本概念会让你为机器人实现强大的程序。让我们看一个简单的例子，以了解它们在实际情况中的应用:</p>
+			<div><div><img src="img/C13550_06_01.jpg" alt="Figure 6.1: A schema of a real example system using ROS"/>
+				</div>
+			</div>
+			<h6>图6.1:使用ROS的真实示例系统的模式</h6>
+			<p>这里的情况包括机器人在探测到接近的障碍物时改变方向。这是一步一步的工作方式:</p>
+			<ol>
+				<li>ROS主机已启用。这意味着ROS系统已经启动，可以运行任何节点。</li>
+				<li>邻近节点启动并从激光传感器提取信息。它通知主设备发布这个获得的信息。如果没有问题，并且信息具有预期的类型，主节点将允许节点通过主题进行发布。</li>
+				<li>一旦主节点允许节点发布，信息就被传递给主题并发布。在这种情况下，邻近节点在激光主题中发布信息。</li>
+				<li>运动节点要求主订阅一个激光话题。当订阅时，它将获得发布的信息，并与它一起决定机器人要执行的下一个动作。</li>
+			</ol>
+			<p>总之，两个节点都可以使用主服务共享信息，主服务通知两个节点彼此的存在。</p>
+			<h2 id="_idParaDest-110"><a id="_idTextAnchor150"/> ROS命令</h2>
+			<p>ROS没有图形用户界面与之配合工作；每个动作都必须在命令行上执行，因为它与Ubuntu兼容。然而，在接触ROS之前，您需要了解它最常用的命令。以下是它们及其功能的简短列表:</p>
+			<ul>
+				<li>roscore :这是使用ROS时运行的第一个命令。它启用框架并为任何ROS程序或操作提供支持。应该启动它，以便允许节点通信。</li>
+				<li><strong class="keyword"> roscd </strong>:该命令切换到一个堆栈或包目录，无需输入物理路径。</li>
+				<li><strong class="keyword"> rosnode </strong>:这些命令管理节点并获取关于它们的信息。在这里，您可以看到最常用的rosnode命令:</li>
+				<li><strong class="keyword"> rosnode list </strong>:该命令打印活动节点的信息。</li>
+				<li><strong class="keyword">节点信息&lt;节点名&gt; </strong>:告知用户所输入的节点。</li>
+				<li><strong class="keyword">rosnode kill&lt;node _ name&gt;</strong>:该命令的作用是停止一个节点进程。</li>
+				<li><strong class="keyword"> rosrun </strong>:使用这个命令，你可以在你的系统上运行任何应用程序，而不用切换到它的目录。</li>
+				<li><strong class="keyword">话题</strong>:该命令允许你管理和查看话题信息。此命令还有其他几种类型:</li>
+				<li><strong class="keyword">主题列表</strong>:打印活动主题的信息。</li>
+				<li><strong class="keyword">主题信息&lt;主题名称&gt; </strong>:显示具体主题的信息。</li>
+				<li><strong class="keyword">rostopic pub&lt;topic _ name&gt;【数据...】</strong>:该命令的作用是将给定的数据发布到输入的主题中。</li>
+				<li>rqt_graph :这是一个非常有用的命令，可以用来图形化地观察正在发布或订阅的活动节点和主题。</li>
+			</ul>
+			<h2 id="_idParaDest-111"><a id="_idTextAnchor151"/>安装和配置</h2>
+			<p>安装ROS之前首先要考虑的是安装的Ubuntu版本。根据您的操作系统版本，有几个ROS版本可供您选择。在这种情况下，我们正在解释ROS Kinetic Kame的安装，它与Ubuntu 16.04 LTS (Xenial Xerus)兼容。</p>
+			<h4>注意</h4>
+			<p class="callout">如果这不是你的Ubuntu版本，你可以去ROS网站，<a href="http://www.ros.org/">http://www.ros.org/</a>，寻找相应的发行版。</p>
+			<p>正如几乎所有其他工具一样，建议总是安装最新版本，因为它可能已经解决了错误或提供了新功能；但是，如前所述，如果您使用的是旧版本，请不要担心。</p>
+			<h4>注意</h4>
+			<p class="callout">要获得如何安装ROS的详细步骤，请参阅第vi页的前言。</p>
+			<h2 id="_idParaDest-112"><a id="_idTextAnchor152"/>柳絮工作区和包</h2>
+			<p>这是为机器人编写第一个应用程序和程序之前的最后一步。你必须建立你的工作环境。为此，您将学习什么是柳絮工作空间和包，以及如何使用它们。</p>
+			<p>柳絮工作空间是一个ROS目录，可以在其中创建、编译和运行柳絮包。柳絮包是用于创建ROS节点和应用程序的容器。这些包中的每一个都作为包含多个节点的单个项目工作。要知道柳絮包里面的ROS代码只能是Python或者C++，这一点很重要。</p>
+			<p>现在，让我们看看如何创建柳絮工作空间:</p>
+			<h4>注意</h4>
+			<p class="callout">在同一个终端窗口中执行这些命令。</p>
+			<ol>
+				<li value="1">创建一个标准文件夹，其中包含名为“<code>src</code>”的子文件夹您可以选择系统上的任何位置:<pre>mkdir -p ~/catkin_ws/src cd ~/catkin_ws</pre></li>
+				<li>Switch to the new <code>catkin_ws</code> directory and run the <code>catkin</code> compilation command to initialize the new workspace:<pre>catkin_make</pre><p>在任何包中进行更改时，每当您想要编译工作空间时，都必须执行该命令。</p></li>
+			</ol>
+			<p>按照这些简单的步骤，您将准备好使用您的柳絮工作空间。但是，在处理它时，您应该始终记得首先输入以下命令:</p>
+			<pre>source devel/setup.bash</pre>
+			<p>这让ROS知道在创建的柳絮工作空间中可以有ROS可执行文件。</p>
+			<p>如果您已经成功地完成了前面的过程，那么现在就可以创建您的柳絮包并对它们进行操作了。使用这里提到的步骤创建一个包:</p>
+			<ol>
+				<li value="1">进入你的柳絮工作空间的“<code>src</code>文件夹:<pre>cd ~/catkin_ws/src</pre></li>
+				<li>使用此命令创建一个包:<pre>catkin_create_pkg &lt;package_name&gt; [dependencies]</pre></li>
+			</ol>
+			<p>依赖项是软件包正常运行所需的一组库或工具。例如，在一个仅使用Python代码的简单包中，命令如下:</p>
+			<pre>catkin_create_pkg my_python_pkg rospy</pre>
+			<h2 id="_idParaDest-113"><a id="_idTextAnchor153"/>发布者和订阅者</h2>
+			<p>在解释基本的ROS概念时，我们讨论了一些用于发布数据的节点和一些用于订阅数据的节点。了解了这一点，就不难想象节点可以根据它们执行的动作类型分为两类。他们可以是<strong class="bold">发布者</strong>或<strong class="bold">订阅者</strong>。为什么您认为区分这两种类型的节点很重要？</p>
+			<p>如前所述，发布者是向其他节点提供信息的节点。他们通常使用传感器来检查环境状态，并将其转换为有价值的输出，供用户接收这些信息。</p>
+			<p>另一方面，订阅者通常会得到一个可以理解的输入并处理它。然后，他们将根据获得的结果决定启动哪个操作。</p>
+			<p>由于这是一种很少使用的编程类型，在开始将这些节点用于机器人和模拟器之前，了解一些这些节点实际如何工作的例子会很有意思。所以，让我们做一些练习来帮助你理解节点。</p>
+			<h3 id="_idParaDest-114"><a id="_idTextAnchor154"/>练习20:发布和订阅</h3>
+			<p>在本例中，我们将使用以下步骤用Python编写一个简单的发布者和订阅者:</p>
+			<ol>
+				<li value="1">打开一个新的终端，输入<code>roscore</code>命令启动ROS服务:<pre>roscore</pre></li>
+				<li>Create a new package in your catkin workspace that contains the solution to this exercise. This package will depend on <code>rospy</code> and <code>std_msgs</code>, so you must create it as follows:<pre>catkin_create_pkg exercise20 rospy std_msgs</pre><h4>注意</h4><p class="callout"><code>std_msgs</code>是一个提供对ROS原始数据类型支持的包。你可以在这里找到更多关于它的信息，包括被管理数据的具体类型:<a href="http://wiki.ros.org/std_msgs">http://wiki.ros.org/std_msgs</a>。</p></li>
+				<li>切换到包目录并创建一个新文件夹，其中将包含发布者和订阅者文件，例如:<pre>cd ~/catkin_ws/src/exercise20 mkdir –p scripts</pre></li>
+				<li>进入新文件夹，为每个节点创建一个相应的Python文件:<pre>cd scripts touch publisher.py touch subscriber.py</pre></li>
+				<li>提供两个文件的可执行权限:<pre>chmod +x publisher.py chmod +x subscriber.py</pre></li>
+				<li>Begin with the publisher implementation:<p>初始化Python环境并导入必要的库。</p><h4>注意</h4><pre>#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String</pre><p>创建一个函数来发布消息。</p><pre>def publisher():</pre><p>声明一个将<code>String</code>消息发布到新主题的发布者，不管它的名称是什么。</p><pre>    pub  =rospy.Publisher('publisher_topic', String, queue_size=1)</pre><h4>注意</h4><pre>    rospy.init_node('publisher', anonymous=True)</pre><p>使用创建的publisher变量发布任何需要的<code>String</code>。例如:</p><pre>    pub.publish("Sending message")</pre><p>最后，检测程序条目并调用创建的函数:</p><pre>if __name__ == '__main__':
+    publisher()</pre></li>
+				<li>Continue with the subscriber implementation:<p>像对发布者一样初始化Python并导入库。</p><h4>注意</h4><pre>#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String</pre><p>创建一个订阅主题的函数:</p><pre>def subscriber():</pre><p>以与之前相同的方式初始化节点:</p><pre>    rospy.init_node('subscriber', anonymous=True)</pre><p>使用此功能订阅<code>publisher_topic</code>:</p><pre>    rospy.Subscriber('publisher_topic', String, callback)</pre><h4>注意</h4><pre>    rospy.spin()</pre><p>实现<code>callback</code>函数，在接收到任何数据时打印消息。在第一个练习中，让我们在收到来自发布者的第一条消息时终止订阅者节点。这可以通过<code>signal_shutdown</code>方法完成，该方法集成在<code>rospy</code>中，只需要关机原因作为参数:</p><pre>def callback(data):
+    if(data != None):
+        print("Message received")
+        rospy.signal_shutdown("Message received")</pre><p>从主执行线程调用创建的函数:</p><pre>    if __name__ == '__main__':
+        subscriber()</pre></li>
+				<li>Test the functioning of the created nodes. You can do this as described here:<p>打开一个新的终端并切换到您的工作区。然后，运行以下命令，以便ROS检查可执行文件:</p><pre>source devel/setup.bash</pre><p>运行订户节点。如果实现是正确的，它应该一直处于执行状态，直到您运行您的发布者:</p><pre>rosrun exercise20 subscriber.py</pre><p>打开一个新的终端，然后再次输入命令。</p><p>运行发布者节点:</p><pre>rosrun exercise20 publisher.py</pre><p>如果节点实现得很好，订阅者执行在执行发布者节点后结束。输出必须是回调中打印的消息，在本例中为:<code>Message received</code>。</p><h4>注意</h4><p class="callout">运行包节点不需要编译工作空间，因为它们是用Python编写的。如果它们是用C++编写的，那么每次修改代码后，您都必须构建一个包。</p></li>
+			</ol>
+			<h3 id="_idParaDest-115"><a id="_idTextAnchor155"/>练习21:发布者和订阅者</h3>
+			<p>这个练习与上一个相似，但是很复杂。之前创建的发布者每次执行只能发送一条消息。现在，我们要实现一个发布器，它不会停止发送数据，直到我们终止它。</p>
+			<p>本练习的目标是创建一个遵循以下规则的号码查找系统:</p>
+			<ul>
+				<li>发布者节点必须将随机数发布到主题中，直到它被用户停止。</li>
+				<li>The subscriber node decides a number to look for and searches for it in the received message list. Here, there are two possibilities:<p>如果在1000次尝试之前找到该数字，将会打印一条肯定的消息，并显示达到该数字所用的尝试次数。</p><p>如果在1000次尝试中没有找到该号码，将打印一条负面消息，告诉用户不可能找到该号码。</p><p>因此，这可以通过以下方式实现:</p></li>
+			</ul>
+			<ol>
+				<li value="1">如前所述，首先创建包和文件:<pre>cd ~/catkin_ws/src catkin_create_pkg exercise21 rospy std_msgs cd exercise21 mkdir scripts cd scripts touch generator.py touch finder.py chmod +x generator.py finder.py</pre></li>
+				<li>Begin with the publisher implementation.<p>导入必要的库。这些库与前言中的相同，但是这一次，您必须更改<code>Int32</code>的<code>String</code>导入，因为节点将处理数字。您还应该导入一个随机库来生成数字。</p><h4>注意</h4><pre>#!/usr/bin/env python
+import rospy
+from std_msgs.msg import Int32
+import random</pre></li>
+				<li>创建号码生成器功能:<pre>def generate():</pre></li>
+				<li>像在前面的练习中一样，声明发布者并初始化节点。请注意，这一次，数据类型不同，队列大小设置为10，这意味着可能有10个发布的数字。当公布第11个数字时，第一个数字将从队列中删除:<pre>    pub = rospy.Publisher('numbers_topic', Int32, queue_size=10)     rospy.init_node('generator', anonymous=True)</pre></li>
+				<li>配置程序循环迭代的速率。我们将速率设置为10 (Hz)，这不是一个很高的速率，这将允许我们检查生成的数字:<pre>    rate = rospy.Rate(10)</pre></li>
+				<li>实现将生成和发布数字的循环。它必须迭代直到用户停止它，所以您可以使用<code>is_shutdown()</code>函数。在声明的速率下使用睡眠功能，使其生效:<pre>    while not rospy.is_shutdown():         num = random.randint(1,101)         pub.publish(num)         rate.sleep()</pre></li>
+				<li>从节点条目调用创建的函数。使用try指令，这样用户关机就不会产生错误:<pre>if __name__ == '__main__':     try:         generate()     except rospy.ROSInterruptException:         pass</pre></li>
+				<li>Continue with the subscriber implementation:<p>导入必要的库。</p><h4>注意</h4><pre>#!/usr/bin/env python
+import rospy
+from std_msgs.msg import Int32</pre></li>
+				<li>创建一个具有两个属性的类:一个用于建立要查找的数字的值，另一个用于计算尝试的次数:<pre>class Finder:     searched_number = 50     generated_numbers = 0</pre></li>
+				<li> Implement the callback function. The logic of the finder has to be coded in this function. There are lots of ways to do this but this is a frequently used one:<pre>    def callback(self, data):
+        if data.data == self.searched_number:
+            print(str(data.data) + ": YES")
+            self.generated_numbers += 1
+            print("The searched number has been found after " + str(self.generated_numbers) + " tries")
+            rospy.signal_shutdown("Number found")
+        elifself.generated_numbers&gt;= 1000:
+print("It wasn't possible to find the searched number")
+            rospy.signal_shutdown("Number not found")
+else:
+            print(str(data.data) + ": NO")
+            self.generated_numbers += 1</pre><p>如您所见，这是一个简单的函数，它查找数字，并在每次尝试失败时将计数器加1。如果找到该号码，它将打印一条肯定的消息。如果计数器达到1000，搜索将中止，并显示一条否定消息。</p></li>
+				<li>创建订阅功能。记住，这一次，发布的数据类型是<code>Int32</code> : <pre>    def finder(self):         rospy.init_node('finder', anonymous=True)         rospy.Subscriber('numbers_topic', Int32, self.callback)         rospy.spin()</pre></li>
+				<li>最后，从节点条目中，创建一个<code>Finder</code>类实例并调用<code>finder</code>方法:<pre>if __name__ == '__main__':     find = Finder()     find.finder()</pre></li>
+				<li>Test whether the performed implementation is correct.<p>打开一个新的终端并运行<code>roscore</code>。</p><p>打开另一个终端并执行订户节点:</p><pre>cd ~/catkin_ws
+source devel/setup.bash
+rosrun exercise21 finder.py</pre></li>
+				<li>在另一个终端中，运行publisher节点，以便生成数字，并且回调函数开始工作:<pre>cd ~/catkin_ws source devel/setup.bash rosrun exercise21 generator.py</pre></li>
+				<li>如果找到了被搜索的数字，在本例中是50，输出应该类似于这个:<div> <img src="img/C13550_06_02.jpg" alt="Figure 6.2: Execution example where the number is found"/> </div> <h6>图6.2:找到该数字的执行示例</h6></li>
+				<li>当找不到号码时，将搜索到的号码更改为大于100的值。您应该获得如下输出:</li>
+			</ol>
+			<div><div><img src="img/C13550_06_03.jpg" alt="Figure 6.3: Execution example where the number is not found"/>
+				</div>
+			</div>
+			<h6>图6.3:找不到编号的执行示例</h6>
+			<p>当两个节点都被执行时，使用<code>rqt_graph</code>命令会很有趣；这样，您可以图形化地看到刚刚创建的结构。因此，打开一个新的终端并输入命令。输出应该是这样的:</p>
+			<div><div><img src="img/C13550_06_04.jpg" alt="Figure 6.4: Output"/>
+				</div>
+			</div>
+			<h6>图6.4:输出</h6>
+			<h2 id="_idParaDest-116"><a id="_idTextAnchor156"/>模拟器</h2>
+			<p>模拟器是开发和测试机器人软件的非常好的工具。他们让每个人都能买得起机器人。想象一下，你正在做一个机器人项目，你必须不断地测试你的机器人的功能改进。每次测试都需要连接机器人，多次充电，并随身携带。所有这些都可以通过模拟器来避免，模拟器可以随时在你的电脑中启动；它甚至可以模拟机器人生成的节点和话题。你知道任何与机器人一起工作的模拟器吗？</p>
+			<p>我们将使用Gazebo，一个包含在ROS完整安装中的模拟器。事实上，如果你在安装的时候选择了这个选项，你可以在一个终端里写“<strong class="bold"> gazebo </strong>”，它就会启动模拟器。Gazebo界面如图6.4所示:</p>
+			<div><div><img src="img/C13550_06_05.jpg" alt="Figure 6.5: The Gazebo start point"/>
+				</div>
+			</div>
+			<h6>图6.5:凉亭起点</h6>
+			<p>下一步是安装和设置我们将要模拟的机器人。在这种情况下，我们将使用一个<strong class="bold"> Turtlebot </strong>，一个装有摄像头和激光等传感器的轮式机器人。Turtlebot可能和你的ROS发行版不兼容(我们用的是Kinetic Kame)；但是不要担心，你可以在凉亭里模拟很多机器人。您可以查找不同的机器人，并尝试将它们用于您的ROS发行版。</p>
+			<h3 id="_idParaDest-117"><a id="_idTextAnchor157"/>练习Turtlebot配置</h3>
+			<p>在本练习中，我们将介绍一些您在使用Turtlebot之前需要做的事情:</p>
+			<ol>
+				<li value="1">安装其依赖项:<pre>sudo apt-get installros-kinetic-turtlebotros-kinetic-turtlebot-apps ros-kinetic-turtlebot-interactions ros-kinetic-turtlebot-simulator ros-kinetic-kobuki-ftdiros-kinetic-ar-track-alvar-msgs</pre></li>
+				<li>在您的<code>catkin</code>工作区下载<code>Turtlebot</code>模拟器包。<h4>注</h4>注<pre>cd ~/catkin_ws/src git clone <a href="https://github.com/PacktPublishing/Artificial-Vision-and-Language-Processing-for-Robotics/blob/master/Lesson06/turtlebot_simulator.zip">https://github.com/PacktPublishing/Artificial-Vision-and-Language-Processing-for-Robotics/blob/master/Lesson06/turtlebot_simulator.zip</a></pre></li>
+				<li>After that, you should be able to use Turtlebot with Gazebo.<p>启动ROS服务:</p><pre>roscore</pre><p>启动Turtlebot世界:</p><pre>cd ~/catkin_ws
+source devel/setup.bash
+roslaunch turtlebot_gazebo turtlebot_world.launch</pre></li>
+				<li>现在，你应该看到和以前一样的凉亭世界，但是在中心有一组对象，包括Turtlebot，如图6.5所示:</li>
+			</ol>
+			<div><div><img src="img/C13550_06_06.jpg" alt="Figure 6.6: The Turtlebot simulation using Gazebo"/>
+				</div>
+			</div>
+			<h6>图6.6:使用Gazebo的Turtlebot模拟</h6>
+			<p>模拟正确运行后，让我们做另一个练习，学习如何从传感器获取信息并使用它。</p>
+			<h3 id="_idParaDest-118"><a id="_idTextAnchor158"/>练习23:模拟器和传感器</h3>
+			<p>在本练习中，我们将创建一个订阅Turtlebot相机以获取相应图像的ROS节点。请遵循以下步骤:</p>
+			<ol>
+				<li value="1">用必需的依赖项和文件创建一个包:<pre>cd ~/catkin_ws/src catkin_create_pkg exercise22 rospy sensor_msgs cd exercise22 mkdir scripts cd scripts touch exercise22.py chmod +x exercise22.py</pre></li>
+				<li>Implement the node.<p>导入必要的库。在本练习中，我们将使用<code>OpenCV</code>来处理从摄像机获取的图像:</p><pre>#!/usr/bin/env python
+import rospy
+from sensor_msgs.msg import Image
+import cv2
+from cv_bridge import CvBridge</pre><p>创建一个类并声明一个类型为<code>CvBridge</code>的属性，稍后将使用该属性将图像类型更改为<code>cv2</code>:</p><pre>class ObtainImage:
+    bridge = CvBridge()</pre><p>编写回调函数，在这里您必须获取图像并将其转换为cv2格式:</p><pre>    def callback(self, data):
+        cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+        cv2.imshow('Image',cv_image)
+        cv2.waitKey(0)
+        rospy.signal_shutdown("Finishing")</pre><h4>注意</h4><p class="callout">我们使用<code>waitKey()</code>功能，以便图像保留在屏幕上。当用户按下任意键时，它就会消失。</p></li>
+				<li>Define and implement the subscriber function. Remember that, now, the required data has an Image type:<pre>    def obtain(self):
+            rospy.Subscriber('/camera/rgb/image_raw', Image, self.callback)
+            rospy.init_node('image_obtainer', anonymous=True)
+            rospy.spin()</pre><h4>注意</h4><p class="callout">如果您不知道想要订阅的主题的名称，您可以随时输入<code>rostopic</code> list命令并检查可用的节点。您应该会看到如下所示的列表:</p><div><img src="img/C13550_06_07.jpg" alt="Figure 6.7: Output of the rostopic list command"/></div><h6>图6.7:rostopic list命令的输出</h6></li>
+				<li>从程序入口调用用户函数:<pre>if __name__ == '__main__':     obt = ObtainImage()     obt.obtain()</pre></li>
+				<li>Check that the node works fine. To do that, you should run <code>roscore</code> command, Gazebo with Turtlebot, and created the node in different terminals. Note that you may also run the <code>source devel/setup.bash</code> source if you didn't do so earlier:<pre>roscore
+roslaunch turtlebot_gazebo turtlebot_world.launch
+rosrun exercise22 exercise22.py</pre><p>结果应该是这样的:</p></li>
+			</ol>
+			<div><div><img src="img/C13550_06_08.jpg" alt="Figure 6.8: The execution example of the exercise node"/>
+				</div>
+			</div>
+			<h6>图6.8:练习节点的执行示例</h6>
+			<h3 id="_idParaDest-119"><a id="_idTextAnchor159"/>活动6:模拟器和传感器</h3>
+			<p>考虑以下场景:您为一家机器人公司工作，该公司最近收购了一个新客户，一家安全监控公司。所以，你被要求为一个在晚上守卫商店的机器人实现一个监视系统。客户希望机器人呆在商店的中间，并不断地四处张望。</p>
+			<p>你必须模拟系统，你被要求使用Turtlebot和Gazebo。</p>
+			<ol>
+				<li value="1">实现一个节点，该节点订阅摄像机并显示它接收到的所有图像。</li>
+				<li>Implement a node for the robot to turn itself on.<h4>注意</h4><p class="callout">为此，您必须发布/mobile_base/commands/velocity主题，该主题适用于Twist消息。Twist是包含在<code>geometry_msgs</code>库中的一种消息类型，所以您必须将它添加为一个依赖项。要使机器人自身旋转，创建Twist实例并修改其<code>angular.z</code>值。然后，发布。</p></li>
+				<li>Now, run both nodes at the same time.<p>在本活动结束时，您将获得类似于以下内容的输出:</p></li>
+			</ol>
+			<div><div><img src="img/C13550_06_09.jpg" alt="Figure 6.9: The rotating output that shows the images in the virtual environment"/>
+				</div>
+			</div>
+			<h6>图<a id="_idTextAnchor160"/> 6.9:显示虚拟环境中图像的旋转输出</h6>
+			<h4>注意</h4>
+			<p class="callout">这项活动的解决方案可在第318页找到。</p>
+			<h2 id="_idParaDest-120"><a id="_idTextAnchor161"/>总结</h2>
+			<p>在本章中，您学习了如何使用ROS，从它的安装和配置到节点的实现。您还与模拟器及其传感器一起工作，从它们那里获得信息，并使获得的信息对解决问题有价值。本章涵盖的所有练习和活动将在接下来的章节中对你有用。</p>
+			<p>在下一章，你将使用自然语言处理(NPL)并学习如何构建聊天机器人。如果你造了一个好的，它可以成为一个非常有趣的机器人工具。你甚至可以用ROS来开发它。</p>
+		</div>
+	
+
+</body></html>

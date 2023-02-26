@@ -1,0 +1,1631 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Working with Time Series Data</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用时间序列数据</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>用神经网络对图像进行分类是深度学习中最具标志性的工作之一。但这肯定不是神经网络擅长的唯一工作。另一个正在进行大量研究的领域是递归神经网络。</p>
+
+<p>在这一章中，我们将深入探讨递归神经网络，以及它们如何应用于处理时间序列数据的场景中；例如，在需要预测温度或其他重要值的物联网解决方案中。</p>
+
+<p>本章包括以下主题:</p>
+
+<ul>
+
+<li>什么是递归神经网络？</li>
+
+<li>递归神经网络的使用场景</li>
+
+<li>递归神经网络是如何工作的</li>
+
+<li>用CNTK构建递归神经网络</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Technical requirements</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">技术要求</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们假设您的计算机上安装了Anaconda的最新版本，并按照<a href="9a2c8c46-f9a0-4e05-86ef-31300a28a7ba.xhtml">第1章</a>、<em>CNTK</em>入门中的步骤在您的计算机上安装CNTK。本章的示例代码可以在我们的GitHub资源库中找到，网址是<a href="https://github.com/PacktPublishing/Deep-Learning-with-Microsoft-Cognitive-Toolkit-Quick-Start-Guide/tree/master/ch6">https://GitHub . com/packt publishing/Deep-Learning-with-Microsoft-Cognitive-Toolkit-Quick-Start-Guide/tree/master/ch6</a>。</p>
+
+<p>在本章中，我们将学习存储在Jupyter笔记本中的一个示例。要访问示例代码，请在下载代码的目录中的Anaconda提示符下运行以下命令:</p>
+
+<pre><strong>cd ch6</strong><br/><strong>jupyter notebook</strong></pre>
+
+<p>样本代码存储在<kbd>Training recurrent neural networks.ipynb</kbd>笔记本中。请注意，如果您没有可以被CNTK使用的带有GPU的机器，那么运行本章的示例代码将需要很长时间。</p>
+
+<p>看看下面的视频，看看代码是如何运行的:<br/><a href="http://bit.ly/2TAdtyr">http://bit.ly/2TAdtyr</a></p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>What are recurrent neural networks?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">什么是递归神经网络？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>递归神经网络是一种特殊的神经网络，能够随着时间的推移进行推理。它们主要用于必须处理随时间变化的值的场景。</p>
+
+<p>在常规的神经网络中，您只能提供一个输入，从而产生一个预测。这限制了常规神经网络的功能。例如，常规神经网络不擅长翻译文本，而递归神经网络在翻译任务中已经有相当多的成功实验。</p>
+
+<p>在递归神经网络中，有可能提供导致单个预测的样本序列。还可以使用递归神经网络根据单个输入样本来预测输出序列。最后，您可以根据输入序列预测输出序列。</p>
+
+<p>与其他类型的神经网络一样，您可以在分类作业和回归任务中使用递归神经网络，尽管根据网络的输出来识别使用递归网络执行的作业类型可能会更加困难。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Recurrent neural networks variations</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">递归神经网络变异</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>递归神经网络可以以多种方式使用。在这一节中，我们将看看递归神经网络的不同变体，以及它们如何用于解决特定类型的问题。具体来说，我们将了解以下变化:</p>
+
+<ul>
+
+<li>基于输入序列预测单个输出</li>
+
+<li>基于单个输入值预测序列</li>
+
+<li>基于其他序列预测序列</li>
+
+</ul>
+
+<p>最后，我们还将探索将多个递归神经网络堆叠在一起，以及这如何有助于在处理文本等场景中获得更好的性能。</p>
+
+<p>让我们来看看可以使用递归网络的场景，因为有几种方法可以使用递归神经网络的独特属性。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Predicting a single output based on a sequence</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">基于序列预测单个输出</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>递归神经网络包含到输入的回送连接。当我们输入一个值序列时，它会按时间步长处理序列中的每个元素。由于环回连接，它可以将处理序列中的一个元素时生成的输出与序列中下一个元素的输入相结合。通过将先前时间步骤的输出与下一时间步骤的输入相结合，它将在整个序列上建立记忆，该记忆可用于进行预测。示意性地，基本的递归神经网络看起来像这样:</p>
+
+<div><img class="aligncenter size-full wp-image-679 image-border" src="img/ca594c5b-ff8b-4a04-8a89-c364e1a1216b.png" style=""/></div>
+
+<p>当我们将递归神经网络展开为各个步骤时，这种递归行为变得更加清晰，如下图所示:</p>
+
+<div><img class="aligncenter size-full wp-image-680 image-border" src="img/b5319a3f-4a49-4e89-8920-812f00ec7cf7.png" style=""/></div>
+
+<p>为了用这个递归神经网络进行预测，我们将执行以下步骤:</p>
+
+<ol>
+
+<li>首先，我们输入输入序列的第一个元素来创建一个初始隐藏状态。</li>
+
+<li>然后，我们获取初始隐藏状态，并将其与输入序列中的第二个元素相结合，以产生更新的隐藏状态。</li>
+
+<li>最后，我们取输入序列中的第三个元素来产生最终的隐藏状态，并预测递归神经网络的输出。</li>
+
+</ol>
+
+<p>由于这种环回连接，您可以教递归神经网络识别随时间发生的模式。例如，当您想要预测明天的温度时，您将需要查看过去几天的天气，以发现可用于确定明天温度的模式。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Predicting a sequence based on a single sample</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">基于单个样本预测序列</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>递归神经网络的基本模型也可以扩展到其他用例。例如，您可以使用相同的网络体系结构来预测基于单个输入的值序列，如下图所示:</p>
+
+<div><img class="aligncenter size-full wp-image-681 image-border" src="img/60c27a51-468f-4049-8e34-2f12ee8acda0.png" style=""/></div>
+
+<p>在这个场景中，我们有三个时间步长，每个时间步长将根据我们提供的输入预测输出序列中的一个步长。</p>
+
+<ol>
+
+<li>首先，我们将输入样本输入到神经网络中，以产生初始隐藏状态并预测输出序列中的第一个元素</li>
+
+<li>然后，我们将初始隐藏状态与相同的样本相结合，以产生更新的隐藏状态，并输出输出序列中的第二个元素</li>
+
+<li>最后，我们再次输入样本，再次更新隐藏状态，并预测输出序列中的最后一个元素</li>
+
+</ol>
+
+<p>从一个样本生成一个序列与我们之前的样本有很大的不同，在我们之前的样本中，我们收集了输入序列中所有时间步长的信息来获得一个预测。在这个场景中，我们在每个时间步生成输出。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>递归神经网络还有一个变化，它利用我们刚刚讨论的设置概念和我们在上一节中讨论的设置，根据一系列值预测一系列值。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Predicting sequences based on sequences</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">基于序列预测序列</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，我们已经了解了如何基于序列预测单个值和基于单个值预测序列，让我们来看看如何针对序列预测序列。在此方案中，您将执行与上一个方案相同的步骤，在上一个方案中，我们根据单个样本预测序列，如下图所示:</p>
+
+<div><img class="aligncenter size-full wp-image-682 image-border" src="img/d06546de-4155-4584-bed2-a8117e94046a.png" style=""/></div>
+
+<p class="CDPAlignLeft CDPAlign">在这个场景中，我们有三个时间步骤，从输入序列中获取元素，并预测输出序列中我们想要预测的相应元素。让我们一步一步地回顾这个场景:</p>
+
+<ol>
+
+<li>首先，我们获取输入序列中的第一个元素，创建一个初始隐藏状态，并预测输出序列中的第一个元素。</li>
+
+<li>接下来，我们从输入序列中获取初始隐藏状态和第二个元素，以更新隐藏状态并预测输出序列中的第二个元素。</li>
+
+<li>最后，我们利用更新后的隐藏状态和输入序列中的最后一个元素来预测输出序列中的最后一个元素。</li>
+
+</ol>
+
+<p>因此，我们不再像上一节那样为每一步重复相同的输入样本，而是一次输入一个元素，并将每一步生成的预测作为模型的输出序列。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Stacking multiple recurrent layers</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">堆叠多个循环层</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>递归神经网络可以有多个递归层。这使得递归网络的记忆容量更大，使得模型能够学习更复杂的关系。</p>
+
+<p>例如，当您想要翻译文本时，您需要将至少两个递归层堆叠在一起，一个将输入文本编码为中间形式，另一个将它解码为您想要将文本翻译成的语言。谷歌有一篇有趣的论文，展示了如何使用这种技术将一种语言翻译成另一种语言，这篇论文在<a href="https://arxiv.org/abs/1409.3215">https://arxiv.org/abs/1409.3215</a>可用。</p>
+
+<p>因为您可以在许多方面使用递归神经网络，所以它在使用时间序列数据进行预测方面非常通用。在下一节中，我们将深入探讨递归网络内部如何工作的更多细节，以便更好地理解隐藏状态是如何工作的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>How do recurrent neural networks work?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">递归神经网络是如何工作的？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了理解递归神经网络是如何工作的，我们需要仔细看看这些网络中的递归层是如何工作的。在递归神经网络中可以使用几种不同类型的递归层。在我们深入到递归单元的更高级版本之前，让我们首先讨论如何用标准递归层预测输出，以及如何训练包含递归层的神经网络。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Making predictions with a recurrent neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用递归神经网络进行预测</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>基本循环层与神经网络中的常规层非常不同。通常，重复出现的层具有隐藏状态，作为层的记忆。从图层的输出到图层的输入有一个环回连接，如下图所示:</p>
+
+<div><img class="aligncenter size-full wp-image-683 image-border" src="img/562450bb-333b-4dcd-aa44-7374466c7d98.png" style=""/></div>
+
+<p>现在我们已经看到了一个基本的循环层是什么样子，让我们使用一系列的三个元素来一步一步地了解这个层类型是如何工作的。序列中的每一步称为一个时间步。要用递归层预测输出，我们需要用初始隐藏状态初始化该层。这通常使用全零来完成。隐藏状态的大小与输入序列中单个时间步长中的特征数量相同。</p>
+
+<p>接下来，我们将需要更新序列中第一个时间步的隐藏状态。要更新第一个时间步长的隐藏状态，我们将使用以下公式:</p>
+
+<div><img class="fm-editor-equation" src="img/d98b7208-2516-4f5e-a56e-5c283bbb58c4.png" style="width:18.25em;height:1.58em;"/></div>
+
+<p>在这个公式中，我们通过计算初始隐藏状态(用零初始化)和一组权重之间的点积(即，元素乘积)来计算新的隐藏状态。我们将添加另一组权重和图层输入之间的点积。两个点积之和的结果通过一个激活函数传递，就像在常规的神经网络层中一样。这为我们提供了当前时间步长的隐藏状态。</p>
+
+<p>当前时间步长的隐藏状态用作序列中下一个时间步长的初始隐藏状态。我们将重复在第一时间步中执行的计算，以更新第二时间步的隐藏状态。第二个时间步长的公式如下所示:</p>
+
+<div><img class="fm-editor-equation" src="img/def3ec5c-8b66-4c14-b6a6-a4fbfad94c75.png" style="width:19.42em;height:1.67em;"/></div>
+
+<p>我们将计算隐藏状态的权重与步骤1中的隐藏状态之间的点积，并将输入与输入权重之间的点积相加。请注意，我们正在重用上一时间步的权重。</p>
+
+<p>我们将为序列中的第三个也是最后一个步骤重复更新隐藏状态的过程，如以下公式所示:</p>
+
+<div><img class="fm-editor-equation" src="img/b5096965-de91-411a-bc1b-d3a5014b15c4.png" style="width:21.75em;height:1.67em;"/></div>
+
+<p>当我们处理完序列中的所有步骤后，我们可以使用第三组权重和最后一个时间步骤的隐藏状态来计算输出，如以下公式所示:</p>
+
+<div><img class="fm-editor-equation" src="img/459719df-c4d9-4ce5-8fd8-cccb2865b739.png" style="width:8.08em;height:1.67em;"/></div>
+
+<p>当您使用递归网络来预测输出序列时，您将需要在每个时间步长执行最终计算，而不仅仅是序列中的最终时间步长。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training a recurrent neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">训练递归神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>与常规神经网络层一样，您可以使用反向传播来训练递归层。这一次，我们将对常规反向传播算法应用一个技巧。</p>
+
+<p>在常规的神经网络中，您可以基于<kbd>loss</kbd>函数、输入和模型的预期输出来计算梯度。但这对递归神经网络不起作用。无法使用单个样本、目标值和<kbd>loss</kbd>函数来计算递归图层的损失。因为预测输出基于网络输入的所有时间步长，所以您还需要使用输入序列的所有时间步长来计算损耗。所以，你得到的不是一组梯度，而是一个梯度序列，当求和时会导致最终损失。</p>
+
+<p>随着时间的推移反向传播比常规反向传播更难。为了达到<kbd>loss</kbd>函数的全局最优，我们需要更加努力地沿着梯度下降。我们的梯度下降算法向下走的山坡比常规神经网络高得多。除了更高的损耗之外，它还需要更长的时间，因为我们需要处理序列中的每个时间步长来计算和优化单个输入序列的损耗。</p>
+
+<p>更糟糕的是，在反向传播过程中，我们有更大的机会看到爆炸梯度，因为在多个时间步长上增加了梯度。您可以通过使用有界激活来解决分解渐变的问题，例如<strong>双曲正切函数</strong> ( <strong> tanh </strong>)或<kbd>sigmoid</kbd>。这些激活函数将<kbd>tanh</kbd>函数的递归层输出值限制在-1和1之间，将<kbd>sigmoid</kbd>函数的输出值限制在0和1之间。<kbd>ReLU</kbd>激活函数在递归神经网络中用处不大，因为梯度不受限制，这肯定会导致梯度在某个点爆炸。</p>
+
+<p>限制激活函数产生的值会导致另一个问题。还记得在<a href="4c9da7a9-6873-4de9-99a9-43de693d65f8.xhtml">第2章</a>、<em>用CNTK </em>构建神经网络中，<kbd>sigmoid</kbd>有一条特定的曲线，曲线两端的梯度迅速降低到零。我们在本节示例中使用的<kbd>tanh</kbd>函数具有相同类型的曲线，如下图所示:</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<div><img src="img/73f475dd-54a0-48ea-8e9e-cd17f2598706.png" style=""/></div>
+
+<p>介于-2和+2之间的输入值具有合理定义的梯度。这意味着我们可以有效地使用梯度下降来优化神经网络中的权重。然而，当循环层的输出低于-2或高于+2时，梯度变得更浅。这可能会变得非常低，以至于CPU或GPU开始将梯度四舍五入为零。这意味着我们不再学习。</p>
+
+<p>由于涉及多个时间步骤，递归层比常规神经网络层更容易出现消失梯度或饱和问题。使用常规递归层时，您对此无能为力。但是，其他具有更高级设置的递归图层类型可以在一定程度上解决此问题。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Using other recurrent layer types</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用其他重现图层类型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>由于消失梯度问题，基本递归层不太擅长学习长期相关性。换句话说，它不能很好地处理长序列。当你试图处理句子或更长的文本序列，并试图对它们的意思进行分类时，你就会遇到这个问题。在英语和其他语言中，一个句子中赋予句子意义的两个相关单词之间有相当长的距离。当你只在你的模型中使用一个基本的递归层时，你会很快发现你的模型不太擅长对文本序列进行分类。</p>
+
+<p>但是，还有其他更适合处理较长序列的递归图层类型。此外，他们倾向于更好地结合长期和短期相关性。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Working with gated recurrent units</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用门控循环单元</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>基本循环层的一个替代方案是<strong>门控循环单元</strong> ( <strong> GRU </strong>)。该图层类型有两个门，有助于处理序列中的长距离相关性，如下图所示:</p>
+
+<p>GRU的形状比常规的循环层复杂得多。有更多的线路将不同的输入连接到输出。让我们看一下这个图表，看看这个层类型背后的一般思想是什么。</p>
+
+<p class="CDPAlignLeft CDPAlign">与常规的循环层不同，GRU层有一个<strong>更新门</strong>和<strong>重置门</strong>。“重置”和“更新”门是控制保留多少先前时间步长的内存以及使用多少新数据来产生新内存的阀门。</p>
+
+<p>预测输出与使用常规递归图层进行预测非常相似。当我们向层中输入数据时，以前的隐藏状态用于计算新隐藏状态的值。当序列中的所有元素都被处理后，使用一组额外的权重来计算输出，就像我们在常规递归层中所做的那样。</p>
+
+<p>在GRU中计算多个时间步长的隐藏状态要复杂得多。更新GRU的隐藏状态需要几个步骤。首先，我们需要计算更新门的值，如下所示:</p>
+
+<div><img class="fm-editor-equation" src="img/1205b70b-a516-409d-9e38-6151b5526369.png" style="width:15.25em;height:1.50em;"/></div>
+
+<p>使用两组权重控制更新门，一组用于前一时间步的隐藏状态，另一组用于提供给层的当前输入。由更新门产生的值控制过去时间步长中有多少保持在隐藏状态。</p>
+
+<p>第二步是更新复位门。这是使用以下公式完成的:</p>
+
+<div><img class="fm-editor-equation" src="img/105e2de9-9e05-4295-aff9-759ca037a53d.png" style="width:16.08em;height:1.58em;"/></div>
+
+<p>重置门也使用两组权重来控制；一组用于当前时间步长的输入值，另一组用于隐藏状态的权重。重置门控制隐藏状态被移除的程度。当我们如下计算新隐藏状态的初始版本时，这变得很清楚:</p>
+
+<div><img class="fm-editor-equation" src="img/e85f1b8b-4519-401f-8c02-01ee1e254c35.png" style="width:14.25em;height:1.33em;"/></div>
+
+<p class="mce-root"/>
+
+<p>首先，我们将输入与其相应的权重相乘。然后，我们将先前的隐藏状态与其对应的权重相乘。然后，我们计算复位门和加权隐藏状态之间的逐元素乘积或哈达玛乘积。最后，我们将其添加到加权输入中，并在其上使用一个<kbd>tanh</kbd>激活来计算记忆的隐藏状态。</p>
+
+<p>该公式中的重置门控制着对先前隐藏状态的遗忘程度。具有低值的重置门将从先前的时间步长中移除大量数据。较高的值将有助于图层记住上一时间步的大量内容。</p>
+
+<p>但是我们还没有完成——一旦我们将来自前一个时间戳的信息通过更新门增加并通过重置门调节，这就产生了来自前一个时间步骤的记忆信息。现在，我们可以根据记住的信息计算最终的隐藏状态值，如下所示:</p>
+
+<div><img class="fm-editor-equation" src="img/57708565-093b-49c9-98c2-dda656dad36a.png" style="width:15.92em;height:1.50em;"/></div>
+
+<p>首先，我们采用前一个隐藏状态和更新门之间的元素乘积来确定前一个状态中应该保留多少信息。然后，我们将更新门和来自先前状态的记忆信息之间的逐元素乘积添加到该值中。请注意，更新门用于输入一定比例的新信息和一定比例的旧信息。这就是为什么我们在公式的第二部分使用了一个<em> 1- </em>操作。</p>
+
+<p>就所涉及的计算及其记忆长期和短期关系的能力而言，GRU比循环层高了一大步。然而，它不能同时做到这两者。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Working with long short-term memory units</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">处理长短期记忆单元</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>使用基本循环层的另一种替代方法是使用一个<strong>长短期记忆</strong> ( <strong> LSTM </strong>)单元。除了LSTM有更多的门之外，这个递归图层与我们在上一节中讨论的GRU一样使用门。</p>
+
+<p class="mce-root"/>
+
+<p>下图概述了LSTM图层的结构:</p>
+
+<div><img class="aligncenter size-full wp-image-684 image-border" src="img/5b72f45d-f78f-47ee-8dfa-1840fcfa61c0.png" style=""/></div>
+
+<p>LSTM单元的像元状态对此图层类型的工作方式至关重要。细胞状态保持很长一段时间，不会有太大变化。LSTM层也有一个隐藏状态，但该状态在层中扮演不同的角色。</p>
+
+<p>简而言之，LSTM的长期记忆被建模为细胞状态，而短期记忆被建模为隐藏状态。使用几个门来保护对长期存储器的访问。LSTM层中有两个控制长期内存访问的门:</p>
+
+<ul>
+
+<li>遗忘门，控制从单元状态中遗忘的内容</li>
+
+<li>输入门，它控制隐藏状态中存储的内容和单元状态中的输入内容</li>
+
+</ul>
+
+<p>在LSTM层有一个最后的门，它控制着什么从细胞状态进入新的隐藏状态。本质上，我们使用输出门来控制从长期记忆中提取什么到短期记忆中。让我们一步一步来看这个层是如何工作的。</p>
+
+<p class="mce-root"/>
+
+<p>首先，我们来看看遗忘之门。使用LSTM图层进行预测时,“忽略门”是第一个更新的门:</p>
+
+<div><img class="aligncenter size-full wp-image-685 image-border" src="img/dfb67acd-f099-4a82-9feb-7c3afa72470e.png" style=""/></div>
+
+<p>遗忘门控制应该遗忘多少单元状态。它使用以下公式进行更新:</p>
+
+<div><img class="fm-editor-equation" src="img/c773dd4c-f829-4e0f-9273-a61a20e28fde.png" style="width:16.25em;height:1.33em;"/></div>
+
+<p>当你仔细观察这个公式时，你会注意到它本质上是一个带有<kbd>sigmoid</kbd>激活函数的密集层。遗忘门生成一个值在0和1之间的向量，以控制单元状态中有多少元素被遗忘。遗忘门上的值1意味着单元状态中的值被保持。遗忘门上的零值使单元状态遗忘其值。</p>
+
+<p>我们将前一步中的隐藏状态和新输入连接成一个沿列轴的矩阵。单元状态本质上将存储关于提供给具有存储在层中的隐藏状态的层的输入的长期信息。</p>
+
+<p>LSTM层中的第二个门是输入门。输入门控制单元状态中存储多少新数据。新数据是上一步的隐藏状态和当前时间步的输入的组合，如下图所示:</p>
+
+<div><img class="aligncenter size-full wp-image-686 image-border" src="img/851cfd14-6e8d-4b29-a10b-1980d63593eb.png" style=""/></div>
+
+<p>我们将使用以下公式来确定更新门的值:</p>
+
+<div><img class="fm-editor-equation" src="img/b2d16767-7b3a-4143-9d07-19af88809941.png" style="width:18.83em;height:1.67em;"/></div>
+
+<p>就像遗忘门一样，输入门被建模为LSTM层中的嵌套密集层。您可以看到输入门是上图中突出显示部分的左分支。输入门在以下公式中用于确定要放入单元状态的新值:</p>
+
+<div><img class="fm-editor-equation" src="img/e5e5aa98-5c77-4939-9761-de781c1fe5dc.png" style="width:16.42em;height:1.58em;"/></div>
+
+<p class="mce-root"/>
+
+<p>要更新单元状态，我们还需要一个步骤，下图突出显示了这个步骤:</p>
+
+<div><img class="aligncenter size-full wp-image-687 image-border" src="img/2098dad2-762f-4ec9-b3cf-8e59ce28d043.png" style=""/></div>
+
+<p>一旦我们知道了遗忘门和输入门的值，我们就可以使用以下公式计算更新后的单元状态:</p>
+
+<div><img class="fm-editor-equation" src="img/10386cb0-d388-4c08-ad54-b5a68b6f2ea1.png" style="width:14.50em;height:1.67em;"/></div>
+
+<p>首先，我们将忘记门乘以前一个单元状态以忘记旧信息。然后，我们将更新门与单元状态的新值相乘，以学习新信息。我们将两个值相加，得出当前时间步长的最终单元状态。</p>
+
+<p class="mce-root"/>
+
+<p>LSTM层的最后一个门是输出门。此门控制在下一个时间步长的层和隐藏状态的输出中使用多少来自单元状态的信息，如下图所示:</p>
+
+<div><img class="aligncenter size-full wp-image-688 image-border" src="img/428c9e0e-cf19-4656-bea2-3cadc8624716.png" style=""/></div>
+
+<p>输出门通过以下公式计算:</p>
+
+<div><img class="fm-editor-equation" src="img/e4613046-8448-455f-8353-2d003fe7e0d2.png" style="width:21.25em;height:1.83em;"/></div>
+
+<p>输出门就像输入门和遗忘门一样，是一个致密层，控制着有多少单元状态被复制到输出端。现在，我们可以使用以下公式计算层的新隐藏状态或输出:</p>
+
+<div><img class="fm-editor-equation" src="img/32364dca-d4db-48a4-9d2f-364ba600154e.png" style="width:11.92em;height:1.83em;"/></div>
+
+<p>您可以使用这个新的隐藏状态来计算下一个时间步长，或者将其作为图层的输出返回。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>When to use other recurrent layer types</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">何时使用其他周期性图层类型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>GRU和LSTM层肯定比常规的循环层更复杂。他们有更多的参数需要训练。当您遇到问题时，这将使调试模型变得更加困难。</p>
+
+<p>当您处理更长的数据序列时，常规的递归图层不太适用，因为它很快就会饱和。你可以用LSTM和GRU来解决这个问题。GRU层在没有附加存储器状态的情况下工作。LSTM使用细胞状态来模拟长期记忆。</p>
+
+<p>因为GRU的门更少，而且没有记忆，所以训练它需要的时间更少。所以，如果你想处理更长的序列，并且需要一个可以相对快速训练的网络，使用GRU层。</p>
+
+<p>LSTM层有更大的能力来表达你给它的序列中的关系。这意味着，如果你有足够的数据来训练它，它会表现得更好。最后，最终要通过实验来确定哪种层类型最适合您的解决方案。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building recurrent neural networks with CNTK</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用CNTK构建递归神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>既然我们已经探索了递归神经网络背后的理论，是时候用CNTK来构建一个了。CNTK为构建递归神经网络提供了几个构件。我们将探索如何使用包含太阳能电池板功率测量值的样本数据集来构建递归神经网络。</p>
+
+<p>太阳能电池板的功率输出在一天中是变化的，所以很难预测一个典型的房子能产生多少功率。这使得当地能源公司很难预测他们应该生产多少额外的电力来满足需求。</p>
+
+<p>幸运的是，许多能源公司提供软件，允许客户跟踪他们的太阳能电池板的功率输出。这将允许他们根据这些历史数据训练一个模型，因此我们可以预测每天的总功率输出。</p>
+
+<p>我们将基于微软作为CNTK文档的一部分提供的数据集，使用递归神经网络来训练功率输出预测模型。</p>
+
+<p>该数据集包含每天的多次测量，并包含某个时间戳的当前功率输出，以及截至该时间戳的总发电量。我们的目标是根据一天中收集的测量数据，预测一天的总发电量。</p>
+
+<p>您可以使用常规的神经网络，但这意味着我们必须将每个收集到的测量值转化为输入的特征。这样做是假设测量值之间没有相关性。但是，实际上是有的。每个未来的测量都依赖于之前的测量。因此，对于这种情况，可以随时间推移进行推理的递归模型更加实用。</p>
+
+<p>在接下来的三节中，我们将探讨如何在CNTK中构建一个递归神经网络。之后，我们将探索如何使用来自太阳能电池板数据集的数据来训练递归神经网络。最后，我们将看看如何用递归神经网络预测输出。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building the neural network structure</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">构建神经网络结构</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在我们开始预测太阳能电池板的输出之前，我们需要构建一个递归神经网络。递归神经网络的构建方式与常规神经网络相同。下面是如何建立一个:</p>
+
+<pre>features = sequence.input_variable(1)<br/><br/>with default_options(initial_state = 0.1):<br/>    model = Sequential([<br/>        Fold(LSTM(15)),<br/>        Dense(1)<br/>    ])(features)<br/>    <br/>target = input_variable(1, dynamic_axes=model.dynamic_axes)</pre>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，创建一个新的输入变量来存储输入序列。</li>
+
+<li>然后，初始化神经网络的default_options，并为initial_state设置提供值0.1。</li>
+
+<li>接下来，为神经网络创建一个顺序层集。</li>
+
+<li>在顺序层集合中，提供一个LSTM循环层，其中15个神经元被包裹在一个折叠层中。</li>
+
+<li>最后，添加一个神经元的密集层。</li>
+
+</ol>
+
+<p>有两种方法可以在CNTK中对递归神经网络建模。如果您只对递归层的最终输出感兴趣，您可以将<kbd>Fold</kbd>层与递归层结合使用，例如GRU、LSTM甚至RNNStep。<kbd>Fold</kbd>层收集递归层的最终隐藏状态，并将其作为输出返回给下一层使用。</p>
+
+<p>作为<kbd>Fold</kbd>层的替代，你也可以使用<kbd>Recurrence</kbd>块。这个包装器返回由包装在其中的递归层生成的完整序列。如果您希望使用递归神经网络生成顺序输出，这将非常有用。</p>
+
+<p>递归神经网络处理顺序输入，这就是为什么我们使用<kbd>sequence.input_variable</kbd>函数而不是常规的<kbd>input_variable</kbd>函数。</p>
+
+<p>常规的<kbd>input_variable</kbd>功能只支持输入的固定尺寸。这意味着我们必须知道每个样本需要输入到网络中的特征数量。这适用于常规模型和处理图像的模型。在图像分类模型中，我们通常使用一个维度作为颜色通道，另外两个维度作为输入图像的宽度和高度。我们预先知道所有这些方面。常规<kbd>input_variable</kbd>函数中唯一动态的维度是批处理维度。当您使用特定的迷你批次大小设置来训练模型时，会计算此维度，从而为批次维度生成一个固定值。</p>
+
+<p>在递归神经网络中，我们不知道每个序列会有多长。我们只知道作为时间步长存储在序列中的每条数据的形状。<kbd>sequence.input_variable</kbd>函数允许我们提供每个时间步长的尺寸，并保持模拟序列长度的尺寸是动态的。与常规的<kbd>input_variable</kbd>功能一样，批次尺寸也是动态的。当我们以特定的迷你批次大小设置开始训练时，我们配置这个维度。</p>
+
+<p>CNTK处理顺序数据的方式是独一无二的。在TensorFlow这样的框架中，在开始训练之前，您必须预先指定序列长度和批量的维度。因为您必须使用固定大小的序列，所以您需要向比您的模型所支持的最大序列长度短的序列添加填充。此外，如果您有较长的序列，您需要截断它们。这会导致模型质量下降，因为您要求模型从序列中的空时间步长中学习信息。CNTK可以很好地处理动态序列，所以在CNTK中处理序列时，不必使用填充。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Stacking multiple recurrent layers</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">堆叠多个循环层</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在上一节中，我们只讨论了使用单个递归层。但是，您可以在CNTK中堆叠多个重复层。例如，当我们想要堆叠两个循环层时，我们需要使用以下层的组合:</p>
+
+<pre>from cntk import sequence, default_options, input_variable<br/>from cntk.layers import Recurrence, LSTM, Dropout, Dense, Sequential, Fold, Recurrence<br/><br/>features = sequence.input_variable(1)<br/><br/>with default_options(initial_state = 0.1):<br/>    model = Sequential([<br/>        Recurrence(LSTM(15)),<br/>        Fold(LSTM(15)),<br/>        Dense(1)<br/>    ])(features)</pre>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先从<kbd>cntk</kbd>包中导入<kbd>sequence</kbd>模块、<kbd>default_options</kbd>函数和<kbd>input_variable</kbd>函数</li>
+
+<li>接下来，导入递归神经网络的层</li>
+
+<li>然后，创建一个新的有15个神经元的<kbd>LSTM</kbd>层，并将其包裹在一个<kbd>Recurrence</kbd>层中，这样该层返回一个序列而不是一个输出</li>
+
+<li>现在，创建第二个有15个神经元的<kbd>LSTM</kbd>层，但是这次将它包装在一个<kbd>Fold</kbd>层中，只返回最后的时间步长作为输出</li>
+
+<li>最后，使用特征变量调用创建的<kbd>Sequential</kbd>层堆栈来完成神经网络</li>
+
+</ol>
+
+<p>这种技术也可以扩展到两层之外；只需在<kbd>Recurrence</kbd>图层中包裹最后一个循环图层之前的图层，并在<kbd>Fold</kbd>图层中包裹最后一个图层。</p>
+
+<p>对于本章中的示例，我们将限制自己使用一个递归层，就像我们在上一节<em>构建神经网络结构</em>中构建的一样。在下一节中，我们将讨论如何训练我们创建的递归神经网络。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training the neural network with time series data</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用时间序列数据训练神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在我们有了一个模型，让我们来看看如何在CNTK中训练一个递归神经网络。</p>
+
+<p>首先，我们需要定义我们想要优化的损失函数。由于我们预测的是连续变量—功率输出—我们需要使用均方误差损失。我们将损失与均方差指标相结合来衡量我们模型的性能。请记住，在<a href="e39df191-73e4-414f-b44b-efca6f0ad4cd.xhtml">第4章</a>、<em>验证模型性能</em>中，我们可以使用<kbd>@Function</kbd>将损失和指标合并到一个函数对象中:</p>
+
+<pre>@Function<br/>def criterion_factory(z, t):<br/>    loss = squared_error(z, t)<br/>    metric = squared_error(z, t) <br/>    <br/>    return loss, metric<br/><br/>loss = criterion_factory(model, target)<br/>learner = adam(model.parameters, lr=0.005, momentum=0.9)</pre>
+
+<p>我们将使用<kbd>adam</kbd>学习器来优化模型。这个学习器是<strong>随机梯度下降</strong> ( <strong> SGD </strong>)算法的扩展。SGD使用固定的学习率，而Adam会随着时间的推移改变学习率。在开始时，它将使用高学习率来快速获得结果。一旦它运行了一段时间，它将开始降低学习率，以提高准确性。在优化<kbd>loss</kbd>函数时，<kbd>adam</kbd>优化器比SGD快得多。</p>
+
+<p>现在我们有了一个损失度量，我们可以使用内存中和内存外的数据来训练递归神经网络。</p>
+
+<p>递归神经网络的数据需要建模为序列。在我们的例子中，输入数据是每天的功率测量序列，存储在一个<strong> CNTK文本格式</strong> ( <strong> CTF </strong>)文件中。遵循给定的步骤:</p>
+
+<p>在<a href="f7cd9148-99e8-427c-acf4-d74c3e52df58.xhtml">第3章</a>、<em>将数据输入你的神经网络</em>中，我们讨论了如何以CTF格式在CNTK中存储用于训练的数据。CTF文件格式不仅支持存储基本样本，还支持存储序列。序列的CTF文件具有以下布局:</p>
+
+<pre>&lt;sequence_id&gt; |&lt;input_name&gt; &lt;values&gt; |&lt;input_name&gt; &lt;values&gt;</pre>
+
+<p>每一行都有一个唯一的数字作为前缀来标识序列。CNTK会将具有相同序列标识符的行视为一个序列。因此，您可以在多行中存储一个序列。每行可以包含序列中的一个时间步长。</p>
+
+<p>在CTF文件中多行存储序列时，有一个重要的细节你必须记住。存储序列的一行也应该包含序列的预期输出。让我们来看看实际情况是怎样的:</p>
+
+<pre>0 |target 0.837696335078534 |features 0.756544502617801<br/>0 |features 0.7931937172774869<br/>0 |features 0.8167539267015707<br/>0 |features 0.8324607329842932<br/>0 |features 0.837696335078534<br/>0 |features 0.837696335078534<br/>0 |features 0.837696335078534<br/>1 |target 0.4239092495636999 |features 0.24554973821989529<br/>1 |features 0.24554973821989529<br/>1 |features 0.00017225130534296885<br/>1 |features 0.0014886562154347149<br/>1 |features 0.005673647442829338<br/>1 |features 0.01481675392670157</pre>
+
+<p>序列的第一行包含<kbd>target</kbd>变量，以及序列中第一个时间步长的数据。<kbd>target</kbd>变量用于存储特定序列的预期功率输出。同一序列的其他行只包含<kbd>features</kbd>变量。如果将<kbd>target</kbd>变量放在单独的一行上，就不能使用输入文件。微型批次源将无法加载。</p>
+
+<p>您可以将序列数据加载到训练代码中，如下所示:</p>
+
+<pre>def create_datasource(filename, sweeps=INFINITELY_REPEAT):<br/>    target_stream = StreamDef(field='target', shape=1, is_sparse=False)<br/>    features_stream = StreamDef(field='features', shape=1, is_sparse=False)<br/><br/>    deserializer = CTFDeserializer(filename, StreamDefs(features=features_stream, target=target_stream))<br/>    datasource = MinibatchSource(deserializer, randomize=True, max_sweeps=sweeps) <br/>    <br/>    return datasource<br/><br/>train_datasource = create_datasource('solar_train.ctf')<br/>test_datasource = create_datasource('solar_val.ctf', sweeps=1)</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable"/>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li class="mce-root">首先，创建一个带有两个参数的新函数create _ data source:filename和sweeps，它的缺省值是INFINITELY_REPEAT，这样我们就可以多次迭代同一个数据集。</li>
+
+<li class="mce-root">在<kbd>create_datasource</kbd>函数中，为minibatch源定义两个流，一个用于输入特性，一个用于模型的预期输出。</li>
+
+<li class="mce-root">然后使用<kbd>CTFDeserializer</kbd>读取输入文件。</li>
+
+<li class="mce-root">最后，为提供的输入文件返回一个新的<kbd>MinibatchSource</kbd>。</li>
+
+</ol>
+
+<p>为了训练模型，我们需要多次迭代相同的数据来训练多个时期。这就是为什么你应该为微型批次源的<kbd>max_sweeps</kbd>使用无限设置。测试是通过迭代一组验证样本来完成的，因此我们只需一次扫描就可以配置微型批次源。</p>
+
+<p>让我们使用提供的数据源来训练神经网络，如下所示:</p>
+
+<pre>progress_writer = ProgressPrinter(0)<br/>test_config = TestConfig(test_datasource)<br/><br/>input_map = {<br/>    features: train_datasource.streams.features,<br/>    target: train_datasource.streams.target<br/>}<br/><br/>history = loss.train(<br/>    train_datasource, <br/>    epoch_size=EPOCH_SIZE,<br/>    parameter_learners=[learner], <br/>    model_inputs_to_streams=input_map,<br/>    callbacks=[progress_writer, test_config],<br/>    minibatch_size=BATCH_SIZE,<br/>    max_epochs=EPOCHS)</pre>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，初始化一个<kbd>ProgressPrinter</kbd>来记录训练过程的输出。</li>
+
+<li>然后，创建一个新的测试配置，以使用来自<kbd>test_datasource</kbd>的数据验证神经网络。</li>
+
+<li>接下来，在神经网络的输入变量和来自训练数据源的流之间创建映射。</li>
+
+<li>最后，调用损失函数上的train方法来开始训练过程。为其提供<kbd>train_datasource</kbd>、设置、学习者、<kbd>input_map</kbd>以及用于记录和测试的回调。</li>
+
+</ol>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>模型需要训练相当长的时间，所以当您计划在您的机器上运行示例代码时，请喝一两杯咖啡。</p>
+
+<p><kbd>train</kbd>方法将在屏幕上输出指标和损失值，因为我们使用了<kbd>ProgressPrinter</kbd>作为<kbd>train</kbd>方法的回调。输出如下所示:</p>
+
+<pre><strong>average      since    average      since      examples
+
+    loss       last     metric       last              
+
+ ------------------------------------------------------
+
+Learning rate per minibatch: 0.005
+
+     0.66       0.66       0.66       0.66            19
+
+    0.637      0.626      0.637      0.626            59
+
+    0.699      0.752      0.699      0.752           129
+
+    0.676      0.656      0.676      0.656           275
+
+    0.622      0.573      0.622      0.573           580
+
+    0.577      0.531      0.577      0.531          1150</strong></pre>
+
+<p>作为一种良好的实践，您希望根据一个单独的测试集来验证您的模型。这也是我们之前创建<kbd>test_datasource</kbd>函数的原因。要使用这些数据来验证您的模型，您可以使用一个<kbd>TestConfig</kbd>对象作为对<kbd>train</kbd>方法的回调。当训练过程完成时，测试逻辑将被自动调用。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Predicting output </title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">预测产量</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>当模型最终完成训练时，您可以使用本章示例代码中的几个示例序列来测试它。请记住，CNTK模型是一个函数，因此您可以用一个numpy数组来调用它，该数组表示您想要预测其总输出的序列，如下所示:</p>
+
+<pre>import pickle<br/><br/>NORMALIZE = 19100<br/><br/>with open('test_samples.pkl', 'rb') as test_file:<br/>    test_samples = pickle.load(test_file)<br/>    <br/>model(test_samples) * NORMALIZE</pre>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，导入泡菜包</li>
+
+<li>接下来，定义设置以规范化数据</li>
+
+<li>之后打开test_samples.pkl文件进行读取。</li>
+
+</ol>
+
+<p> </p>
+
+<ol start="4">
+
+<li>文件打开后，使用pickle.load函数加载其内容。</li>
+
+<li>最后，通过网络运行样本，并将它们乘以归一化常数，以获得太阳能电池板的预测输出。</li>
+
+</ol>
+
+<p>模型产生的输出介于0和1之间，因为这是我们存储在原始数据集中的内容。这些值代表太阳能电池板功率输出的标准化版本。我们需要将它们乘以用于归一化原始测量值的归一化值，以获得太阳能电池板的实际功率输出。</p>
+
+<p>模型的最终反规格化输出如下所示:</p>
+
+<pre>array([[ 8161.595],
+
+       [16710.596],
+
+       [13220.489],
+
+       ...,
+
+       [10979.5  ],
+
+       [15410.741],
+
+       [16656.523]], dtype=float32)</pre>
+
+<p>使用递归神经网络进行预测与使用任何其他CNTK模型进行预测非常相似，只是您需要提供序列而不是单个样本。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本章中，我们已经了解了如何使用递归神经网络根据时间序列数据进行预测。递归神经网络在您必须处理金融数据、物联网数据或任何其他随时间收集的信息的情况下非常有用。</p>
+
+<p>递归神经网络的一个重要组成部分是<kbd>Fold</kbd>和<kbd>Recurrence</kbd>层类型，您可以将它们与任何递归层类型(如RNNStep、GRU或LSTM)结合，以构建一个递归层集。根据您是想要预测序列还是单个值，您可以使用<kbd>Recurrence</kbd>或<kbd>Fold</kbd>层类型来包装递归层。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>在训练递归神经网络时，可以利用以CTF文件格式存储的序列数据来简化模型的训练。但是，只要使用序列输入变量与递归层的正确组合，就可以轻松地使用存储为numpy数组的序列。</p>
+
+<p>使用递归神经网络进行预测与使用常规神经网络一样简单。唯一的区别是输入数据格式，就像训练一样，它是一个序列。</p>
+
+<p>在下一章，我们将看看本书的最后一个主题:<em>将模型部署到生产中</em>。我们将探索如何使用你用C#或Java构建的CNTK模型，以及如何使用Azure机器学习服务等工具正确管理你的实验。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

@@ -1,0 +1,1640 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building Neural Networks with CNTK</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用CNTK构建神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在前一章中，我们讨论了什么是深度学习，以及神经网络如何在概念层面上工作。最后，我们谈到了CNTK，以及如何将它安装到您的机器上。在本章中，我们将使用CNTK构建我们的第一个神经网络，并对其进行训练。</p>
+
+<p>我们将着眼于使用CNTK库中的不同函数和类来构建一个神经网络。我们将用一个基本的分类问题来做这件事。</p>
+
+<p>一旦我们有了用于分类问题的神经网络，我们将使用从开放数据集中获得的样本数据来训练它。在我们的神经网络被训练之后，我们将看看如何使用它来进行预测。</p>
+
+<p>在这一章的最后，我们将花一些时间讨论一旦你训练好了模型，如何改进它。</p>
+
+<p>在本章中，我们将讨论以下主题:</p>
+
+<ul>
+
+<li>CNTK中的基本神经网络概念</li>
+
+<li>建立你的第一个神经网络</li>
+
+<li>训练神经网络</li>
+
+<li>用神经网络做预测</li>
+
+<li>改进模型</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Technical requirements</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">技术要求</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一章中，我们将在一个Jupyter笔记本中使用Python构建一个样本模型。Jupyter是一种开源技术，允许您创建包含Python代码、Markdown和HTML部分的交互式网页。这使得在构建深度学习模型时记录您的代码和假设变得更加容易。</p>
+
+<p>如果您已经按照第一章、中定义的步骤安装了Anaconda，那么您的机器上已经安装了Jupyter。如果你还没有Anaconda，你可以从:<a xmlns:epub="http://www.idpf.org/2007/ops" href="https://www.anaconda.com/download/" target="_blank">https://anacondacloud.com/download</a>下载。</p>
+
+<p>你可以从<a href="https://github.com/PacktPublishing/Deep-Learning-with-Microsoft-Cognitive-Toolkit-Quick-Start-Guide/tree/master/ch2">https://github . com/packt publishing/Deep-Learning-with-Microsoft-Cognitive-Toolkit-Quick-Start-Guide/tree/master/CH2</a>获得本章的示例代码。要运行示例代码，请在下载示例代码的目录下的终端中运行以下命令:</p>
+
+<pre><strong>cd ch2</strong><br/><strong>jupyter notebook</strong></pre>
+
+<p>找到<kbd>Train your first model.ipynb</kbd>笔记本，点击它打开示例代码。您可以通过选择Cell | Run All一步执行所有代码。这将执行笔记本中的所有步骤。</p>
+
+<p class="mce-root">请观看以下视频，了解实际运行的代码:</p>
+
+<p><a href="http://bit.ly/2YoyNKY">http://bit.ly/2YoyNKY</a></p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Basic neural network concepts in CNTK</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">CNTK中的基本神经网络概念</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在前一章中，我们看了神经网络的基本概念。让我们将我们所学的概念映射到CNTK库中的组件，并了解如何使用这些概念来构建您自己的模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building neural networks using layer functions</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用层函数构建神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>神经网络由几层神经元组成。在CNTK中，我们可以使用layers模块中定义的层函数对神经网络的层进行建模。CNTK中的一个<kbd>layer</kbd>函数看起来像一个常规函数。例如，您可以用一行代码创建最基本的层类型<kbd>Dense</kbd>:</p>
+
+<pre>from cntk.layers import Dense<br/>from cntk import input_variable<br/><br/>features = input_variable(100)<br/>layer = Dense(50)(features)</pre>
+
+<p>按照给定步骤创建最基本的层类型:</p>
+
+<ol>
+
+<li>首先，从图层包中导入<kbd>Dense</kbd>图层函数</li>
+
+<li>接下来，从<kbd>cntk</kbd>根包中导入<kbd>input_variable</kbd>函数</li>
+
+<li>使用<kbd>input_variable</kbd>函数创建一个名为features的新输入变量，并赋予其大小为<kbd>100</kbd></li>
+
+<li>使用<kbd>Dense</kbd>函数创建一个新层，提供你想要的神经元数量</li>
+
+<li>调用提供特征变量的已配置的<kbd>Dense</kbd>层功能，将<kbd>Dense</kbd>层连接到输入</li>
+
+</ol>
+
+<p>在CNTK中使用层具有独特的函数式编程感觉。我们看看上一章，就能明白为什么CNTK走上了这条路。最终，神经网络中的每一层都是一个数学函数。CNTK中的所有层函数产生一个带有一组预定义参数的数学函数。再次调用该函数，将最后一个缺少的参数(输入)绑定到层。</p>
+
+<p class="mce-root">当您想要创建具有复杂体系结构的神经网络时，通常会使用这种编程风格来构建神经网络。但是，对于大多数初学者来说，函数式风格感觉很陌生。当你想通过<kbd>Sequential</kbd>层函数建立一个基本的神经网络时，CNTK提供了一个更简单的API。</p>
+
+<p>您可以使用<kbd>Sequential</kbd> layer函数将几个层链接在一起，而不必使用函数式编程风格，如下所示:</p>
+
+<pre>from cntk.layers import Sequential, Dense<br/>from cntk import input_variable<br/><br/>features = input_variable(7)<br/><br/>network = Sequential([<br/>  Dense(64),<br/>  Dense(32),<br/>  Dense(3)<br/>])(features)</pre>
+
+<p>为此，请遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，从<kbd>layers</kbd>包中导入想要使用的图层功能</li>
+
+<li>导入<kbd>input_variable</kbd>函数，创建一个输入变量，用于将数据输入神经网络</li>
+
+<li>创建一个新的输入变量，将数据输入神经网络</li>
+
+<li>通过调用<kbd>Sequential</kbd>功能创建一个新的顺序层块</li>
+
+</ol>
+
+<ol start="5">
+
+<li>向<kbd>Sequential</kbd>函数提供您想要链接在一起的层的列表</li>
+
+<li>调用配置好的提供特性输入变量的<kbd>Sequential</kbd>功能对象，完成网络结构</li>
+
+</ol>
+
+<p>通过组合<kbd>Sequential</kbd>功能和其他层功能，您可以创建任何神经网络结构。在下一节中，我们将看看如何使用设置来定制图层，以配置类似<kbd>activation</kbd>功能的东西。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Customizing layer settings</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">自定义图层设置</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>CNTK为构建神经网络提供了一组非常好的默认值。但是你会发现自己对这些设置做了很多尝试。根据<kbd>activation</kbd>功能和您选择的其他设置，神经网络的行为和性能会有所不同。因此，了解您可以配置什么是很好的。</p>
+
+<p>每一层都有自己独特的配置选项，有些您会经常使用，有些您会较少使用。当我们查看<kbd>Dense</kbd>层时，有一些重要的设置需要定义:</p>
+
+<ul>
+
+<li><kbd>shape</kbd> : <strong> </strong>输出图层的形状</li>
+
+<li><kbd>activation</kbd>:图层的<kbd>activation</kbd>功能</li>
+
+<li><kbd>init</kbd>:图层的<kbd>initialization</kbd>功能</li>
+
+</ul>
+
+<p class="mce-root"/>
+
+<p>层的输出形状决定了该层中神经元的数量。每个神经元需要定义一个<kbd>activation</kbd>函数，这样它就可以转换输入数据。最后，当我们开始训练神经网络时，我们需要一个函数来初始化该层的参数。输出形状是每个<kbd>layer</kbd>功能的第一个参数。<kbd>activation</kbd>和<kbd>init</kbd>参数作为关键字参数提供。这些参数有默认值，所以如果不需要自定义设置，可以省略它们。下一个示例演示了如何使用自定义的<kbd>initializer</kbd>和<kbd>activation</kbd>功能配置<kbd>Dense</kbd>层:</p>
+
+<pre>from cntk.layers import Dense<br/>from cntk.ops import sigmoid<br/>from cntk.initializer import glorot_uniform<br/><br/>layer = Dense(128, activation=sigmoid, init=glorot_uniform)</pre>
+
+<p>要配置密集层，请遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，从<kbd>layers</kbd>包中导入<kbd>Dense</kbd>层</li>
+
+<li>接下来，从<kbd>ops</kbd>包中导入<kbd>sigmoid</kbd>操作符，这样我们就可以用它来配置一个<kbd>activation</kbd>函数</li>
+
+<li>然后从<kbd>initializer</kbd>包中导入<kbd>glorot_uniform</kbd>初始化器</li>
+
+<li>最后，使用提供神经元数量的<kbd>Dense</kbd>层创建一个新层作为第一个参数，并提供<kbd>sigmoid</kbd>操作符作为该层的<kbd>activation</kbd>函数，提供<kbd>glorot_uniform</kbd>函数作为该层的<kbd>init</kbd>函数</li>
+
+</ol>
+
+<p class="mce-root">有几个<kbd>activation</kbd>功能可供选择；例如，您可以使用<strong>整流线性单元</strong> ( <strong> ReLU </strong>)、<strong> </strong>或<kbd>sigmoid</kbd>作为<kbd>activation</kbd>功能。所有的<kbd>activation</kbd>功能都可以在<kbd>cntk.ops</kbd>包中找到。</p>
+
+<p class="mce-root">每个<kbd>activation</kbd>函数都会对你的神经网络的性能产生不同的影响。在本章稍后构建神经网络时，我们将更详细地讨论<kbd>activation</kbd>函数。</p>
+
+<p>当我们开始训练神经网络时，初始化器决定层中的参数如何初始化。可以从CNTK中的各种初始化器中进行选择。<kbd>Normal</kbd>、<kbd>uniform</kbd>和<kbd>glorot_uniform</kbd>是<kbd>cntk.initializer</kbd>包中一些更广泛使用的初始化器。当我们开始解决我们的第一个深度学习问题时，我们将更详细地讨论使用哪个初始化器。</p>
+
+<p>无论您使用CNTK中的哪个初始化函数，重要的是要认识到它们使用随机数生成器来生成层中参数的初始值。这是一项重要的技术，因为它允许神经网络有效地学习正确的参数。CNTK中的所有初始化函数都支持额外的种子设置。当您将此参数设置为固定值时，每次训练神经网络时都会获得相同的初始值。当您试图重现问题或尝试不同的设置时，这可能会很有用。</p>
+
+<p>在构建神经网络时，通常必须为神经网络中的几个层指定相同的设置集。当你试验你的模型时，这可能会成为问题。为了解决这个问题，CNTK包含了一个名为<kbd>default_options</kbd>的<kbd>utility</kbd>函数:</p>
+
+<pre>from cntk import default_options<br/>from cntk.layers import Dense, Sequential<br/>from cntk.ops import sigmoid<br/><br/>with default_options(activation=sigmoid):<br/>  network = Sequential([<br/>    Dense(1024),<br/>    Dense(512),<br/>    Dense(256)<br/>  ])</pre>
+
+<p>通过使用<kbd>default_options</kbd>函数，我们只用一行代码就为所有三层配置了<kbd>sigmoid</kbd>激活函数。<kbd>default_options</kbd>功能接受一组标准设置，应用于该功能范围内的所有图层。使用<kbd>default_options</kbd>功能可以更方便地为一组层配置相同的选项。您可以通过这种方式配置相当多的设置；例如，具有以下功能:</p>
+
+<ul>
+
+<li><kbd>activation</kbd> : <strong> </strong>要使用的<kbd>activation</kbd>功能</li>
+
+<li><kbd>init</kbd>:图层的<kbd>initialization</kbd>功能</li>
+
+<li><kbd>bias</kbd>:层是否应该包含一个<kbd>bias</kbd>项</li>
+
+<li><kbd>init_bias</kbd> : <strong> </strong>偏置项的<kbd>initialization</kbd>功能</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Using learners and trainers to optimize the parameters in a neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用学习者和训练者来优化神经网络中的参数</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在前面几节中，我们已经看到了如何创建神经网络的结构以及如何配置各种设置。现在让我们看看如何使用<kbd xmlns:epub="http://www.idpf.org/2007/ops">learners</kbd>和<kbd xmlns:epub="http://www.idpf.org/2007/ops">trainers</kbd>来优化一个神经网络的参数。在CNTK中，使用两个组件的组合来训练神经网络。第一个组件是<kbd xmlns:epub="http://www.idpf.org/2007/ops">trainer</kbd>组件，它实现了反向传播过程。第二个组件是<kbd xmlns:epub="http://www.idpf.org/2007/ops">learner</kbd>。它负责执行我们在<a xmlns:epub="http://www.idpf.org/2007/ops" href="9a2c8c46-f9a0-4e05-86ef-31300a28a7ba.xhtml">第1章</a>、【CNTK入门中看到的梯度下降算法。</p>
+
+<p><kbd>trainer</kbd>通过神经网络传递数据以获得预测。然后，它使用<kbd>learner</kbd>获取神经网络中参数的新值。然后应用这些新值，并重复这个过程。这种情况一直持续到满足退出标准。当达到配置的迭代次数时，训练过程停止。这可以使用自定义回调来增强。</p>
+
+<p>我们已经在<a href="9a2c8c46-f9a0-4e05-86ef-31300a28a7ba.xhtml">第1章</a>、<em>CNTK</em>入门中讨论了一种非常基本的梯度下降形式。但是，实际上，这个基本算法有许多变体。对于复杂的情况，基本的梯度下降不太适用。通常，它会陷入局部最优(如果你愿意，可以说是山坡上的隆起)，因此它不会达到神经网络中参数的全局最优值。其他算法，例如带动量的<strong>随机梯度下降</strong> ( <strong> SGD </strong>)考虑了局部最优，并使用动量等概念来越过损失曲线斜率中的凸起。</p>
+
+<p>以下是CNTK库中包含的几个有趣的<kbd>learners</kbd>:</p>
+
+<ul>
+
+<li>基本随机梯度下降，没有任何额外的东西</li>
+
+<li><strong>动量GD </strong>:应用动量来克服局部最优</li>
+
+<li><strong> RMSProp </strong>:使用衰减学习率来控制下降率</li>
+
+<li>亚当:利用衰减的动量来降低下降的速度</li>
+
+<li><strong> Adagrad </strong>:对频繁出现和不频繁出现的特征使用不同的学习率</li>
+
+</ul>
+
+<p>要知道你可以选择不同的<kbd>learners</kbd>，取决于你想解决的问题。当我们开始用神经网络解决我们的第一个机器学习问题时，我们将了解更多关于选择正确的优化器的信息。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Loss functions</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">损失函数</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了让<kbd>trainer</kbd>和<kbd>learner</kbd>能够优化神经网络的参数，我们需要定义一个函数来测量神经网络中的损耗。<kbd>loss</kbd>函数计算神经网络的预测输出和我们事先知道的预期输出之间的差异有多大。</p>
+
+<p>CNTK在<kbd>cntk.losses</kbd>模块中包含许多<kbd>loss</kbd>功能。每个<kbd>loss</kbd>功能都有自己的用途和特性。例如，当您想要测量预测连续值的模型中的损失时，您将需要<kbd>squared_error</kbd>损失函数。它测量模型生成的预测值与您在为模型定型时提供的实际值之间的距离。</p>
+
+<p>对于分类模型，您将需要一组不同的<kbd>loss</kbd>函数。<kbd>binary_cross_entropy</kbd>损失函数可用于测量用于二元分类作业的模型中的损失，如欺诈检测模型。<kbd>cross_entropy_with_softmax</kbd>损失函数更适合预测多个类别的分类模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Model metrics</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">模型度量</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>将<kbd>learner</kbd>和<kbd>loss</kbd>函数与<kbd>trainer</kbd>函数相结合，可以优化神经网络中的参数。这应该会产生一个好的模型，但是为了确定这一点，我们需要度量来测量模型性能。度量是一个单一的值，它告诉我们，例如，有多少百分比的样本被正确预测。</p>
+
+<p>因为<kbd>loss</kbd>函数测量实际值和预测值之间的差异，您可能会认为这是一个很好的测量我们的模型做得有多好的方法。根据模型的不同，它可能会提供一些值，但是通常您需要使用一个单独的<kbd>metric</kbd>函数来以一种有意义的方式测量您的模型的性能。</p>
+
+<p>CNTK在<kbd>cntk.metrics</kbd>包中提供了许多不同的<kbd>metric</kbd>功能。例如，如果你想测量一个分类模型的性能，你可以使用<kbd>classification_error</kbd>函数。这用于测量预测正确的样本百分比。</p>
+
+<p><kbd>classification_error</kbd>函数只是度量的一个例子。另一个重要的<kbd>metric</kbd>功能是<kbd>ndcg_at_1</kbd>指标。如果您正在使用排名模型，那么您会对模型根据预定义的排名对样本进行排名的紧密程度感兴趣。这就是<kbd>ndcg_at_1</kbd>指标给你的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building your first neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">建立你的第一个神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在我们已经了解了CNTK提供了哪些概念来构建神经网络，我们可以开始将这些概念应用到实际的机器学习问题中。在本节中，我们将探讨如何使用神经网络对鸢尾花的种类进行分类。</p>
+
+<p>这不是一个你想要使用神经网络的典型任务。但是，正如你很快就会发现的那样，数据集足够简单，可以很好地掌握构建深度学习模型的过程。然而，它包含了足够的数据，以确保模型工作得相当好。</p>
+
+<p>鸢尾数据集描述了不同品种鸢尾花的物理特性:</p>
+
+<ul>
+
+<li>萼片长度，单位为厘米</li>
+
+<li>萼片宽度，单位为厘米</li>
+
+<li>花瓣长度(厘米)</li>
+
+<li>花瓣宽度(厘米)</li>
+
+<li>类别(刚毛鸢尾、杂色鸢尾、海滨鸢尾)</li>
+
+</ul>
+
+<p>本章的代码包括iris数据集，你需要在这个数据集上训练深度学习模型。如果你感兴趣，你可以在网上找到原始文件:<a href="http://archive.ics.uci.edu/ml/datasets/Iris">http://archive.ics.uci.edu/ml/datasets/Iris</a>。本章的示例代码中也包含了它。</p>
+
+<p>我们将建立一个深度学习模型，该模型将根据萼片宽度和长度以及花瓣宽度和长度的物理属性对花朵进行分类。我们可以预测三个不同的类作为模型的输出。</p>
+
+<p>我们总共有150个不同的样本进行训练，当我们试图使用该模型对一种花进行分类时，这应该足以获得合理的性能。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building the network structure</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">构建网络结构</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>首先，我们需要确定我们的神经网络使用什么架构。我们将构建一个常规的神经网络，它通常被称为前馈神经网络。</p>
+
+<p>我们需要首先定义输入和输出层的神经元数量。然后，我们需要定义神经网络中隐藏层的形状。因为我们正在解决的任务很简单，我们不需要超过一层。</p>
+
+<p class="mce-root"/>
+
+<p>当我们查看数据集时，我们可以看到它有四个要素和一个标签。因为我们有四个特征，我们需要确保我们的神经网络有一个包含四个神经元的输入层。</p>
+
+<p>接下来，我们需要为我们的神经网络定义输出层。为此，我们看看我们需要能够用我们的模型预测的类的数量。在我们的例子中，我们有三种不同种类的花可供选择，所以我们在输出层需要三个神经元。</p>
+
+<p>首先，我们从CNTK库中导入必要的组件，它们是我们的层类型、<kbd>activation</kbd>函数和一个允许我们为网络定义输入变量的函数:</p>
+
+<pre>from cntk import default_options, input_variable<br/>from cntk.layers import Dense, Sequential<br/>from cntk.ops import log_softmax, relu</pre>
+
+<p>然后，我们使用<kbd>Sequential</kbd>函数创建我们的模型，并给它添加我们想要的层。我们在网络中创建了两个不同的层，首先，一层有四个神经元，然后，另一层有三个神经元:</p>
+
+<pre>model = Sequential([<br/>    Dense(4, activation=relu),<br/>    Dense(3, activation=log_softmax)<br/>])</pre>
+
+<p>最后，我们将网络绑定到输入变量，该变量将编译神经网络，使其具有四个神经元的输入层和三个神经元的输出层，如下所示:</p>
+
+<pre>features = input_variable(4)<br/>z = model(features)</pre>
+
+<p>现在，让我们回到我们的层结构。注意，当我们调用<kbd>Sequential</kbd>层函数时，我们没有对输入层建模。这是因为我们在代码中创建的<kbd>input_variable</kbd>是神经网络的输入层。</p>
+
+<p>顺序调用中的第一层是网络中的隐藏层。根据一般经验，您希望隐藏的层不超过前一层神经元数量的两倍。</p>
+
+<p>为了得到最好的结果，你需要试验这个设置。在你的神经网络中选择正确的层数和神经元数需要一些经验和实验。没有硬性的规则来决定应该包含多少隐藏层。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Choosing an activation function</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">选择激活功能</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在前面的部分中，我们为我们的神经网络选择了<kbd>sigmoid</kbd>激活函数。选择正确的激活对深度学习模型的表现有很大的影响。</p>
+
+<p>你会发现很多关于选择一个<kbd>activation</kbd>功能的意见。这是因为有很多选择，而且没有足够的确凿证据证明该领域专家做出的任何选择。那么，如何为你的神经网络挑选一个呢？</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Choosing an activation function for the output layer</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">为输出图层选择激活函数</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>首先，我们需要定义我们正在解决什么样的问题。这决定了网络输出层的<kbd>activation</kbd>函数。对于回归问题，您希望在输出层使用一个<kbd>linear</kbd>激活函数。对于一个分类问题，您将希望使用<kbd>sigmoid</kbd>进行二元分类，使用<kbd>softmax</kbd>函数进行多类分类问题。</p>
+
+<p>在我们正在构建的模型中，我们需要预测三个类中的一个，这意味着我们需要在输出层使用<kbd>softmax</kbd>激活函数。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Choosing an activation function for the hidden layers</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">为隐藏层选择激活函数</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">现在，让我们看看隐藏层。为我们模型中的隐藏层选择一个<kbd>activation</kbd>函数要困难得多。我们需要运行一些实验并监控性能，看看哪个<kbd>activation</kbd>函数工作得最好。</p>
+
+<p>对于分类问题，就像我们的花卉分类模型，我们需要一些能给出概率值的东西。我们需要这个，因为我们需要预测样本属于特定类别的概率。<kbd>sigmoid</kbd>功能帮助我们达到这个目标。它的输出是一个概率，以0到1之间的值来度量。</p>
+
+<p>使用<kbd>sigmoid</kbd>激活功能，我们必须考虑一些问题。当你创建更大的网络时，你可能会遇到一个叫做<strong>消失梯度</strong>的问题。</p>
+
+<p>给予<kbd>sigmoid</kbd>函数的非常大的输入值将收敛到零或一，这取决于它们是负的还是正的。这意味着，当我们为我们的模型使用大的输入值时，我们不会在<kbd>sigmoid</kbd>函数的输出中看到很大的差异。一个已经很大的输入值的改变只会导致输出很小的变化。由优化器在训练期间由此导出的梯度也非常小。有时，它非常小，以至于您的计算机会将其舍入到零，这意味着优化器无法检测参数值的走向。当优化器由于CPU中的舍入问题而无法计算梯度时，我们正在处理一个消失梯度问题。</p>
+
+<p>为了解决这个问题，科学家们想出了一个新的激活函数<kbd>ReLU</kbd>。该激活函数将所有负值转换为零，并作为正值的通过过滤器。它有助于解决渐变消失的问题，因为它不会限制输出值。</p>
+
+<p>然而，<kbd>ReLU</kbd>函数有两个问题。首先，它将负输入转换为零。在某些情况下，这会导致优化器将某些参数的权重也设置为零的情况。这导致你的网络有死亡的神经元。当然，这限制了你的网络所能做的。</p>
+
+<p>第二个问题是<kbd>ReLU</kbd>函数遭受爆炸梯度。因为这个函数的输出上限是不受限制的，它可以放大信号，这样优化器将计算接近无穷大的梯度。当您将此梯度应用于网络中的参数时，您的网络将开始输出NaN值。</p>
+
+<p>为隐藏层选择正确的激活函数需要一些实验。还是那句话，没有硬性规定说要用哪个激活函数。在本章的示例代码中，我们选择了<kbd>sigmoid</kbd>函数，在对模型做了一点试验之后。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Picking a loss function</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">选择损失函数</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>当我们有了模型的结构，是时候看看如何优化它了。为此，我们需要一个<kbd>loss</kbd>函数来最小化。有相当多的<kbd>loss</kbd>功能可供选择。</p>
+
+<p>正确的<kbd>loss</kbd>函数取决于你在解决什么样的问题。例如，在像我们这样的分类模型中，我们需要一个<kbd>loss</kbd>函数来度量预测类和实际类之间的差异。它需要为三个类这样做。<kbd>categorical cross entropy</kbd>函数是一个很好的选择。在CNTK中，这个<kbd>loss</kbd>功能被实现为<kbd>cross_entropy_with_softmax</kbd>:</p>
+
+<pre>label = input_variable(3)<br/>loss = cross_entropy_with_softmax(z, label)</pre>
+
+<p>我们需要首先从<kbd>cntk.losses</kbd>包中导入<kbd>cross_entropy_with_softmax</kbd>函数。在我们导入了<kbd>loss</kbd>函数之后，我们创建了一个新的输入变量，这样我们就可以将期望的标签输入到<kbd>loss</kbd>函数中。然后我们创建一个新的<kbd>loss</kbd>变量来保存对<kbd>loss</kbd>函数的引用。CNTK中的任何<kbd>loss</kbd>函数都需要模型的输出和预期标签的输入变量。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Recording metrics</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">记录指标</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>有了合适的结构和一个<kbd>loss</kbd>函数，我们就有了开始优化我们的深度学习模型所需的所有成分。但是在我们开始研究如何训练模型之前，让我们先来看看指标。</p>
+
+<p>为了让我们了解网络的运行情况，我们需要记录一些指标。因为我们正在构建一个分类模型，所以我们将使用一个<kbd>classification_error</kbd>指标。此指标产生一个介于0和1之间的数字，表示正确预测的样本百分比:</p>
+
+<pre>error_rate = classification_error(z, label)</pre>
+
+<p>让我们从<kbd>cntk.metrics</kbd>包中导入<kbd>classification_error</kbd>。然后我们创建一个新的<kbd>error_rate</kbd>变量并将<kbd>classification_error</kbd>函数绑定到它。该函数需要网络的输出和期望的标签作为输入。我们已经通过定义我们的模型和<kbd>loss</kbd>函数获得了这些。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training the neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">训练神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在我们已经定义了深度学习的所有组件，让我们来训练它。您可以使用<kbd>learner</kbd>和<kbd>trainer</kbd>的组合在CNTK中训练模型。我们需要定义这些，然后通过训练器输入数据来训练模型。让我们看看它是如何工作的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Choosing a learner and setting up training</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">选择学员和设置培训</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p> </p>
+
+<p>有几个<kbd>learners</kbd>可以选择。对于我们的第一个模型，我们将使用<kbd>stochastic gradient descent</kbd>学习器。让我们配置<kbd>learner</kbd>和<kbd>trainer</kbd>来训练神经网络:</p>
+
+<pre>from cntk.learners import sgd<br/>from cntk.train.trainer import Trainer<br/><br/>learner = sgd(z.parameters, 0.01)<br/><br/>trainer = Trainer(z, (loss, error_rate), [learner])</pre>
+
+<p>要配置<kbd>learner</kbd>和<kbd>trainer</kbd>来训练神经网络，请遵循以下步骤:</p>
+
+<ol>
+
+<li>首先，从<kbd>learners</kbd>包中导入<kbd>sgd</kbd>函数</li>
+
+<li>然后，从属于<kbd>train</kbd>包的<kbd>trainer</kbd>包中导入<kbd>Trainer</kbd></li>
+
+</ol>
+
+<ol start="3">
+
+<li>现在，通过调用提供模型参数和学习率值的<kbd>sgd</kbd>函数来创建一个<kbd>learner</kbd></li>
+
+<li>最后，初始化<kbd>trainer</kbd>并为其提供网络，即<kbd>loss</kbd>和<kbd>metric</kbd>以及<kbd>learner</kbd>的组合</li>
+
+</ol>
+
+<p>我们提供给<kbd>sgd</kbd>函数的学习率控制着优化的速度，应该是0.1到0.001之间的一个小数字。</p>
+
+<p>请注意，每个<kbd>learner</kbd>都有自己的参数，因此请务必查看文档，了解在使用<kbd>cntk.learners</kbd>包中的特定<kbd>learner</kbd>时需要配置哪些参数。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Feeding data into the trainer to optimize the neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">将数据输入训练器以优化神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们花了相当多的时间定义我们的模型，配置<kbd>loss</kbd>、<kbd>metrics</kbd>，最后是<kbd>learner</kbd>。现在是时候在我们的数据集上训练它了。然而，在我们训练模型之前，我们需要加载数据集。</p>
+
+<p>示例代码中的数据集存储为CSV文件。为了加载这个数据集，我们需要使用一个数据争论包，比如<kbd>pandas</kbd>。这个包默认包含在您的Anaconda安装中。以下示例演示了如何使用<kbd>pandas</kbd>将数据集加载到内存中:</p>
+
+<pre>import pandas as pd<br/><br/>df_source = pd.read_csv('iris.csv', <br/>    names=['sepal_length', 'sepal_width','petal_length','petal_width', 'species'], <br/>    index_col=False)</pre>
+
+<p>要使用<kbd>pandas</kbd>将数据集加载到内存中，请遵循以下步骤:</p>
+
+<ol>
+
+<li>首先，导入别名为<kbd>pd</kbd>的<kbd>pandas</kbd>包</li>
+
+<li>然后，调用<kbd>read_csv</kbd>函数从磁盘加载<kbd>iris.csv</kbd>文件</li>
+
+</ol>
+
+<p>因为CSV文件不包含列标题，所以我们需要自己定义它们。这将便于以后引用特定的列。</p>
+
+<p>通常，<kbd>pandas</kbd>会使用输入文件中的第一列作为数据集的索引。该索引将作为一个关键字，通过它您可以识别记录。我们的数据集中没有索引，所以我们通过<kbd>index_col</kbd>关键字参数禁止使用它。</p>
+
+<p>加载数据集后，让我们将其分成一组要素和一个标注:</p>
+
+<pre>X = df_source.iloc[:, :4].values<br/>y = df_source['species'].values</pre>
+
+<p>要将数据集分割成一组要素和标注，请遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，使用<kbd>iloc</kbd>函数从数据集中选择所有行和前四列</li>
+
+<li>接下来，从数据集中选择物种列，并使用values属性来访问底层的<kbd>numpy</kbd>数组</li>
+
+</ol>
+
+<p>我们的模型需要数字输入值。但是物种列是一个字符串值，表示花的类型。我们可以通过将物种列编码为数字向量表示来解决这个问题。我们创建的向量表示与神经网络的输出神经元数量相匹配。向量中的每个元素代表一种花，如下所示:</p>
+
+<pre>label_mapping = {<br/>    'Iris-setosa': 0,<br/>    'Iris-versicolor': 1,<br/>    'Iris-virginica': 2<br/>}</pre>
+
+<p>为了创建物种的独热矢量表示，我们将使用一个小的<kbd>utility</kbd>函数:</p>
+
+<pre>def one_hot(index, length):<br/>    result = np.zeros(length)<br/>    result[index] = 1<br/>    <br/>    return result</pre>
+
+<p><kbd>one_hot</kbd>功能执行以下步骤:</p>
+
+<ol>
+
+<li>首先，用所需的<kbd>length</kbd>初始化一个用零填充的新数组</li>
+
+<li>接下来，选择指定<kbd>index</kbd>处的元素，并将其设置为<kbd>1</kbd></li>
+
+</ol>
+
+<p>既然我们已经有了一个将物种映射到索引的字典，以及一种创建one-hot vector的方法，我们可以使用一行额外的代码将字符串值转换为它们的向量表示:</p>
+
+<pre>y = np.array([one_hot(label_mapping[v], 3) for v in y])</pre>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，创建一个列表表达式来迭代数组中的所有元素</li>
+
+<li>对于数组中的每个值，在<kbd>label_mapping</kbd>字典中进行查找</li>
+
+<li>接下来，获取这个转换后的数值，并应用<kbd>one_hot</kbd>函数将其转换为一个独热码编码向量</li>
+
+<li>最后，将转换后的列表转换成一个<kbd>numpy</kbd>数组</li>
+
+</ol>
+
+<p>当你训练深度学习模型或任何机器学习模型时，你需要记住，计算机会试图记住你用来训练模型的所有样本。同时，它会尝试学习一般的规则。当模型记住了样本，但无法从训练样本中推导出规则时，它会对数据集过度拟合。</p>
+
+<p>要检测过度拟合，您需要将数据集的一小部分与训练集分开。然后，训练集用于训练模型，而测试集用于度量模型的性能。</p>
+
+<p>我们可以使用<kbd>scikit-learn</kbd>包中的<kbd>utility</kbd>函数将数据集分成训练集和测试集:</p>
+
+<pre>from sklearn.model_selection import train_test_split<br/><br/>X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, stratify=y)</pre>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，从<kbd>sklearn</kbd>包中的<kbd>model_selection</kbd>模块导入<kbd>train_test_split</kbd>函数</li>
+
+<li>然后，使用特性<kbd>X</kbd>和标签<kbd>y</kbd>调用<kbd>train_test_split</kbd>功能</li>
+
+<li>指定<kbd>0.2</kbd>中的<kbd>test_size</kbd>以留出20%的数据</li>
+
+<li>使用带有标签数组<kbd>y</kbd>中的值的<kbd>stratify</kbd>关键字参数，以便我们为数据集中的每个物种在训练和测试集中获得等量的样本</li>
+
+</ol>
+
+<p>如果不使用<kbd>stratify</kbd>参数，最终得到的数据集可能不包含一个类的任何样本，而包含太多另一个类的样本。然后，模型不会学习如何对训练集中缺失的类进行分类，而会对另一个类进行过度训练，后者有太多可用的样本。</p>
+
+<p>现在我们有了一个训练集和验证集，让我们看看如何将它们提供给我们的模型来训练它:</p>
+
+<pre>trainer.train_minibatch({ features: X_train, label: y_train })</pre>
+
+<p>为了训练模型，调用<kbd>trainer</kbd>上的<kbd>train_minibatch</kbd>方法，并给它一个字典，该字典将输入数据映射到您用来定义神经网络及其相关<kbd>loss</kbd>函数的输入变量。</p>
+
+<p>我们使用<kbd>train_minibatch</kbd>方法作为将数据输入训练器的便捷方式。在下一章中，我们将讨论输入数据的其他方法。我们还将更详细地看看<kbd>train_minibatch</kbd>方法做了什么。</p>
+
+<p>请注意，您将不得不多次调用<kbd>train_minibatch</kbd>来使网络得到良好的训练。所以我们必须围绕这个方法调用写一个简短的循环:</p>
+
+<pre>for _epoch in range(10):<br/>    trainer.train_minibatch({ features: X_train, label: y_train })<br/><br/>    print('Loss: {}, Acc: {}'.format(<br/>        trainer.previous_minibatch_loss_average,<br/>        trainer.previous_minibatch_evaluation_average))</pre>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，使用<kbd>for</kbd>语句创建一个新的循环，并给它一个范围<kbd>10</kbd></li>
+
+<li>在循环中调用<kbd>train_minibatch</kbd>方法，在输入变量和相关数据之间建立映射</li>
+
+<li>最后，打印<kbd>previous_minibatch_loss_average</kbd>和<kbd>previous_minibatch_evaluation_average</kbd>来监控培训进度。</li>
+
+</ol>
+
+<p>当您调用<kbd>train_minibatch</kbd>方法时，<kbd>trainer</kbd>将更新<kbd>loss</kbd>函数的输出和我们提供给<kbd>trainer</kbd>的<kbd>metric</kbd>函数的值，并将其存储在<kbd>previous_minibatch_evaluation_average</kbd>中。</p>
+
+<p>每次循环完成，我们通过<kbd>trainer</kbd>运行整个数据集，我们就完成了一个时期的训练。正如我们在前一章中看到的，在一个模型足够好地工作之前，运行几个时期是正常的。作为一个额外的奖励，我们也在每个时期之后打印我们的<kbd>trainer</kbd>的进度。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Checking the performance of the neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">检查神经网络的性能</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>每次我们通过训练器传递数据来优化我们的模型时，它都会通过我们为训练器配置的指标来衡量模型的性能。在训练期间测量的模型性能在训练集上。衡量训练集的准确性是很有用的，因为它会告诉您模型实际上是否从数据中学到了什么。</p>
+
+<p>对于模型性能的全面分析，您需要使用测试集来度量模型的性能。这可以通过调用<kbd>trainer</kbd>上的<kbd>test_minibatch</kbd>方法来完成，如下所示:</p>
+
+<pre>trainer.test_minibatch( {features: X_test, label: y_test })</pre>
+
+<p>该方法接受输入变量和变量数据之间有映射的字典。这个方法的输出是您之前配置的<kbd>metric</kbd>函数的输出。在我们的例子中，它是基于我们作为输入给出的数据的模型的准确性。</p>
+
+<p>当测试集的精度高于训练集的精度时，我们将得到一个欠拟合的模型。当测试集的精度低于训练集的精度时，我们正在处理过度拟合。</p>
+
+<p>如果过犹不及，过犹不及都是不好的。当测试集和训练集的准确率几乎相同时，性能最好。我们将在第4章、<em xmlns:epub="http://www.idpf.org/2007/ops">验证模型性能</em>中详细讨论模型性能。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Making predictions with a neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用神经网络做预测</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在训练一个深度学习模型之后，最令人满意的事情之一就是在一个应用程序中实际使用它。现在，我们将限制自己使用从测试集中随机选取的样本的模型。但是，稍后，在第7章、<em xmlns:epub="http://www.idpf.org/2007/ops">将模型部署到</em> <em xmlns:epub="http://www.idpf.org/2007/ops">生产</em>中，我们将了解如何将模型保存到磁盘并在C#或。NET来构建应用程序。</p>
+
+<p>让我们编写代码，用我们训练的神经网络进行预测:</p>
+
+<pre>sample_index = np.random.choice(X_test.shape[0])<br/>sample = X_test[sample_index]<br/><br/>inverted_mapping = {<br/>    1: 'Iris-setosa',<br/>    2: 'Iris-versicolor',<br/>    3: 'Iris-virginica'<br/>}<br/><br/>prediction = z(sample)<br/>predicted_label = inverted_mapping[np.argmax(prediction)]<br/><br/>print(predicted_label)</pre>
+
+<p>遵循给定的步骤:</p>
+
+<ol>
+
+<li>首先，使用<kbd>np.random.choice</kbd>函数从测试集中选择一个随机项目</li>
+
+<li>然后使用生成的<kbd>sample_index</kbd>从测试集中选择样本数据</li>
+
+<li>接下来，创建反向映射，以便可以将神经网络的数字输出转换为实际标签</li>
+
+</ol>
+
+<ol start="4">
+
+<li>现在，使用选择的<kbd>sample</kbd>数据，通过调用神经网络<kbd>z</kbd>作为函数进行预测</li>
+
+</ol>
+
+<ol start="5">
+
+<li>从预测输出中，使用<kbd>numpy</kbd>包中的<kbd>np.argmax</kbd>函数，将具有最高值的神经元的指数作为预测值</li>
+
+<li>使用<kbd>inverted_mapping</kbd>将索引值转换成实际标签</li>
+
+</ol>
+
+<p>当您执行代码示例时，您将得到类似如下的输出:</p>
+
+<pre>Iris-versicolor</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Improving the model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">改进模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>你将很快了解到建立和训练神经网络需要不止一次的尝试。通常，你的模型的第一个版本不会像你希望的那样好。想出一个好的模型需要相当多的实验。</p>
+
+<p>一个好的神经网络从一个伟大的数据集开始。几乎在所有情况下，使用适当的数据集都可以获得更好的性能。许多数据科学家会告诉你，他们花了大约80%的时间在一个好的数据集上。和所有的计算机软件一样，如果你把垃圾放进去，你就会把垃圾弄出来。</p>
+
+<p>即使有了一个好的数据集，您仍然需要花费相当多的时间来构建和训练不同的模型，然后才能获得您所追求的性能。所以，让我们来看看在你第一次建立模型之后，你能做些什么来改进你的模型。</p>
+
+<p>第一次训练模型后，您有几个选项可以选择，以改进您的模型。</p>
+
+<p>看看你的训练和验证集的准确性。训练集上的准确率更低了吗？尝试为更多的纪元训练模型。通常，这将有助于改进模型。</p>
+
+<p>即使训练模型的时间更长，训练精度也不会提高吗？那么您的模型可能无法学习数据集中的复杂关系。尝试更改模型结构，并再次训练模型，以查看这是否会提高准确性。</p>
+
+<p>例如，尝试改变激活函数或隐藏层中神经元的数量。这通常有助于模型了解数据集中更复杂的关系。</p>
+
+<p>或者，您可以查看模型中的层数。多添加一层会对您的模型从您提供的数据中学习规则的能力产生相当大的影响。</p>
+
+<p class="mce-root"/>
+
+<p>最后，当这没有帮助时，看看你的模型中的层的初始化。在某些情况下，选择不同的初始化函数有助于模型的初始学习步骤。</p>
+
+<p>实验过程的关键是一次改变一件事，并记录你的实验。使用诸如Git这样的源代码控制解决方案可以帮助您跟踪不同版本的培训代码。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:f69ed529-6576-4ff7-a760-3ddf81ca9def" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一章中，我们建立了第一个神经网络，并训练它识别鸢尾花。虽然这个示例非常简单，但它展示了如何使用CNTK来构建和训练神经网络。</p>
+
+<p>我们已经看到了如何利用CNTK中的图层库来快速定义神经网络的结构。在这一章中，我们已经讨论了一些基本的构建模块，例如<kbd>Dense</kbd>层和<kbd>Sequential</kbd>层，它们将其他几个层链接在一起。在接下来的章节中，我们将学习其他层函数来构建其他类型的神经网络，如卷积网络。</p>
+
+<p>在本章中，我们还讨论了如何使用<kbd>learner</kbd>和<kbd>trainer</kbd>来构建一个基本算法来训练我们的神经网络。我们使用了<kbd>train_minibatch</kbd>方法，以及一个基本循环，来构建我们自己的训练过程。这是训练我们模型的一种非常简单而强大的方法。在下一章，我们将更详细地讨论其他训练方法和<kbd>train_minibatch</kbd>方法。</p>
+
+<p>在我们训练了模型之后，我们利用CNTK的功能特性用我们训练的模型进行预测。模型是一个函数的事实是非常强大的，这使得在应用程序中使用经过训练的模型非常直观。</p>
+
+<p>最后，我们已经看到了如何使用<kbd>test_minibatch</kbd>方法测量模型性能，以及如何使用性能度量来检查我们的模型是否过度拟合。我们稍后讨论了如何使用度量来确定如何改进模型。</p>
+
+<p>在下一章中，我们将看看访问和向CNTK模型提供数据的不同方法。我们还将探索CNTK中的每种数据访问方法，以及哪种方法最适合在不同的环境中使用。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

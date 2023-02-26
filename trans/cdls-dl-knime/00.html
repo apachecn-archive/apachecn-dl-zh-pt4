@@ -1,0 +1,849 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B16391_04_Final_NM_ePUB</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-53"><em class="italic"> <a id="_idTextAnchor101"/>第四章:</em>建立并训练一个前馈神经网络</h1>
+
+			<p>在<a href="B16391_03_Final_PG_ePUB.xhtml#_idTextAnchor073"> <em class="italic">第三章</em> </a>、<em class="italic">神经网络入门</em>中，你学习了神经网络和深度学习背后的基础理论。本章将这些知识付诸实践。我们将实现两个非常简单的分类示例:使用<strong class="bold"> iris flower </strong>数据集的多类分类，以及使用成人数据集的二元分类，也称为<strong class="bold">人口普查收入</strong>数据集。</p>
+
+			<p>这两个数据集非常小，相应的分类解决方案也非常简单。在这两个例子中，完全连接的前馈网络就足够了。然而，我们决定在这里将它们作为玩具示例来展示，以描述构建、训练和应用具有<strong class="bold"> KNIME分析平台</strong>和<strong class="bold"> KNIME Keras集成</strong>的全连接前馈分类网络所需的所有步骤。</p>
+
+			<p>这些步骤包括常用的预处理技术、神经结构的设计、激活函数的设置、网络的训练和应用，以及最后的结果评估。</p>
+
+			<p>因此，本章涵盖以下主要主题:</p>
+
+			<ul>
+
+				<li>准备数据</li>
+
+				<li>构建前馈神经架构</li>
+
+				<li>训练网络</li>
+
+				<li>测试和应用网络</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-54"><a id="_idTextAnchor102"/>准备数据</h1>
+
+			<p>在<a href="B16391_03_Final_PG_ePUB.xhtml#_idTextAnchor073"> <em class="italic">第3章</em> </a>、<em class="italic">神经网络入门</em>中，我们介绍了反向传播<a id="_idIndexMarker279"/>算法，梯度下降算法使用它来训练神经网络。这些算法处理数字，无法处理名义/分类输入要素或类值。因此，如果我们希望网络使用标称输入特征或标称输出值，则必须将其编码为数值。在这一节中，我们将展示几种数字编码技术以及在KNIME Analytics平台中实现它们的相应节点。</p>
+
+			<p>除此之外，我们还将经历许多其他经典的数据预处理步骤，以提供机器学习算法:从原始数据集创建训练、验证和测试集；正常化；和缺失值插补。</p>
+
+			<p>在这个过程中，我们还将向您展示如何导入数据，如何执行一些额外的数据操作，以及KNIME Analytics平台中一些常用的技巧。本章中描述的工作流可在KNIME Hub上获得:<a href="https://hub.knime.com/kathrin/spaces/Codeless%20Deep%20Learning%20with%20KNIME/latest/Chapter%204/">https://Hub . KNIME . com/kath rin/spaces/Codeless % 20 deep % 20 learning % 20 with % 20 KNIME/latest/Chapter % 204/</a>。</p>
+
+			<h2 id="_idParaDest-55"><a id="_idTextAnchor103"/>数据集和分类示例</h2>
+
+			<p>在我们进入不同的预处理步骤之前，让我们快速浏览一下两个选择的数据集和相关的分类示例:</p>
+
+			<ul>
+
+				<li>基于虹膜数据集的<a id="_idIndexMarker282"/>三种鸢尾花的分类</li>
+
+				<li>基于成人数据集数据的收入分类(二元类)</li>
+
+			</ul>
+
+			<p>我们的第一个数据集给了我们一个多类分类问题的例子。</p>
+
+			<p>鸢尾数据集<a id="_idIndexMarker283"/>由三种鸢尾植物的花的例子组成:鸢尾-刚毛鸢尾、鸢尾-海滨鸢尾和鸢尾-杂色鸢尾。每一朵花通过四种方法来描述:萼片长度(厘米)，萼片宽度(厘米)，花瓣长度(厘米)，花瓣宽度(厘米)。这是一个小数据集，每个物种有50个样本，总共有150个样本。<em class="italic">图4.1 </em>显示了数据集的概况。</p>
+
+			<p>目标是训练一个具有一个隐藏层(八个单元和ReLU激活函数)的神经网络，以基于四个输入特征区分三个物种。</p>
+
+			<p>Iris数据集的一部分显示在以下表格<a id="_idTextAnchor104"/>中:</p>
+
+			<div><div><img src="img/B16391_04_001.jpg" alt="Figure 4.1 – Overview of the Iris dataset, used here to implement a multiclass classification"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.1–Iris数据集概述，此处用于实现多类分类</p>
+
+			<p>第二个<a id="_idIndexMarker284"/>示例数据集为我们提供了一个二元分类问题。</p>
+
+			<p>成人数据集<a id="_idIndexMarker285"/>由32561名居住在美国的人组成。每个记录通过14个人口统计特征描述一个人，包括他们当前的年收入(&gt; 50K/ &lt; = 50K)。<em class="italic">图4.2 </em>显示了数据集中特征的概述:数字特征，如年龄和每周工作时间，以及名义特征，如工作类别和婚姻状况。</p>
+
+			<p>目标是训练一个神经网络，使用所有其他属性作为输入特征，预测一个人的年收入是高于还是低于5万美元。我们要用的网络应该有两个隐藏层，每个隐藏层有八个单元和ReLU激活函数。</p>
+
+			<p>表格中显示的一些人口普查收入数据集如下:</p>
+
+			<div><div><img src="img/B16391_04_002.jpg" alt="Figure 4.2 – Overview of the adult dataset, used here to implement a binary class classification"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.2-成人数据集概述，此处用于实现二元类分类</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">为了获得数据集的概览，您可以使用<strong class="bold">数据浏览器</strong>节点<a id="_idIndexMarker286"/>。此节点在交互式视图中显示输入数据的一些统计度量。在<em class="italic">图4.1 </em>和<em class="italic">图4.2 </em>中，您可以看到两个示例数据集的节点视图。</p>
+
+			<p>总结一下虹膜数据集，它由四个数值特征，加上虹膜名义类组成；成人数据集由14个数字和名义混合特征组成。因此，数据准备的第一步是将所有名义特征转换成数字特征。那么，让我们继续讨论编码技术。</p>
+
+			<h2 id="_idParaDest-56"><a id="_idTextAnchor106"/>标称特征的编码</h2>
+
+			<p>名义特征，有时也称为<a id="_idIndexMarker287"/>分类特征，只能采用字符串类型的值。例如，描述头发颜色的特征的唯一可能值可以是字符串类型，例如<code>black</code>、<code>brown</code>、<code>blond</code>和<code>red</code>；描述性别的特征传统上只假设两个字符串类型的值，<code>female</code>和<code>male</code>；教育特征的可能值可以是字符串，例如<code>Doctorate</code>、<code>Masters</code>、<code>Bachelors</code>或<code>Some-college</code>。最后一个例子取自成人数据集中名为<code>education</code>的列。这些值应该在输入神经网络之前转换成数字。</p>
+
+			<p>有两种常见的<a id="_idIndexMarker288"/>方法来编码标称特征:</p>
+
+			<ul>
+
+				<li><strong class="bold">整数编码</strong></li>
+
+				<li><strong class="bold">一键编码</strong></li>
+
+			</ul>
+
+			<p>整数编码将一个整数<a id="_idIndexMarker289"/>值分配给特征的每个可能标称值。例如，<code>"black"</code>可以是1，<code>"brown"</code>可以是2，<code>"blond"</code>可以是3，<code>"red"</code>可以是4。我们选择了数字1、2、3和4，但它也可以是任何其他数字组。这种方法在不同的值之间引入了一种人为的关系——例如，<code>"black"</code>比<code>"red"</code>更接近于<code>"brown"</code>。这可以反映序数或等级特征中的值之间的真实关系，例如教育，其中<code>"Doctorate"</code>比<code>"Some-college"</code>更接近于<code>"Masters"</code>。但是，在其他情况下，例如前面提到的头发颜色，它引入了一个新的附加关系，该关系不能反映现实，并且会在学习过程中使模型产生偏差。一般来说，在名义上无序的特性上使用整数编码方法会导致性能更差的模型。</p>
+
+			<p>一键矢量编码通过用矢量表示每个特征克服了这个问题，其中所有矢量之间的距离总是相同的。向量由与原始特征中的可能值相同数量的二进制分量组成。然后，每个组件与其中一个值相关联，并被设置为该值的<code>1</code>；其他组件保持设置为<code>0</code>。在发色示例中，<code>"black"</code>变成了<img src="img/Formula_B16391_04_001.png" alt=""/>，<code>"brown"</code>变成了<img src="img/Formula_B16391_04_002.png" alt=""/>，<code>"blond"</code>变成了<img src="img/Formula_B16391_04_003.png" alt=""/>，<code>"red"</code>变成了<img src="img/Formula_B16391_04_004.png" alt=""/>。</p>
+
+			<p class="callout-heading">重要说明</p>
+
+			<p class="callout">独热向量<a id="_idIndexMarker290"/>是一个只有一个<code>1</code>且所有其他值都是<code>0</code>的向量。它可以用来对不同的类进行编码，而无需在它们之间添加任何人为的距离。</p>
+
+			<p>现在让我们看看如何用KNIME节点实现这些编码。</p>
+
+			<h3>KNIME分析平台中的整数编码</h3>
+
+			<p>要执行<a id="_idIndexMarker291"/>整数编码，可以使用<strong class="bold">类别对</strong>节点进行编号。该节点有一个数据输入端口(在下图<a id="_idIndexMarker293"/>中用黑色<a id="_idIndexMarker292"/>三角形表示)和两个输出端口:</p>
+
+			<ul>
+
+				<li>带有整数编码数据的数据输出端口(黑色三角形)</li>
+
+				<li>带有映射规则的PMML模型输出端口(蓝色方块)</li>
+
+			</ul>
+
+			<p><em class="italic">图4.3 </em>显示了该节点及其配置窗口<a id="_idTextAnchor107"/>:</p>
+
+			<div><div><img src="img/B16391_04_003.jpg" alt="Figure 4.3 – The Category to Number node performs an integer encoding on the selected columns"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.3–分类到编号节点对选定的列执行整数编码</p>
+
+			<p>在配置窗口的<a id="_idIndexMarker294"/>上部，您可以选择要应用整数编码的<a id="_idIndexMarker295"/>字符串类型输入列。<strong class="bold">包含</strong>框架中的列将被转换，而<strong class="bold">不包含</strong>框架中的列将保持不变。您可以使用框架之间的按钮将列从一个框架移动到另一个框架。</p>
+
+			<p>默认情况下，原始列中的值被替换为整数编码的值。然而，<strong class="bold">追加列</strong>复选框为整数编码的值创建了额外的列，以便不覆盖原来的列。如果激活此复选框，您还可以为新列标题定义自定义后缀。</p>
+
+			<p>在配置窗口的下半部分，您可以定义编码规则:起始值、增量、允许的最大类别数以及所有缺失值的整数值。</p>
+
+			<p>默认整数值被传递到输出PMML变换模型。<strong class="bold"> PMML </strong>代表<strong class="bold">预测模型标记语言</strong>，是一种在不同应用之间描述和交换预测模型<a id="_idIndexMarker296"/>的方式。蓝色正方形输出端口处的<a id="_idIndexMarker297"/> PMML模型包含在该节点中构建的映射函数，并将应用于其他数据集。应用此整数编码PMML模型时，默认值被分配给当前映射未表示的所有输入值(如果有)。如果没有默认值，将使用一个<a id="_idIndexMarker298"/>缺失值。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">要将存储在PMML输出端口中的相同整数编码映射应用到另一个数据集，您可以使用<strong class="bold">类别来编号(应用)</strong>节点。</p>
+
+			<p><strong class="bold">类别到编号</strong>节点<a id="_idIndexMarker300"/>自动定义映射。这意味着您不能手动定义哪个标称值应该由哪个整数值表示。如果你想这样做，你可以在KNIME <a id="_idIndexMarker301"/>分析平台中选择其他选项，我们将介绍其中的两个:单元格替换器节点和规则引擎节点。</p>
+
+			<p><strong class="bold">单元格替换器</strong>节点根据字典表替换一列中的<a id="_idIndexMarker302"/>单元格值。它有两个输入:</p>
+
+			<ul>
+
+				<li>具有要替换其值的目标列的表的顶部输入</li>
+
+				<li>字典表的下部输入</li>
+
+			</ul>
+
+			<p><em class="italic">图4.4 </em>显示了Cell Repla <a id="_idTextAnchor108"/> cer节点的配置窗口:</p>
+
+			<div><div><img src="img/B16391_04_004.jpg" alt="Figure 4.4 – The Cell Replacer node implements an encoding mapping based on a dictionary"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.4–单元格替换器节点基于字典实现编码映射</p>
+
+			<p>在配置窗口的<a id="_idIndexMarker303"/>上部，可以从顶部输入端口的输入表中选择<a id="_idIndexMarker304"/>目标列；这意味着要根据字典值替换其值的列。</p>
+
+			<p>在配置窗口的<strong class="bold">字典表</strong>部分，您可以从下方输入端口的数据表中选择具有查找值的列——即<strong class="bold">输入(查找)</strong>列——和包含替换值的列——即<strong class="bold">输出(替换)</strong>列。</p>
+
+			<p>目标列(第一个输入)中匹配查找值的任何匹配项都将被相应的替换值替换。结果存储在输出列中，该列或者被添加到表中，或者替换原来的目标列。</p>
+
+			<p>缺失值被视为普通值；也就是说，它们作为查找值和替换值都是有效值。如果字典表的查找列中有重复项，则最后一个匹配项(最低行)定义替换对。</p>
+
+			<p>对于整数编码示例，您需要一个字典表来映射标称值和整数值。例如，每个教育水平应该映射到一个相应的整数值。然后，您可以将原始数据集输入到顶部输入端口，并将<a id="_idIndexMarker305"/>该地图/字典表输入到<a id="_idIndexMarker306"/>最低输入端口。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout"><strong class="bold">表创建者</strong>节点可以<a id="_idIndexMarker307"/>帮助手动创建查找表。</p>
+
+			<p>如果您没有字典表并且不想创建一个，您可以使用<strong class="bold">规则引擎</strong>节点。</p>
+
+			<p><a id="_idIndexMarker308"/>规则引擎节点根据一组手动定义的规则转换输入列中的值，这些规则在其配置窗口中定义。</p>
+
+			<p><em class="italic">图4.5 </em>显示了Rul <a id="_idTextAnchor109"/> e引擎节点的配置窗口:</p>
+
+			<div><div><img src="img/B16391_04_005.jpg" alt="Figure 4.5 – The Rule Engine node implements an integer encoding from user-defined rules"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.5–规则引擎节点根据用户定义的规则实现整数编码</p>
+
+			<p>在<a id="_idIndexMarker309"/>中的<code>=&gt;</code>，以<code>"antecedent =&gt; consequence"</code>的形式出现。结果将被插入到新列中，或者替换选定列中的值。对于输入表中的每个数据行，规则匹配过程从顶部规则向底部规则移动:第一个匹配规则确定结果，然后规则过程停止。收集所有剩余数据行的最后一个默认条件被表示为<code>"TRUE =&gt; consequence"</code>。</p>
+
+			<p>规则的结果可能是一个字符串(在<code>"</code>或<code>/</code>符号之间)、一个数字、一个布尔常量或对另一列的引用。如果没有匹配的规则，则结果是缺少值。对其他列的引用由<code>$</code>之间的列名表示。您可以手动或双击配置窗口左侧<strong class="bold">列列表</strong>中的列来插入列引用。</p>
+
+			<p>除了<strong class="bold">表达式</strong>面板，您还可以找到<strong class="bold">功能</strong>、<strong class="bold">列列表</strong>和<strong class="bold">流变量列表</strong>面板。<strong class="bold">功能</strong>面板列出所有功能，<strong class="bold">列列表</strong>面板列出所有输入列，<strong class="bold">流量变量列表</strong>包含所有可用的流量变量。双击它们中的任何一个，用正确的语法将它们添加到<strong class="bold">表达式</strong>窗口中。此外，选择任何功能都会显示说明和示例。</p>
+
+			<p>综上所述，KNIME Analytics平台有<a id="_idIndexMarker311"/>多种方式实现整数编码<a id="_idIndexMarker312"/>。我们引入了三个选项:</p>
+
+			<ul>
+
+				<li>如果您不想手动定义映射，那么<strong class="bold">类别到编号</strong>节点提供了一种自动、简单的方法。</li>
+
+				<li>如果手头有一个查找表，那么<strong class="bold">单元格替换器</strong>节点非常有用。</li>
+
+				<li>如果您想通过一组规则手动定义标称值和整数值之间的映射，则<strong class="bold">规则引擎</strong>节点非常有用。</li>
+
+			</ul>
+
+			<p>接下来，让我们看看KNIME分析平台中的一键编码。</p>
+
+			<h3>KNIME分析平台中的一键编码</h3>
+
+			<p>为了对名义特征执行<a id="_idIndexMarker313"/>一键编码，有<strong class="bold">一对多</strong>节点。这个节点<a id="_idIndexMarker314"/>获取一列中可用的标称值的列表，构建<a id="_idIndexMarker315"/>一个具有尽可能多的分量的向量，并产生每个值的一键编码:一个值变成许多二进制单元，因此得名。</p>
+
+			<p>在“配置”窗口中，您可以选择要对其执行一键编码的字符串类型列。对于每一列，由于有不同的值，将创建尽可能多的新列。每个新列的标题将是名义列中的原始值，其单元格取值为<code>0</code>或<code>1</code>，这取决于原始列中是否存在标题值。</p>
+
+			<p><em class="italic">图4.6 </em>显示了节点的配置w <a id="_idTextAnchor110"/>窗口:</p>
+
+			<p class="figure-caption"> </p>
+
+			<div><div><img src="img/B16391_04_006.jpg" alt="Figure 4.6 – The One to Many node implements the one-hot encoding for nominal features"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.6–一对多节点实现名义特征的一键编码</p>
+
+			<p>创建<a id="_idIndexMarker316"/>独热编码向量导致非常大的<a id="_idIndexMarker317"/>和非常稀疏的数据表，其中有许多零。这可能会影响执行期间的工作流性能。Keras学习者节点接受大而稀疏的单热编码数据表。然而，它还提供了一个非常好的可选特性，避免了用一次性编码的向量显式创建数据表的整个步骤。它可以从原始列的整数编码版本内部创建一个热编码向量。这样，数据的独热编码表示保持隐藏在<strong class="bold"> Keras网络学习器</strong>节点中，并且<a id="_idIndexMarker318"/>从不在节点间传递。在这种情况下，每个整数编码单元的值必须作为集合类型单元呈现给Keras网络学习者节点。要创建集合类型单元格，可以使用<strong class="bold">创建集合列</strong>节点。在本章的<em class="italic">训练网络</em>一节中，您将看到如何正确配置Keras网络学习器节点以利用该功能。</p>
+
+			<p><em class="italic">图4.7 </em>显示了<strong class="bold">创建收藏列</strong>节点的配置窗口<a id="_idIndexMarker319"/>。在<strong class="bold"> Exclude-Include </strong>框架中，您选择一个或多个列来聚集在集合类型<a id="_idIndexMarker320"/>列中。在configuration <a id="_idIndexMarker321"/>窗口的下半部分，您可以决定是否删除原来的列并定义新的collection<a id="_idTextAnchor111"/>类型列的名称:</p>
+
+			<div><div><img src="img/B16391_04_007.jpg" alt="Figure 4.7 – The Create Collection Column node aggregates the values from multiple columns as a collection into one single column"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.7–创建集合列节点将多个列中的值作为一个集合聚合到一个列中</p>
+
+			<p>注意，对于这种两步一热编码——首先是整数编码，然后是一热编码——您需要用上一节中列出的节点之一创建整数编码列，然后将<strong class="bold"> Create Collection Column </strong>节点应用于一列:我们刚刚创建的整数编码列。</p>
+
+			<h3>分类目标变量的编码</h3>
+
+			<p>在上一章中，我们<a id="_idIndexMarker322"/>谈到了不同的激活函数和损失函数，它们可用于构建网络架构和训练网络来解决分类问题。当然，输出层中的激活函数和损失函数必须匹配。不仅如此，类编码还必须与选择的激活和丢失函数相匹配。这意味着不仅要对名义输入特征进行编码，还要对类值进行编码。如本节所述，同样的编码技术和节点也可以用于类编码。</p>
+
+			<p>二进制分类的常用方法是用<img src="img/Formula_B16391_04_005.png" alt=""/>和<img src="img/Formula_B16391_04_006.png" alt=""/>对两个类别进行编码，然后训练网络来预测<img src="img/Formula_B16391_04_007.png" alt=""/>类别的概率。在这种情况下,“类别到号码”节点或“规则引擎”节点都可以工作。</p>
+
+			<p>在多类问题的情况下，也有两个选项来编码类列:在<a id="_idIndexMarker323"/>上的<strong class="bold">一对多</strong>节点或者在创建集合列节点之后的分类到编号。</p>
+
+			<p>神经网络的另一个推荐预处理步骤是归一化。</p>
+
+			<h2 id="_idParaDest-57"><a id="_idTextAnchor112"/>正常化</h2>
+
+			<p>大多数神经网络都是使用随机梯度下降的某种变体和反向传播算法来训练的，以计算梯度。具有不可比范围的输入特征会在学习过程中产生问题，因为具有最大范围的输入特征会超过权重更新的计算，甚至可能超过局部最小值。这可能会产生振荡并减缓学习过程的收敛。要加快学习阶段，建议提前将数据归一化；例如，通过使用z得分归一化，使每列中的值呈高斯分布，平均值为0.0，标准偏差为1.0。</p>
+
+			<p>在<em class="italic">图4.8 </em>中，可以看到<strong class="bold">规格化器</strong>节点和<a id="_idIndexMarker325"/>其配置<a id="_idIndexMarker326"/>窗口，以及<a id="_idIndexMarker327"/>为<strong class="bold">规格化器(应用)</strong>节点<a id="_idTextAnchor113"/>:</p>
+
+			<div><div><img src="img/B16391_04_008.jpg" alt="Figure 4.8 – The Normalizer node creates a normalization function for the selected input columns. The Normalizer (Apply) node applies the same normalization function to another dataset"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.8–规格化器节点为选择的输入列创建一个规格化函数。规格化器(应用)节点将相同的规格化函数应用于另一个数据集</p>
+
+			<p>规范化器节点在选定的输入列上创建一个规范化函数，并对它们进行规范化。规格化器(应用)节点采用外部预定义的规格化函数，并将其应用于输入数据。应用这对节点的经典案例是在训练集和测试集上。规格化器节点规格化训练数据，规格化器(应用)节点将相同的规格化变换应用于测试数据。</p>
+
+			<p>规格化器节点有一个数据输入端口和两个输出端口:</p>
+
+			<ul>
+
+				<li>一个带有标准化输入数据的数据输出端口</li>
+
+				<li>一个包含归一化参数的模型输出端口，可用于<a id="_idIndexMarker328"/>归一化器(应用)节点中的另一个数据集</li>
+
+			</ul>
+
+			<p>在规格化器节点的配置窗口中，可以选择要规格化的数值列和规格化方法。</p>
+
+			<p>规格化器(应用)节点的<a id="_idIndexMarker329"/>配置窗口最小，因为所有必要的参数都包含在输入规格化模型中。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">使用分区节点，您可以在规范化数据之前创建训练和测试集<em class="italic">。</em></p>
+
+			<h2 id="_idParaDest-58"><a id="_idTextAnchor114"/>其他有用的预处理节点</h2>
+
+			<p>训练神经网络时，缺失值可能是一个<a id="_idIndexMarker330"/>问题，因为反向传播算法无法处理它们。表示KNIME数据表中缺失值的占位符值是一个红色问号。</p>
+
+			<p>用于估算<a id="_idIndexMarker331"/>缺失值的强大节点是<strong class="bold">缺失值</strong>节点。此节点允许您在多种插补方法中进行选择，例如平均值、固定值和最常见值等等。</p>
+
+			<p><em class="italic">图4.9 </em>显示了节点配置窗口的两个选项卡。在第一个选项卡<strong class="bold">默认</strong>选项卡中，您可以选择一种插补方法，应用于数据集中相同类型的所有列；除了在配置的第二个选项卡<strong class="bold">列设置</strong>选项卡中设置的列之外的所有列。在第二个选项卡中，您可以为每个单独的列定义插补方法<a id="_idTextAnchor115"/> mn:</p>
+
+			<div><div><img src="img/B16391_04_009.jpg" alt="Figure 4.9 – The Missing Value node selects among many imputation methods for missing values"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.9–缺失值节点在缺失值的多种插补方法中进行选择</p>
+
+			<p>大多数神经网络都是在监督下训练的。因此，另一个必要的步骤是创建训练集和测试集，以及可选的验证集。要创建不同的不相交子集，您<a id="_idIndexMarker333"/>可以使用<strong class="bold">分区</strong>节点。</p>
+
+			<p>在<em class="italic">图4.10 </em>中<a id="_idIndexMarker334"/>分区节点的配置窗口中，您可以设置第一个分区的大小，可以是绝对百分比，也可以是相对百分比。在此之下，您可以设置抽样技术来创建第一个子集，根据所选列中的类别，按照数据分布进行随机抽取(分层抽样)，每隔<em class="italic"> n </em>个数据行进行线性抽取，或者从顶部开始按顺序抽取。顶部输出端口产生结果分区；较低的输出端口产生所有其他剩余的数据行:</p>
+
+			<div><div><img src="img/B16391_04_010.jpg" alt="Figure 4.10 – The Partitioning node creates two disjoint subsets"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.10–划分节点创建了两个不相交的子集</p>
+
+			<p>对于<a id="_idIndexMarker335"/>分类问题，推荐<strong class="bold">分层抽样</strong>方案。它确保所选列中类别的分布(大约)保留在两个分区中。对于时间序列分析，如果您的数据按日期升序排序，那么<strong class="bold">从顶部取值</strong>选项是更好的选择。时间上更早的样本将在一个分区中，而较新的样本在另一个分区中。</p>
+
+			<p>要创建额外的验证集，需要两个分区节点的序列。</p>
+
+			<p>我们已经讨论了分类特征的编码、数值特征的标准化、缺失值插补和数据集的划分。很可能这些不是为神经网络准备数据所需的唯一节点。</p>
+
+			<p>让我们通过在前面描述的两个示例数据集上实现数据准备部分，来看看数据准备在实践中是如何工作的。</p>
+
+			<h2 id="_idParaDest-59"><a id="_idTextAnchor116"/>虹膜数据集的数据准备</h2>
+
+			<p>在<em class="italic">图4.11 </em>中，您可以看到工作流的<a id="_idIndexMarker336"/>部分，专门用于为即将到来的神经网络访问和准备数据。</p>
+
+			<p>工作流程<a id="_idIndexMarker337"/>从使用<strong class="bold">表读取器</strong>节点读取Iris数据集<a id="_idIndexMarker338"/>开始。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">您可以在本章的数据文件夹中找到数据集。</p>
+
+			<p>由于数据集只有数字输入特征(花瓣和萼片测量)，因此不需要e <a id="_idTextAnchor117"/>编码:</p>
+
+			<div><div><img src="img/B16391_04_011.jpg" alt="Figure 4.11 – This workflow snippet shows the preprocessing for the data in the iris dataset example"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.11–该工作流片段显示了iris数据集示例中数据的预处理</p>
+
+			<p>然而，目标变量包含三个不同的类别:每种花卉的名称。这个名义列中的类别需要通过某种编码技术转换成数字。为了避免引入不存在的关系，我们选择了一键编码。为了实现一键编码，我们选择了通过节点的整数编码和Keras学习器节点内的一键编码的组合。我们将在<em class="italic">训练网络</em>部分讨论Keras学习器节点内部的一键编码。这里，我们将重点关注集合类型列中flower类的整数编码的创建:</p>
+
+			<ol>
+
+				<li value="1">为了<a id="_idIndexMarker339"/>将物种名称转换成索引，我们使用<a id="_idIndexMarker340"/>的<code>class</code>列。</li>
+
+				<li>之后，我们<a id="_idIndexMarker341"/>通过一个<code>class</code>列传递来自规则引擎节点的结果，并在配置窗口中排除所有其他列。</li>
+
+				<li>接下来，使用一个<strong class="bold">分区</strong>节点创建训练和测试集，使用75%的数据进行训练，剩余的25%用于测试。</li>
+
+				<li>最后，使用z得分归一化对数据进行归一化。</li>
+
+			</ol>
+
+			<p>虹膜数据集非常小，而且定义非常明确。只有几个节点(所需的最少节点)足以实施数据准备部分。</p>
+
+			<p>现在让我们看看在一个更复杂(但仍然很小)的数据集上发生了什么，比如成人数据集。</p>
+
+			<h2 id="_idParaDest-60"><a id="_idTextAnchor118"/>成人数据集上的数据准备</h2>
+
+			<p><em class="italic">图4.12 </em>中的<a id="_idIndexMarker342"/>工作流是读取和预处理ad <a id="_idTextAnchor119"/> ult数据集的收入预测示例<a id="_idIndexMarker343"/>的一部分:</p>
+
+			<div><div><img src="img/B16391_04_012.jpg" alt="Figure 4.12 – This workflow snippet shows the preprocessing for the data in the adult dataset example"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.12–该工作流片段显示了成人数据集示例中的数据预处理</p>
+
+			<p>像虹膜数据集一样，您可以在本章的数据文件夹中找到工作流中使用的两个数据集:成人数据集和字典Excel表。在成人数据集中，教育水平以文本形式显示。字典Excel文件提供了教育水平和相应的标准整数代码之间的映射。我们可以使用这些整数代码作为教育输入特征的数字编码。</p>
+
+			<p>接下来，<strong class="bold">单元替换器</strong>节点<a id="_idIndexMarker344"/>用相应的代码替换所有教育级别。我们几乎不费吹灰之力就得到一种编码。</p>
+
+			<p>一些标称<a id="_idIndexMarker345"/>列缺少值。在<code>"Missing"</code>里面。</p>
+
+			<p>接下来，我们继续对除教育之外的所有其他名义特征进行编码。对于以下特性，使用了一个<a id="_idIndexMarker346"/>整数编码，由<strong class="bold">类别实现，以对</strong>节点进行编号:婚姻状况、种族和性别。我们可以在这里使用整数编码，因为这些特性要么是二进制的，要么只有几个类别。</p>
+
+			<p>对于剩余的名义特征——工作类别、职业、关系和本国——使用一键编码，由<strong class="bold">一对多</strong>节点实现<a id="_idIndexMarker347"/>。请记住，该节点为每个选定列中的每个值创建一个新列。因此，经过这种变换后，数据集有82个要素，而不是原来的14个。</p>
+
+			<p>接下来，使用两个<code>Income</code>类列的序列创建训练、验证和测试<a id="_idIndexMarker348"/>集。</p>
+
+			<p>最后，<code>Income</code>列在所有子集上都进行了整数编码，并且它们的所有数据都进行了规范化。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">为了隐藏复杂性并整理您的工作流，您可以创建<strong class="bold">元节点</strong>。元节点<a id="_idIndexMarker350"/>被描述为灰色节点，包含节点的子工作流。要创建一个元节点，选择想要隐藏的节点，点击右键，选择<strong class="bold">创建元节点</strong>。</p>
+
+			<p>我们的数据准备好了。让我们现在建立神经网络。</p>
+
+			<h1 id="_idParaDest-61"><a id="_idTextAnchor120"/>构建前馈神经架构</h1>
+
+			<p>要使用KNIME Keras集成构建一个<a id="_idIndexMarker351"/>神经网络架构，您可以使用Keras层节点链。在<strong class="bold">节点库</strong>的<strong class="bold"> Keras- &gt; Layers </strong>文件夹中，可用于构建层的节点按类别分组，例如<strong class="bold">高级激活</strong>、<strong class="bold">卷积</strong>、<strong class="bold">核心</strong>、<strong class="bold">嵌入</strong>和<strong class="bold">递归</strong>等等。</p>
+
+			<p>显示在<strong class="bold"> Keras- &gt; Layers </strong>文件夹中的每一层都有一个专业。例如，<strong class="bold">高级激活</strong>中的层创建具有特定激活功能的单位的层；<strong class="bold">卷积</strong>中的层为卷积神经网络创建层；<strong class="bold">核心</strong>包含所有经典层，例如用于收集输入值的<strong class="bold">输入</strong>层和用于全连接前馈神经网络的<strong class="bold">密集</strong>层；诸如此类。</p>
+
+			<p>我们将在本书中一路探索这些层面。然而，在本章中，我们将把自己限制在全连接前馈神经网络所需的基本层。</p>
+
+			<p>任何网络的第一层都是接收输入值的层。让我们从Keras输入层节点开始。</p>
+
+			<h2 id="_idParaDest-62"><a id="_idTextAnchor121"/>Keras输入层节点</h2>
+
+			<p>构建神经网络总是从定义网络的输入层开始。<strong class="bold"> Keras输入层</strong>节点可以<a id="_idIndexMarker353"/>帮助你完成这个任务。事实上，该节点为网络构建所需的输入以接受输入值。</p>
+
+			<p>在<em class="italic">图4.13 </em>的左侧，您可以看到Keras输入层节点，在右侧可以看到其配置窗口。如您所见，该节点没有输入端口，只有一个与目前遇到的<a id="_idIndexMarker354"/>节点形状和颜色不同的输出端口(红色方块):这是<a id="_idTextAnchor122"/><strong class="bold">Keras网络端口</strong>:</p>
+
+			<div><div><img src="img/B16391_04_013.jpg" alt="Figure 4.13 – The Keras Input Layer node defines the input layer of your neural network"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.13–Keras输入层节点定义了神经网络的输入层</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">端口的颜色和形状表示哪些端口可以相互连接。大多数情况下，只能连接颜色和形状相同的端口，但也有例外。例如，您可以将一个灰色方块(Python DL端口)与一个红色方块(Keras端口)连接起来。</p>
+
+			<p>每个层节点都有一个<a id="_idIndexMarker355"/>配置窗口，带有该特定层所需的设置选项。与其他层节点相比，该节点具有简单的配置窗口，只有几个设置选项。</p>
+
+			<p>最重要的设定是<strong class="bold">形状</strong>。<strong class="bold"> Shape </strong>允许你定义你的网络的输入形状，意味着你的输入层有多少神经元。请记住，输入层中神经元的数量必须与预处理输入列的数量相匹配。</p>
+
+			<p>虹膜数据集有四个我们将用作输入的特征:萼片长度、萼片宽度、花瓣长度和花瓣宽度。因此，这里的输入形状是4。</p>
+
+			<p>此外，在Keras输入层节点的配置窗口中，可以设置以下内容:</p>
+
+			<ul>
+
+				<li>一个<strong class="bold">名称前缀</strong>用于该层，以便以后更容易识别(可选)。</li>
+
+				<li>一个<strong class="bold">批量</strong>(可选)。记住，批量大小是培训的设置选项之一。推荐的方法是在学习者和执行者节点中定义批量大小。此外，您可以选择在这里定义它。如果定义了批次大小，则“学习者”和“执行者”节点中的“批次大小”选项不可用。</li>
+
+				<li>输入的<strong class="bold">数据类型</strong>和<strong class="bold">数据格式</strong>。</li>
+
+			</ul>
+
+			<p>您的网络现在有了第一层，即输入层。现在，您可以通过创建下一层节点并将其连接到Keras输入层节点的输出来继续构建网络，例如，<strong class="bold"> Keras密集层</strong>节点。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">要创建一个节点并立即将其连接到现有节点，请在工作流编辑器中选择现有节点，然后双击节点存储库中的新节点。这将创建新节点，并将其自动连接到所选的现有节点。</p>
+
+			<h2 id="_idParaDest-63"><a id="_idTextAnchor123"/>喀拉斯密集层节点</h2>
+
+			<p><strong class="bold"> Keras密集层</strong>节点<a id="_idIndexMarker356"/>实现了前馈全连接网络中的经典层。这里要设置的参数是神经单元的数量和激活函数。</p>
+
+			<p><em class="italic">图4.14 </em>显示了该节点的配置窗口。设置选项分为两个选项卡:<strong class="bold">选项</strong>和<strong class="bold">高级</strong>。</p>
+
+			<p><strong class="bold">选项</strong>选项卡包含最重要的设置，如神经元数量(也称为单位)和激活功能。</p>
+
+			<p>此外，<strong class="bold">输入张量</strong>设置定义了来自前一个节点的输入张量部分。在前馈网络中，输入张量是前一层的输出张量。然而，一些层节点——例如，<strong class="bold"> Keras LSTM层</strong>节点——创建的不仅仅是<a id="_idIndexMarker357"/>一个隐藏输出张量，而是多个。在这种情况下，必须在前一层节点产生的不同输入张量或隐藏状态中选择一个。像Keras密集层一样，Keras输入层只产生一个输出向量，这是我们选择作为Keras密集层节点的输入张量。</p>
+
+			<p>在<strong class="bold">高级</strong>选项卡的上部，您可以选择如何随机初始化网络的权重和偏差；这意味着在学习过程的第一次迭代之前所有权重和偏差的起始值。</p>
+
+			<p><strong class="bold">高级</strong>选项卡的下部允许您为该层中的权重添加规范正则化。范数正则化是一种避免过拟合的技术，我们在第3章 、<em class="italic">神经网络入门</em>中介绍过。在配置窗口中，可以选择是否将其应用于内核权重矩阵、偏移向量和/或层激活。激活相应的复选框后，您可以选择使用L1标准作为惩罚项，使用L2标准作为惩罚项，或者两者都使用。最后，您可以设置正则化参数<img src="img/Formula_B16391_04_008.png" alt=""/>的值，用于权重和偏移值的惩罚项和约束。</p>
+
+			<p>通过使用<strong class="bold"> Keras输入层</strong>节点和<a id="_idIndexMarker358"/>多个Keras密集层节点，您可以为许多不同的任务构建一个前馈网络，例如<a id="_idTextAnchor124"/>对鸢尾花进行分类:</p>
+
+			<div><div><img src="img/B16391_04_014.jpg" alt="Figure 4.14 – The Keras Dense Layer node allows you to add a fully connected layer to your neural network, including a selection of commonly used activation functions"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.14–Keras密集层节点允许您向神经网络添加完全连接的层，包括常用激活函数的选择</p>
+
+			<p>其他层节点的配置与这里针对密集层和输入层所描述的类似，您将在接下来的章节中了解更多相关信息。</p>
+
+			<p>因为本章中使用的两个基本例子都是指前馈网络，所以我们现在已经有了构建这两个前馈神经网络的所有必要部分。</p>
+
+			<h2 id="_idParaDest-64"><a id="_idTextAnchor125"/>构建鸢尾花分类的神经网络</h2>
+
+			<p>对于使用Iris数据集的多类<a id="_idIndexMarker359"/>分类问题<a id="_idIndexMarker360"/>，目标是建立一个具有三层的全连接前馈神经网络:</p>
+
+			<ul>
+
+				<li>一个输入图层包含四个单元，每个单元对应一个输入要素</li>
+
+				<li>一个具有八个单元和ReLU激活功能的隐藏层</li>
+
+				<li>一个包含三个单元的输出图层，每个单元对应一个输出类别，这意味着每个虹膜物种对应一个单元，具有softmax激活功能</li>
+
+			</ul>
+
+			<p>我们在隐藏层中选择ReLU激活函数，因为它在隐藏层中使用时具有更好的性能，在输出层中选择softmax激活函数，因为它具有概率可解释性。来自softmax函数的具有最高输出的输出单元是具有最高分类概率的单元。</p>
+
+			<p><em class="italic">图4.15 </em>显示了用于IRI<a id="_idTextAnchor126"/>s分类问题的神经网络架构:</p>
+
+			<div><div><img src="img/B16391_04_015.jpg" alt="Figure 4.15 – A diagram of the feedforward network used for the iris flower example"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.15–用于鸢尾花示例的前馈网络图</p>
+
+			<p><em class="italic">图4.16 </em>显示了<a id="_idIndexMarker361"/>工作流片段，其中<a id="_idIndexMarker362"/>三层节点构建网络及其配置窗口，包括单元数量<a id="_idTextAnchor128"/>和激活功能:</p>
+
+			<div><div><img src="img/B16391_04_016.jpg" alt="Figure 4.16 – This workflow snippet builds the neural network in Figure 4.15 for the Iris dataset example. The configuration windows below them show you the nodes' configurations"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.16–该工作流片段为Iris数据集示例构建了图4.15中的神经网络。它们下面的配置窗口显示了节点的配置</p>
+
+			<p>输入<a id="_idIndexMarker363"/>层有四个输入单元<code>Shape = 4</code>，用于<a id="_idIndexMarker364"/>的四个数字输入特征。第一个Keras密集层节点是隐藏层，有八个单元，使用ReLU激活函数。在输出层，softmax激活函数与三个单元一起使用，每个类一个单元。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">在最后一层，名称前缀<strong class="bold">输出</strong>已经被使用。这使得识别<strong class="bold">执行器</strong>节点中的层变得更加容易，并且具有这样的优点:如果更多的Keras密集层节点被添加为隐藏层，层名称不会改变。</p>
+
+			<h2 id="_idParaDest-65"><a id="_idTextAnchor129"/>构建用于收入预测的神经网络</h2>
+
+			<p>第二个提出的例子是一个二元分类问题:预测成人数据集中的收入(大于或小于每年50K)。这里，我们采用了一个具有两个隐藏层的神经网络，总共有四层:</p>
+
+			<ul>
+
+				<li>一个包含81个单元的输入图层，与输入要素一样多</li>
+
+				<li>一个具有六个单元和ReLU激活功能的隐藏层</li>
+
+				<li>多了一个隐藏层，有六个单元和ReLU激活功能</li>
+
+				<li>具有一个单元和sigmoid激活函数的一个输出层</li>
+
+			</ul>
+
+			<p>输出层使用二进制分类问题的经典实现:一个具有sigmoid激活函数的单个单元。sigmoid函数的范围从0到1，它可以很容易地实现类属性，对一个类使用<code>0</code>，对另一个类使用<code>1</code>。因此，对于二进制分类问题，其中两个类别被编码为<code>0</code>和<code>1</code>，单独一个sigmoid函数可以产生编码为<code>1</code>的类别的概率。</p>
+
+			<p><em class="italic">图4.17 </em>向您展示了构建这个全连接前馈神经网络的工作流程片段:</p>
+
+			<div><div><img src="img/B16391_04_017.jpg" alt="Figure 4.17 – This workflow snippet builds the fully connected feedforward neural network used as a solution for the adult dataset example"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption"><a id="_idTextAnchor130"/></p>
+
+			<p class="figure-caption">图4.17–该工作流片段构建了完全连接的前馈神经网络，用作成人数据集示例的解决方案</p>
+
+			<p>预处理后，成人数据集最终有82列、81个输入要素和目标列。所以输入层有<code>Shape = 81</code>。接下来，使用带有<code>Units = 6</code>和ReLU激活函数的两个Keras密集层节点构建两个隐藏层。输出层由一个Keras密集层节点组成，同样带有<code>Units = 1</code>和sigmoid激活函数。</p>
+
+			<p>在本节中，您已经学习了如何使用KNIME Keras集成节点构建前馈神经网络。下一步是设置网络训练所需的其他参数，例如损失函数，然后训练网络。</p>
+
+			<h1 id="_idParaDest-66"><a id="_idTextAnchor131"/>训练网络</h1>
+
+			<p>我们已经准备好了数据和网络。本节的目标是向您展示如何使用训练集中的数据来训练网络。这需要损失函数的选择、训练参数的设置、训练集和验证集的规范以及训练进度的跟踪。</p>
+
+			<p>网络训练和所有这些训练设置的关键节点是<strong class="bold"> Keras网络学习者</strong>节点。这是一个非常强大、非常灵活的节点，有许多可能的设置，分布在四个选项卡上:<strong class="bold">输入数据</strong>、<strong class="bold">目标数据</strong>、<strong class="bold">选项</strong>和<strong class="bold">高级选项</strong>。</p>
+
+			<p>Keras网络学习节点有三个输入端口:</p>
+
+			<ul>
+
+				<li><strong class="bold">顶口</strong>:你要训练的神经网络</li>
+
+				<li><strong class="bold">中间端口</strong>:训练集</li>
+
+				<li><strong class="bold">最低端口</strong>:可选验证集</li>
+
+			</ul>
+
+			<p>它有一个输出端口，输出训练好的网络。</p>
+
+			<p>此外，该节点有<strong class="bold">学习监控</strong>视图，您可以使用它来监控网络训练进度。</p>
+
+			<p>在继续学习训练参数之前，让我们先了解如何选择损失函数。</p>
+
+			<h2 id="_idParaDest-67"><a id="_idTextAnchor132"/>选择损失函数</h2>
+
+			<p>在<a href="B16391_03_Final_PG_ePUB.xhtml#_idTextAnchor073"> <em class="italic">第3章</em> </a>、<em class="italic">神经网络入门</em>中，我们介绍了许多损失函数，每个<a id="_idIndexMarker369"/>一个适合一个特定的任务，作为你的网络的最后设计选择。例如，均方误差通常用于回归问题或多类分类问题中的类别交叉熵。在<strong class="bold">目标数据</strong>选项卡的下部，您可以在不同的标准预打包<a id="_idIndexMarker370"/>损失函数之间进行选择，或者使用Python定义您自己的自定义损失函数(参见<em class="italic">图4.18 </em> ) <a id="_idTextAnchor133"/>:</p>
+
+			<div><div><img src="img/B16391_04_018.jpg" alt="Figure 4.18 – In the Target Data tab of the Keras Network Learner node, you can select the target columns and the loss function"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.18–在Keras网络学习器节点的目标数据选项卡中，您可以选择目标列和损失函数</p>
+
+			<p>现在已经定义了网络结构并选择了正确的损失函数，下一步是定义输入数据集中的哪些列是网络的输入，以及哪些列包含目标值。</p>
+
+			<h2 id="_idParaDest-68"><a id="_idTextAnchor134"/>定义输入和输出数据</h2>
+
+			<p>定义输入和<a id="_idIndexMarker371"/>输出列是您<a id="_idIndexMarker372"/>可以在<strong class="bold">输入数据</strong>和<strong class="bold">目标数据</strong>选项卡中完成的事情。让我们首先关注输入数据。</p>
+
+			<p>输入数据是网络期望作为输入的数据，这意味着符合网络输入大小的列。在<strong class="bold">输入数据</strong>选项卡中，所选网络的输入神经元数量和随之产生的形状显示在最顶端:</p>
+
+			<div><div><img src="img/B16391_04_019.jpg" alt="Figure 4.19 – In the Input Data tab of the Keras Network Learner node, you can &#13;&#10;select the input column(s) and the correct conversion"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.19–在Keras网络学习器节点的输入数据选项卡中，您可以选择输入列和正确的转换</p>
+
+			<p>接下来，您必须选择转换类型；这意味着将选定的输入列转换成网络输入规范可以接受的格式。可能的转换类型如下:</p>
+
+			<ul>
+
+				<li><strong class="bold">从数(整数)的集合到单热张量</strong></li>
+
+				<li><strong class="bold">从数(双精度)</strong></li>
+
+				<li><strong class="bold">从数(整数)</strong></li>
+
+				<li><strong class="bold">来自集合的数(双精度)</strong></li>
+
+				<li><strong class="bold">来自集合的数(整数)</strong></li>
+
+				<li><strong class="bold">来自图像</strong></li>
+
+			</ul>
+
+			<p>转换类型1，<strong class="bold">从数字集合(整数)到独热张量</strong>，当网络需要独热向量时，这是一个非常有用的转换。您可以输入一系列整数编码的值，然后将它们一个接一个地转换成独热向量，而不是创建一个包含所有独热向量的矩阵，这样会占用空间和资源。在执行过程中，节点创建独热向量并将它们输入到网络中。整个过程对最终用户是隐藏的，并且不会创建额外的大型稀疏数据表。</p>
+
+			<p>其他转换类型只接受指定格式(double、integer或image)的输入列，并将它们呈现给网络。</p>
+
+			<p>在选择了<a id="_idIndexMarker373"/>转换类型之后，您可以通过包含-排除框架选择<a id="_idIndexMarker374"/>网络的输入列。请注意，该框架已经预加载了所有与所选转换类型匹配的输入列。</p>
+
+			<p>现在让我们选择目标列。目标数据必须与输出层的规范相匹配。这意味着，如果你的输出层有20个单元，你的目标数据必须是20维向量；或者，如果输出图层只有一个单元，则目标数据也必须由每个训练样本或数据行的一个值组成。</p>
+
+			<p>在<strong class="bold">目标数据</strong>选项卡中，在最顶端，报告了网络输出层的神经元数量和最终形状。与在<strong class="bold">输入数据</strong>选项卡中一样，在这里您可以从许多转换选项中进行选择，以将输入数据集转换为网络规范。该菜单具有所有可供选择的转换类型，并预先加载了符合网络输出层规范的转换类型。</p>
+
+			<p>对于多类<a id="_idIndexMarker375"/>分类问题，从数的集合(整数)到单热张量的转换<a id="_idIndexMarker376"/>类型确实很有帮助。您只需要对输入集合像元中的类(1)的位置进行编码，而不是预先创建一个热点向量。</p>
+
+			<p>让我们继续讨论培训参数。</p>
+
+			<h2 id="_idParaDest-69"><a id="_idTextAnchor135"/>设置训练参数</h2>
+
+			<p>现在已经定义了网络<a id="_idIndexMarker377"/>和损失函数，下一步是设置训练参数。例如，您希望使用哪个优化器？你想训练多少个纪元？有许多参数需要定义。</p>
+
+			<p>所有的训练参数都可以在<strong class="bold">选项</strong>和<strong class="bold">高级选项</strong>选项卡中找到。在<em class="italic">图4.20 </em>中，可以看到<strong class="bold"> Keras网络学习者<a id="_idTextAnchor136"/> </strong>节点的<strong class="bold">选项</strong>选项卡:</p>
+
+			<div><div><img src="img/B16391_04_020.jpg" alt="Figure 4.20 – In the Options tab of the Keras Network Learner node, you can set all the training parameters"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.20–在“Keras网络学习者”节点的“选项”选项卡中，您可以设置所有培训参数</p>
+
+			<p>在<strong class="bold">选项</strong>选项卡的<a id="_idIndexMarker378"/>上部，在配置窗口中，您可以定义时期数和批量大小。这决定了在每个训练迭代中要成批提供给网络的训练集和验证集中的数据行数。</p>
+
+			<p class="callout-heading">重要说明</p>
+
+			<p class="callout">如果在Keras输入层节点中定义了批次大小，则批次大小设置将被停用。</p>
+
+			<p>在那下面，有两个复选框。一种是在每个时期之前随机打乱训练数据，一种是设置随机种子。打乱训练数据通常会改善学习过程。实际上，在每个时期以相同的顺序用相同的批次更新网络会对训练的收敛速度产生不利影响。如果选择了“随机播放”复选框，则“随机种子”复选框会变为活动状态，显示的数字用于生成随机播放操作的随机序列。随机种子的使用产生了可重复的随机洗牌过程，因此允许我们重复特定训练运行的结果。点击<strong class="bold">新种子</strong>按钮生成新的随机种子和新的随机洗牌程序。禁用随机种子的复选框会为每个节点执行创建一个新种子。</p>
+
+			<p>在<strong class="bold">选项</strong>选项卡的下部，您可以选择<strong class="bold">优化器算法</strong>，及其在训练期间使用的参数。优化器算法是训练算法。例如，您可以选择<strong class="bold"> RMSProp </strong>优化器，然后选择相应的<strong class="bold">学习率</strong>和<strong class="bold">学习率衰减</strong>值。当节点被选中时，右边的<strong class="bold">描述</strong>面板会填充该节点的详细信息。提供了一个优化器列表，以及到原始Keras库的链接，解释了这个框架中需要的所有参数。</p>
+
+			<p>在<strong class="bold">选项</strong>选项卡的最底部，您可以约束渐变值的大小。如果勾选了<strong class="bold">修剪规范</strong>，L2规范超过给定规范的梯度将被修剪到该规范。如果勾选了<strong class="bold">剪辑值</strong>，绝对值超过给定值的梯度将被剪辑到该值(或取反值)。</p>
+
+			<p><strong class="bold">高级选项</strong>选项卡包含一些特殊终止和学习率降低情况的附加设置。最后一个选项允许您指定在具有多个GPU的系统上使用哪个GPU。</p>
+
+			<h2 id="_idParaDest-70"><a id="_idTextAnchor137"/>跟踪培训进度</h2>
+
+			<p>在设置好所有的训练<a id="_idIndexMarker380"/>参数后，你可以通过执行节点开始训练你的网络。执行节点时，您可以在<strong class="bold">学习监视器</strong>视图中查看学习进度。右键点击Keras网络学习者节点，选择<strong class="bold">视图:学习监控</strong>，可以打开<strong class="bold">学习监控</strong>视图；参见<em class="italic">图4.21 </em>。</p>
+
+			<p>默认情况下，<strong class="bold">学习监视器</strong>视图以红色显示每次权重更新后，即一批数据通过网络后，训练集的准确度曲线的变化。精度值在<em class="italic"> y </em>轴上报告，批次的前进数在<em class="italic"> x </em>轴上报告。</p>
+
+			<p>点击线图上方的<strong class="bold">损失</strong>显示训练集的损失曲线，而不是准确度。</p>
+
+			<p>关于训练进度的更多信息可在<strong class="bold"> Keras日志输出</strong>视图中获得。这可以在Keras学习节点视图的顶部选择，在<strong class="bold">精确度</strong> a <a id="_idTextAnchor138"/>和<strong class="bold">损失</strong>之后的最后一个选项卡中:</p>
+
+			<div><div><img src="img/B16391_04_021.jpg" alt="Figure 4.21 – The Learning Monitor view shows the progress of the learning process"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.21–学习监控视图显示了学习过程的进度</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">Keras网络学习者节点的<strong class="bold">学习监视器</strong>视图允许您跟踪模型的学习。右键点击执行节点，选择<strong class="bold">视图:学习监视器</strong>即可打开。</p>
+
+			<p>如果使用认证组，准确度/损失图中会出现一条蓝线。蓝线显示了验证集上训练过程的相应进度。</p>
+
+			<p>在图中，您<a id="_idIndexMarker381"/>可以选择放大<em class="italic"> x </em>轴——批次轴——以更详细地查看每个批次的进度。</p>
+
+			<p><strong class="bold">平滑</strong>复选框引入原始精度或损失曲线的移动平均曲线。<strong class="bold">对数刻度</strong>复选框将曲线表示更改为对数刻度，以便对训练运行进行更详细的评估。</p>
+
+			<p>最后，在视图的底部，可以看到<strong class="bold">停止学习</strong>按钮。这是一个按需提前停止训练过程的选项。如果训练在完成前停止，网络将保存在当前状态。</p>
+
+			<h2 id="_idParaDest-71"><a id="_idTextAnchor139"/>鸢尾花分类的训练设置</h2>
+
+			<p>对于基于虹膜数据集的虹膜花朵分类<a id="_idIndexMarker382"/>示例，我们在网络学习器节点中使用了以下设置。</p>
+
+			<p>在第一个选项卡<strong class="bold">输入数据</strong>选项卡中，四个数字输入被选为输入特征。在数据准备部分，我们没有对输入特征应用名义特征编码。所以，我们只是通过使用<strong class="bold"> From Number (double) </strong>转换类型，将它们输入到网络的输入层。</p>
+
+			<p>在第二个选项卡中，<code>class_collection</code>输入列，包含作为集合的整数编码类，我们将<strong class="bold">从Number (integer)集合应用到One-Hot Tensor </strong>转换。因此，在执行期间，Keras网络学习器节点在三维向量中创建三个类的一次性编码版本，因为它也需要匹配网络输出。在第二个选项卡的下部，选择<strong class="bold">分类交叉熵</strong>损失函数。</p>
+
+			<p>在名为<strong class="bold">选项</strong>的第三个选项卡中，定义了训练参数。使用50个历元、5的训练批量和<strong class="bold"> RMSProp </strong>优化器来训练网络。</p>
+
+			<p>默认情况下，<strong class="bold">高级选项</strong>选项卡中的设置处于非活动状态。</p>
+
+			<h2 id="_idParaDest-72"><a id="_idTextAnchor140"/>收入预测的培训设置</h2>
+
+			<p>对于多类分类问题，例如基于成人数据集的收入预测<a id="_idIndexMarker383"/>示例，设置会有所不同。我们使用了以下设置。</p>
+
+			<p>在第一个选项卡中，<code>Income</code>位于<code>Exclude</code>部分。在这里，在数据准备阶段，一些输入特征已经是数字的并且还没有被编码，一些已经被整数编码，一些已经通过KNIME本地节点被一次性编码。因此，所有输入要素都已准备好输入到网络中。请注意，由于我们决定混合整数编码、一键编码和原始特性，适用于所有这些不同特性的唯一可能的编码是简单的从Number 类型的转换。</p>
+
+			<p>同样，在第二个选项卡中，<code>0</code>或<code>1</code>。这也符合网络输出层中sigmoid函数的一个输出。在包含-排除框架中，仅包含目标列<code>Income</code>。接下来，选择<strong class="bold">二进制交叉熵</strong>损失函数，以适合二进制分类问题，例如这个问题。</p>
+
+			<p>在第三个选项卡<strong class="bold">选项</strong>中，我们将网络设置为训练80个历元，训练批量为80个数据行。在本例中，我们还使用了一个验证集，以便能够在训练过程中看到未包含在训练集中的数据的网络进度。对于验证集的处理，设置了40个数据行的批量大小。最后，我们选择<strong class="bold"> Adam </strong>作为这个训练过程的优化器。</p>
+
+			<p>同样，默认情况下，最后一个选项卡<strong class="bold">高级选项</strong>中的设置是禁用的。</p>
+
+			<h1 id="_idParaDest-73"><a id="_idTextAnchor141"/>测试和应用网络</h1>
+
+			<p>现在已经训练了神经网络，最后一步是将网络应用于测试集并评估其性能。</p>
+
+			<h2 id="_idParaDest-74"><a id="_idTextAnchor142"/>执行网络</h2>
+
+			<p>要<a id="_idIndexMarker386"/>执行一个训练好的网络，可以使用<strong class="bold"> Keras网络执行器</strong>节点，如图<em class="italic">图4.22 </em>所示。<a id="_idIndexMarker387"/>节点有两个输入端口:用于训练网络的Keras网络端口和用于测试集或新数据的数据输入端口。</p>
+
+			<p>在配置窗口的第一个名为<strong class="bold">选项</strong>的选项卡中，您可以在上部选择后端引擎、输入数据的批量大小以及是否在输出数据表中保留原始输入列。</p>
+
+			<p>在此之下，您可以指定输入列和所需的转换。像在Keras网络学习者节点中一样，来自神经网络的输入规范打印在顶部。请记住，由于您使用相同的网络和相同的数据格式，因此输入要素的设置必须与Keras网络学习者节点中的设置相同。</p>
+
+			<p>在该选项卡的最后一部分，您可以添加输出设置。首先，您需要指定从哪里获取输出；这应该是输入网络的输出层。要添加一个输出层，点击<strong class="bold">添加输出</strong>按钮。在新窗口中，您会看到一个包含输入网络中所有图层的菜单。如果在图层节点中配置了前缀，则可以在下拉菜单中看到它们，从而更容易识别感兴趣的图层。选择<a id="_idTextAnchor143"/>输出层:</p>
+
+			<div><div><img src="img/B16391_04_022.jpg" alt="Figure 4.22 – The Keras Network Executor node runs the network on new data. In the configuration window, you can select the outputs by clicking on the add output button"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.22–Keras网络执行器节点根据新数据运行网络。在配置窗口中，您可以通过单击添加输出按钮来选择输出</p>
+
+			<p>在本书包含的所有使用<a id="_idIndexMarker388"/>案例中，网络的最后一层用作输出层。该层很容易识别，因为它是下拉列表中唯一没有<strong class="bold">(隐藏)</strong>后缀的层。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">您还可以输出隐藏层的输出，例如，用于调试目的。</p>
+
+			<p>最后，选择<a id="_idIndexMarker389"/>适当的转换类型，以获得您喜欢的形状的输出值——例如，在一个单元格中作为一个列表(<strong class="bold">到数字(双精度)</strong>列表)或每个输出单元有一个新列(<strong class="bold">到数字(双精度)</strong>)。在最后一种情况下，您可以定义一个前缀附加到输出列的名称上。</p>
+
+			<p><strong class="bold">高级选项</strong>部分包含让网络在支持GPU的机器上运行的设置。</p>
+
+			<h2 id="_idParaDest-75"><a id="_idTextAnchor144"/>提取预测并评估网络性能</h2>
+
+			<p>根据用例的不同，<a id="_idIndexMarker390"/>网络输出可能需要一些<a id="_idIndexMarker391"/>后处理来提取预测。例如，在二进制分类问题中，有一个输出单元和一个sigmoid激活函数，输出值是编码为<code>1</code>的类的概率。在这种情况下，为了产生实际的类分配，您可以对规则引擎节点内的概率应用一个阈值。</p>
+
+			<p>最后一步是模型的评估。要评估分类模型，您可以使用<a id="_idIndexMarker392"/>计分器<strong class="bold">节点或<strong class="bold"> ROC曲线</strong>节点。Scorer节点的输出为您提供了常见的性能<a id="_idIndexMarker393"/>度量，例如准确性、Cohen’s kappa或混淆矩阵。</strong></p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">另一个评估二进制分类问题的<a id="_idIndexMarker394"/>性能的非常好的节点是<strong class="bold">二进制分类检查器</strong>节点。该节点是KNIME机器学习可解释性扩展的一部分:<a href="https://hub.knime.com/knime/extensions/org.knime.features.mli/latest">https://hub . KNIME . com/KNIME/extensions/org . KNIME . features . mli/latest</a>。</p>
+
+			<p>对于回归解的评估，<strong class="bold">数字计分器</strong>节点计算<a id="_idIndexMarker395"/>一些误差度量，例如均方误差、均方根误差、平均绝对误差、平均绝对百分比误差、平均符号差和R平方。<a id="_idTextAnchor145"/></p>
+
+			<h2 id="_idParaDest-76"><a id="_idTextAnchor146"/>测试训练好的网络对鸢尾花进行分类</h2>
+
+			<p>在<em class="italic">图4.23 </em>中，您可以看到工作流程的<a id="_idIndexMarker396"/>部分，该部分应用训练好的网络，提取预测，并评估训练好的网络以对鸢尾花进行分类:</p>
+
+			<p class="figure-caption"><a id="_idTextAnchor147"/></p>
+
+			<div><div><img src="img/B16391_04_023.jpg" alt="Figure 4.23 – This workflow snippet applies the trained network and extracts &#13;&#10;and evaluates the predictions for the iris flower example"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图4.23–该工作流片段应用了训练好的网络，并提取和评估了鸢尾花示例的预测</p>
+
+			<p>在<code>"dense_2/Softmax:0_"</code>的配置窗口中，作为<strong class="bold">转换的</strong>类型的<strong class="bold">到【双精度】</strong>被选中。由于Iris数据集有三个不同的可能类值，因此节点添加了三个新列，其中包含三个类的三种概率。另一个转换选项是<strong class="bold">到</strong>的数字列表(双精度)。这个转换选项将只产生一个新列，一个单元格中的所有类别概率打包成一个列表。</p>
+
+			<p>接下来，使用规则引擎节点提取预测。不同类别的概率在类别1的<code>$Output_1/Softmax:0_0for class 0</code>和<code> Output_1/Softmax:0_1</code>列中，类别2的<code>Output_1/Softmax:0_2</code>列中。这里，选择具有最高概率的类作为预测结果。</p>
+
+			<p>第一个规则通过将编码为<code>0</code>的类与其他两个类的概率进行比较，来检查该类是否具有最高的概率。第二个规则同样适用于编码为<code>1</code>的类，第三个规则适用于编码为<code>2</code>的类。最后一个规则定义了一个默认值。</p>
+
+			<p>这些规则通过以下代码应用于<a id="_idIndexMarker398"/>:</p>
+
+			<pre>$Output_1/Softmax:0_0$ &gt; $Output_1/Softmax:0_1$ AND $Output_1/Softmax:0_0$ &gt; $Output_1/Softmax:0_2$ =&gt; 0
+$Output_1/Softmax:0_1$ &gt; $Output_1/Softmax:0_0$ AND $Output_1/Softmax:0_1$ &gt;$Output_1/Softmax:0_2$ =&gt; 1
+$Output_1/Softmax:0_2$ &gt; $Output_1/Softmax:0_0$ AND $Output_1/Softmax:0_2$ &gt;$Output_1/Softmax:0_1$ =&gt; 2
+TRUE =&gt; 3</pre>
+
+			<p>最后，Scorer节点用于评估网络性能。</p>
+
+			<h2 id="_idParaDest-77"><a id="_idTextAnchor148"/>测试为收入预测而训练的网络</h2>
+
+			<p>具有不同设置的相同节点<a id="_idIndexMarker399"/>组合可用于应用经训练的网络、提取预测以及评估成人数据集上的收入预测示例的模型。</p>
+
+			<p>在Keras网络执行器节点的配置窗口中，在<code>dense_3</code>输出层被添加为输出。在这种情况下，网络的输出是编码为<code>1</code>、<code>"&gt;50K"</code>的类的概率。</p>
+
+			<p>最后，规则引擎节点使用以下代码检查输出概率是高于还是低于<code>0.5</code>阈值:</p>
+
+			<pre>$dense_3/Softmax:0_0$ &lt; 0.5=&gt; "&lt;=50K"
+TRUE =&gt; "&gt;50K"</pre>
+
+			<p>最后，用Scorer节点对网络性能进行评估。</p>
+
+			<p>这样，我们已经经历了整个过程，从数据访问和数据准备到使用KNIME分析平台定义、训练、应用和评估神经网络。</p>
+
+			<h1 id="_idParaDest-78"><a id="_idTextAnchor149"/>总结</h1>
+
+			<p>我们已经到了本章的结尾，在这里你已经学会了如何执行在KNIME Analytics Platform中训练神经网络所涉及的不同步骤。</p>
+
+			<p>我们从常见的预处理步骤开始，包括不同的编码、规范化和丢失值处理。接下来，您学习了如何通过使用不同的Keras层节点来定义神经网络架构，而无需编写代码。然后，我们继续训练神经网络，您学习了如何定义损失函数，以及如何监控学习进度，将网络应用于新数据，并提取预测。</p>
+
+			<p>每个部分都以小的示例会话结束，为您自己执行所有这些步骤做准备。</p>
+
+			<p>在下一章中，你将看到这些步骤如何应用到本书的第一个用例:使用自动编码器的欺诈检测。</p>
+
+			<h1 id="_idParaDest-79"><a id="_idTextAnchor150"/>问题和练习</h1>
+
+			<p>通过回答以下问题，检查您对本章中介绍的概念的理解程度:</p>
+
+			<ol>
+
+				<li value="1">How can you set the loss function to train your neural network?<p>a)通过使用Keras损失功能节点</p><p>b)通过使用Keras输出层节点</p><p>c)在Keras网络学习器节点的配置窗口中</p><p>d)在Keras网络执行器节点的配置窗口中</p></li>
+
+				<li>How can you one-hot encode your features?<p>a)通过使用一个热编码节点</p><p>b)通过使用一对多节点</p><p>c)通过使用类别到编号节点创建整数编码，然后，整数到一个热编码节点</p><p>d)通过创建整数编码，将其转换为集合单元格，并选择正确的转换</p></li>
+
+				<li>How can you define the number of neurons for the input of your network?<p>a)通过使用Keras输入层节点。</p><p>b)通过使用没有任何输入网络的Keras密集层节点。</p><p>c)基于在Keras网络学习器节点中选择的特征自动设置输入维度。</p><p>d)通过使用Keras开始层节点。</p></li>
+
+				<li>How can you monitor the training of your neural network on a validation set?<p>a)将验证集输入Keras网络学习器节点的可选输入端口，并打开训练监视器视图。验证集的性能显示为红色。</p><p>b)点击培训监视器视图中的<strong class="bold">应用于验证集</strong>按钮。</p><p>c)将验证集输入Keras网络学习器节点的可选输入端口，并打开训练监视器视图。验证集的性能以蓝色显示。</p><p>d)将验证集输入Keras网络学习者节点的可选输入端口，并打开训练监视器视图的验证集选项卡。建立一个工作流来读取Iris数据集，并训练一个具有一个隐藏层(八个单元和ReLU激活函数)的神经网络，以根据四个输入特征将三个物种相互区分开来。</p></li>
+
+			</ol>
+
+		</div>
+
+	
+
+
+
+</body></html>

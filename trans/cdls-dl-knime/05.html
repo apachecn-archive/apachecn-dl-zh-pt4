@@ -1,0 +1,419 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B16391_08_Final_SK_ePUB</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-144"><em class="italic"> <a id="_idTextAnchor290"/>第八章:</em>神经机器翻译</h1>
+
+			<p>在前一章<a href="B16391_07_Final_NM_ePUB.xhtml#_idTextAnchor230"> <em class="italic">第七章</em></a><em class="italic">实现NLP应用</em>中，我们介绍了几种文本编码技术，并在三个<strong class="bold">自然语言处理</strong> ( <strong class="bold"> NLP </strong>)应用中使用了它们。其中一个应用是自由文本生成。结果表明，网络可以学习一种语言的结构，从而生成某种风格的文本。</p>
+
+			<p>在本章中，我们将在这个自由文本生成的案例研究的基础上，训练一个神经网络来自动将句子从源语言翻译成目标语言。为此，我们将使用从自由文本生成网络学到的概念，以及从第5章<em class="italic">的<a href="B16391_05_Final_NM_ePUB.xhtml#_idTextAnchor152"> <em class="italic">中介绍的用于欺诈检测的</em>自动编码器中学到的概念。</a></em></p>
+
+			<p>我们将首先描述机器翻译的一般概念，然后介绍将用于神经机器翻译的编码器-解码器神经架构。接下来，我们将讨论应用程序实现中涉及的所有步骤，从预处理到定义网络结构，再到训练和应用网络。</p>
+
+			<p>本章分为以下几节:</p>
+
+			<ul>
+
+				<li>神经机器翻译的思想</li>
+
+				<li>编码器-解码器架构</li>
+
+				<li>为两种语言准备数据</li>
+
+				<li>构建和训练编码器-解码器架构</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-145"><a id="_idTextAnchor291"/>神经机器翻译的理念</h1>
+
+			<p>自动翻译一直以来都是一项热门且具有挑战性的任务。人类语言的灵活性和模糊性使得它仍然是最难实现的任务之一。根据上下文，同一个单词或短语可能有不同的含义，通常，可能不只有一种正确的翻译，而是有许多种可能的方法来翻译同一个句子。那么，计算机如何学会将文本从一种语言翻译成另一种语言呢？多年来，不同的方法被引入，所有的方法都有相同的目标:自动将句子或文本从源语言翻译成目标语言。</p>
+
+			<p>自动翻译系统的发展始于20世纪70年代初，基于规则的机器翻译开始出现。在这里，自动翻译是通过由专业语言学家在句子的词汇、句法和语义级别手工开发的规则和字典来实现的。</p>
+
+			<p>在20世纪90年代，<strong class="bold">统计机器翻译</strong>模型成为了最先进的技术，尽管统计机器翻译的第一个<a id="_idIndexMarker740"/>概念是由Warren Weaver在1949年提出的。这个想法不再使用字典和手写规则，而是使用大量的例子来训练统计模型。该任务可以被描述为对概率分布<img src="img/Formula_B16391_08_001.png" alt=""/>建模，目标语言(例如，德语)中的字符串<img src="img/Formula_B16391_07_001.png" alt=""/>是源语言(例如，英语)中的字符串<img src="img/Formula_B16391_08_003.png" alt=""/>的翻译。已经引入了不同的方法来建模这个<img src="img/Formula_B16391_08_004.png" alt=""/>概率分布，其中最流行的方法来自贝叶斯定理，并将<img src="img/Formula_B16391_08_005.png" alt=""/>建模为<img src="img/Formula_B16391_08_006.png" alt=""/>。因此，在这种方法中，任务被分成两个子任务:训练语言模型<img src="img/Formula_B16391_08_007.png" alt=""/>和建模概率<img src="img/Formula_B16391_08_008.png" alt=""/>更一般地，可以定义几个子任务，并且为每个子任务训练和调整几个模型。</p>
+
+			<p>最近，神经机器翻译在自动翻译任务中相当流行。此外，这里需要源语言和目标语言中的大量例句来训练翻译模型。经典的基于统计的模型和神经机器翻译之间的区别在于任务的<a id="_idIndexMarker741"/>定义:不是训练许多小的子组件并单独调整它们，而是以端到端的方式训练一个单一的网络。</p>
+
+			<p>一种可用于神经机器翻译的网络架构是编码器-解码器网络。我们来看看这是什么。</p>
+
+			<h1 id="_idParaDest-146"><a id="_idTextAnchor292"/>编码器-解码器架构</h1>
+
+			<p>在本节中，我们将首先介绍编码器-解码器架构的一般概念。之后，我们<a id="_idIndexMarker742"/>将关注编码器如何用于神经机器翻译。在最后两节中，我们将集中讨论在培训和部署期间如何应用解码器。</p>
+
+			<p>用于神经机器翻译的一种可能的结构<a id="_idIndexMarker743"/>是<strong class="bold">编码器-解码器</strong>网络。在<a href="B16391_05_Final_NM_ePUB.xhtml#_idTextAnchor152"> <em class="italic">第5章</em> </a>、<em class="italic">欺诈检测的自动编码器</em>中，我们介绍了由编码器和解码器组件组成的神经网络的概念。请记住，在自动编码器的情况下，编码器组件的任务是提取输入的密集表示，而解码器组件的任务是根据编码器给出的密集表示重新创建输入。</p>
+
+			<p>在用于神经机器翻译的编码器-解码器网络的情况下，编码器的任务是将源语言中的句子(输入句子)的上下文提取为密集表示，而解码器的任务是从编码器的密集表示创建目标语言中的相应翻译。</p>
+
+			<p><em class="italic">图8.1 </em>显示了这一过程:</p>
+
+			<div><div><img src="img/B16391_08_001.jpg" alt="Figure 8.1 – The general structure of an encoder-decoder network for neural machine translation"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图8.1<a id="_idTextAnchor293"/>–用于神经机器翻译的编码器-解码器网络的一般结构</p>
+
+			<p>这里，源语言是英语，目标语言是德语。目标是将句子<code>I am a student</code>从英语翻译成德语，其中一个正确的翻译可能是<code>Ich bin ein Student</code>。编码器使用<code>I am a student</code>句子，并产生句子<a id="_idIndexMarker744"/>内容的密集矢量表示作为输出。这种密集的矢量表示被输入解码器，然后输出翻译。</p>
+
+			<p>在这个案例研究中，网络的输入和输出是序列。因此，<strong class="bold">递归神经网络</strong> ( <strong class="bold"> RNN </strong>)层<a id="_idIndexMarker745"/>通常用于编码器和解码器部分，以捕获上下文信息并处理可变长度的输入和输出序列。</p>
+
+			<p>一般来说，基于RNN的编码器-解码器架构用于各种序列间分析任务，例如问答系统。在这里，问题首先由编码器处理，编码器创建一个密集的数字表示，然后解码器生成答案。</p>
+
+			<p>在继续讨论解码器之前，让我们先关注神经翻译网络的编码器部分，以了解需要哪种数据准备。</p>
+
+			<h2 id="_idParaDest-147"><a id="_idTextAnchor294"/>应用编码器</h2>
+
+			<p><a id="_idIndexMarker746"/>编码器的目标是从输入句子中提取上下文的密集向量表示。这可以通过使用一个<strong class="bold">长短期记忆</strong> ( <strong class="bold"> LSTM </strong>)层<a id="_idIndexMarker747"/>来实现，在这里编码器一个字一个字或者一个字符一个字符地读取输入的句子(英文)。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">在第六章<a href="B16391_06_Final_VK_ePUB.xhtml#_idTextAnchor181"><em class="italic"/></a><em class="italic">需求预测的递归神经网络</em>中，我们介绍了LSTM层。请记住，LSTM图层有两个隐藏状态，一个是单元格状态，另一个是它的过滤版本。单元格状态包含所有先前输入的摘要。</p>
+
+			<p>在经典的编码器-解码器网络架构中，LSTM层的隐藏状态的向量用于存储密集表示。<em class="italic">图8.2 </em>显示了基于LSTM的编码器如何处理输入句子:</p>
+
+			<div><div><img src="img/B16391_08_002.jpg" alt="Figure 8.2 – Example of how the encoder processes the input sentence"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图<a id="_idTextAnchor295"/>8.2–编码器如何处理输入句子的示例</p>
+
+			<p>编码器从一些初始化的隐藏状态向量开始。在每一步，序列中的下一个单词被送入LSTM单元，隐藏状态向量被更新。在处理源语言中的整个输入序列之后，最终的隐藏状态向量包含上下文表示，并成为解码器中隐藏状态向量的输入。</p>
+
+			<p>不使用编码器的中间输出隐藏状态。</p>
+
+			<p>现在我们有了上下文的密集表示，我们可以用它来馈送给解码器。虽然编码器在训练和部署期间的工作方式保持不变，但解码器在训练和部署期间的工作方式略有不同。</p>
+
+			<p>我们先集中精力在训练阶段。</p>
+
+			<h2 id="_idParaDest-148"><a id="_idTextAnchor296"/>在训练期间应用解码器</h2>
+
+			<p><a id="_idIndexMarker749"/>解码器的任务是从密集上下文表示中生成目标序列的翻译，或者一个字一个字，或者一个字符一个字符，再次使用具有LSTM层的RNN。这意味着，理论上，每个预测的单词/字符应该作为下一个输入反馈到网络中。但是在训练的时候，我们可以跳过理论，套用<strong class="bold">老师逼</strong>的<a id="_idIndexMarker750"/>概念。这里，实际的单词/字符被反馈到LSTM单元，而不是预测的单词/字符，这极大地有利于训练过程。</p>
+
+			<p><em class="italic">图8.3 </em>显示了解码器训练阶段的教师强制示例:</p>
+
+			<div><div><img src="img/B16391_08_003.jpg" alt="Figure 8.3 – Example of teacher forcing while training of the decoder"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">figure<a id="_idTextAnchor297"/><a id="_idTextAnchor298"/>e 8.3–培训解码器时教师强制的示例</p>
+
+			<p>编码器的密集上下文表示用于初始化解码器的LSTM层的隐藏状态。接下来，LSTM层使用两个序列来训练解码器:具有真实单词/字符值的输入序列，以<strong class="bold">开始标记</strong>开始，以及同样具有真实单词/字符值的目标序列。</p>
+
+			<p class="callout-heading">重要说明</p>
+
+			<p class="callout">在这种情况下，目标序列是移动了一个字符的输入序列，并且在末尾有一个结束标记。</p>
+
+			<p>总而言之，在训练期间需要三个单词/字符序列:</p>
+
+			<ul>
+
+				<li>编码器的输入序列</li>
+
+				<li>解码器的输入序列</li>
+
+				<li>解码器的输出序列</li>
+
+			</ul>
+
+			<p>在部署期间，我们没有解码器的输入和输出序列。那么，让我们看看如何在部署期间使用经过训练的解码器。</p>
+
+			<h2 id="_idParaDest-149"><a id="_idTextAnchor299"/>部署期间应用解码器</h2>
+
+			<p>当我们应用<a id="_idIndexMarker752"/>训练的网络时，我们不知道翻译序列的真实值。因此，我们只将来自编码器的密集上下文表示和一个开始标记输入解码器。然后，解码器多次应用LSTM单元，总是将最后预测的单词/字符反馈到LSTM单元作为下一步的输入。<em class="italic">图8.4 </em>显示了部署期间解码器的使用情况:</p>
+
+			<div><div><img src="img/B16391_08_004.jpg" alt="Figure 8.4 – Usage of the decoder during deployment"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图8.4–部署期间解码器的使用</p>
+
+			<p>在第一步中，来自编码器的密集上下文表示形成输入隐藏状态向量，并且<strong class="bold">开始标记</strong>形成解码器的输入值。基于此，预测第一个单词，并且更新隐藏状态向量。在接下来的步骤中，更新的隐藏状态向量和最后预测的字被反馈到LSTM单元，以预测下一个字。这意味着如果一个错误的单词被预测了一次；在这种顺序预测中，误差会累积。</p>
+
+			<p>在本节中，您学习了什么是编码器-解码器神经网络，以及它们如何用于神经机器翻译。</p>
+
+			<p>在接下来的章节中，我们将介绍训练神经机器翻译<a id="_idIndexMarker753"/>网络将句子从英语翻译成德语所需的步骤。和往常一样，第一步是数据准备。</p>
+
+			<p>因此，让我们首先创建使用编码器-解码器结构训练神经机器翻译网络所需的三个序列。</p>
+
+			<h1 id="_idParaDest-150"><a id="_idTextAnchor301"/>为两种语言准备数据</h1>
+
+			<p>在<a href="B16391_07_Final_NM_ePUB.xhtml#_idTextAnchor230"> <em class="italic">第七章</em> </a>、<em class="italic">实现NLP应用</em>中，我们谈到了<a id="_idIndexMarker754"/>在字符和单词层面训练神经网络的优缺点。由于我们已经有了一些字符级别的经验，我们决定也训练这个网络在字符级别进行自动翻译。</p>
+
+			<p>为了训练神经机器翻译网络，我们需要一个包含两种语言的双语句子对的数据集。不同语言组合的数据集可以在<a href="http://www.manythings.org/anki/">www.manythings.org/anki/</a>免费下载。从那里，我们可以下载一个数据集，其中包含大量日常生活中常用的英语和德语句子。数据集只包含两列:英语的原始短文本和相应的德语译文。</p>
+
+			<p><em class="italic">图8.5 </em>显示了该数据集的一个子集，用作训练集:</p>
+
+			<div><div><img src="img/B16391_08_005.jpg" alt="Figure 8.5 – Subset of the training set with English and German sentences"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">F <a id="_idTextAnchor302"/>图8.5–包含英语和德语句子的训练集子集</p>
+
+			<p>正如你所看到的，对于一些英语句子，有不止一种可能的翻译。例如，句子<code>Hug Tom</code>可以翻译成<code>Umarmt Tom</code>、<code>Umarmen Sie Tom</code>或<code>Drücken Sie Tom</code>。</p>
+
+			<p>记住一个网络不懂字符，只懂数值。因此，字符输入序列需要转换成数字输入序列。在前一章的第一部分，我们介绍了几种编码技术。</p>
+
+			<p>对于自由文本生成<a id="_idIndexMarker757"/>案例研究，我们采用了<strong class="bold">一键编码</strong>作为编码方案，将分两步实施。首先，产生一个<strong class="bold">基于索引的编码</strong><a id="_idIndexMarker758"/>；然后，这种基于索引的编码在训练期间被转换成在<strong class="bold"> Keras网络学习器</strong>节点<a id="_idIndexMarker759"/>内的一位热编码，并且当<a id="_idIndexMarker760"/>应用训练的网络时被转换成在<strong class="bold"> Keras网络执行器</strong>节点内的一位热编码。</p>
+
+			<p>此外，还需要英语和德语字符及其索引的字典映射。在前一章中，为了生成产品名称，我们借助于<strong class="bold"> KNIME文本处理扩展</strong>来为字符序列生成基于索引的<a id="_idIndexMarker761"/>编码。我们将在这里做同样的事情。</p>
+
+			<p>为了训练神经机器翻译，必须创建三个索引编码的字符序列:</p>
+
+			<ul>
+
+				<li>输入<a id="_idIndexMarker762"/>进给编码器的顺序。这是来自源语言的索引编码的输入字符序列——在我们的例子中是英语。</li>
+
+				<li>提供给解码器的输入序列。这是目标语言的索引编码字符序列，以开始标记开始。</li>
+
+				<li>训练解码器的目标序列，它是解码器的输入序列，在过去移动了一步，并以结束标记结束。</li>
+
+			</ul>
+
+			<p><em class="italic">图8.6 </em>中的工作流程读取双语句子对，提取前10，000个句子，分别对英语和德语句子进行索引编码，最后<a id="_idIndexMarker763"/>将数据集划分为训练集和测试集<a id="_idTextAnchor303"/> <a id="_idTextAnchor304"/>:</p>
+
+			<div><div><img src="img/B16391_08_006.jpg" alt="Figure 8.6 – Preprocessing workflow snippet to prepare the data to train the network for neural machine translation"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图8.6-预处理工作流片段以准备数据来训练神经机器翻译的网络</p>
+
+			<p>预处理的大部分工作发生在名为<strong class="bold">索引编码和序列创建</strong>的组件中。<em class="italic">图8.7 </em>显示了其内容:<a id="_idTextAnchor305"/></p>
+
+			<div><div><img src="img/B16391_08_007.jpg" alt="Figure 8.7 – Workflow snippet inside the component named Index encoding and sequence creation"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图8.7–名为索引编码和序列创建的组件内的工作流片段</p>
+
+			<p>组件内部的工作流片段首先将英语文本与德语文本分开，然后<a id="_idIndexMarker764"/>为句子生成索引编码——在德语句子的上半部分和英语句子的下半部分。然后，最后，为每种语言创建、应用和保存一个字典。</p>
+
+			<p>在对德语句子进行索引编码之后，为解码器创建两个序列:在上面的分支中，通过在序列的开头添加开始标记，在下面的分支中，通过在序列的结尾添加结束标记。</p>
+
+			<p>来自德语和英语语言的所有序列然后被转换成集合单元，以便它们可以在训练之前被转换成一键编码。</p>
+
+			<h1 id="_idParaDest-151"><a id="_idTextAnchor306"/>构建和训练编码器-解码器架构</h1>
+
+			<p>现在这三个序列都可用了，我们可以开始定义工作流中的网络结构<a id="_idIndexMarker765"/>。在本节中，您将学习如何在KNIME Analytics平台中定义和训练编码器-解码器结构。一旦网络被训练，你将学习如何将编码器和解码器提取到两个网络中。在最后一节中，我们将讨论如何在部署工作流中使用提取的网络将英语句子翻译成德语。</p>
+
+			<h2 id="_idParaDest-152"><a id="_idTextAnchor307"/>定义网络结构</h2>
+
+			<p>在编码器-解码器<a id="_idIndexMarker767"/>架构中，我们希望编码器和解码器都是LSTM网络。编码器和解码器具有不同的输入序列。英语one-hot-encoded句子是编码器的输入，德语one-hot-encoded句子是解码器的输入。这意味着需要两个输入层:一个用于编码器，一个用于解码器。</p>
+
+			<p><strong class="bold">编码器</strong>网络由两层组成:</p>
+
+			<ul>
+
+				<li>通过<strong class="bold"> Keras输入层</strong>节点实现的<a id="_idIndexMarker768"/>输入层:<a id="_idIndexMarker769"/>输入张量的形状是<img src="img/Formula_B16391_08_009.png" alt=""/>，其中<img src="img/Formula_B16391_08_010.png" alt=""/>是源语言的字典大小。<em class="italic">？输入张量形状中的</em>表示可变长度序列，而<em class="italic"> n </em>表示具有<img src="img/Formula_B16391_08_011.png" alt=""/>分量的独热向量。在我们的例子中，<img src="img/Formula_B16391_08_012.png" alt=""/>为英语，而输入张量的形状是[？,71].</li>
+
+				<li>经由<strong class="bold"> Keras LSTM层</strong>节点的LSTM <a id="_idIndexMarker770"/>层:在该节点中，我们<a id="_idIndexMarker771"/>使用256个单元，并启用<em class="italic">返回状态</em>复选框，以将隐藏状态传递给即将到来的解码器网络。</li>
+
+			</ul>
+
+			<p><strong class="bold">解码器网络</strong>由三层组成:</p>
+
+			<ul>
+
+				<li>首先，一个<strong class="bold"> Keras输入层</strong>节点<a id="_idIndexMarker772"/>定义输入形状。同样，输入形状<img src="img/Formula_B16391_08_013.png" alt=""/>是一个元组，其中<img src="img/Formula_B16391_08_014.png" alt=""/>表示<a id="_idIndexMarker773"/>一个可变长度，而<img src="img/Formula_B16391_08_015.png" alt=""/>表示输入序列中每个向量的大小——即目标语言(德语)的字典大小。在我们的例子中，德语的输入张量的形状是<img src="img/Formula_B16391_08_016.png" alt=""/>。</li>
+
+				<li>一个LSTM <a id="_idIndexMarker774"/>层通过一个喀拉斯<strong class="bold"> LSTM层</strong>节点。这一次，<a id="_idIndexMarker775"/>可选输入端口用于将隐藏状态从编码器输入解码器。这意味着编码器网络中第一LSTM层的输出端口连接到解码器网络中的两个可选输入端口。此外，德语输入序列的Keras输入层节点的输出端口连接到顶部输入端口。在其配置窗口中，选择正确的输入张量和隐藏张量是很重要的。必须激活<em class="italic">返回序列</em>和<em class="italic">返回状态</em>复选框，以返回中间输出隐藏状态，该状态用于下一个<a id="_idIndexMarker776"/>层，以提取下一个预测字符的概率分布。与LSTM编码器一样，使用了256个单元。</li>
+
+				<li>最后，通过<strong class="bold"> Keras密集层</strong>节点<a id="_idIndexMarker778"/>添加<a id="_idIndexMarker777"/> softmax层，产生目标语言(德语)词典中字符的概率向量。在配置窗口中，softmax激活功能被选择为具有85个单位，这是目标语言的字典的大小。</li>
+
+			</ul>
+
+			<p>图8.8 中<em class="italic">的工作流程定义了这个编码器-解码器<a id="_idIndexMarker779"/>网络结构:</em></p>
+
+			<p class="figure-caption"><a id="_idTextAnchor308"/></p>
+
+			<div><div><img src="img/B16391_08_008.jpg" alt="Figure 8.8 – The workflow snippet that defines the encoder-decoder network"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图8.8–定义编码器-解码器网络的工作流片段</p>
+
+			<p>工作流程的上部用<strong class="bold"> Keras输入层</strong>和<strong class="bold"> Keras LSTM层</strong>节点定义编码器。在<a id="_idIndexMarker780"/>下部，解码器定义如前所述。</p>
+
+			<p>既然我们已经定义了编码器-解码器架构，我们可以训练网络。</p>
+
+			<h2 id="_idParaDest-153"><a id="_idTextAnchor309"/>训练网络</h2>
+
+			<p>正如本书中所有其他<a id="_idIndexMarker781"/>示例一样，<strong class="bold"> Keras网络学习器</strong>节点<a id="_idIndexMarker782"/>用于训练网络。</p>
+
+			<p>在名为<strong class="bold">输入数据</strong>的配置窗口的第一个选项卡中，选择了两个输入层的输入列:上半部分为源语言，表示编码器的输入，下半部分为目标语言，表示解码器的输入。为了将索引编码的序列转换为单热编码的序列，从数字集合(整数)到单热张量的转换类型<strong class="bold">被用于两个列。</strong></p>
+
+			<p>在配置窗口的下一个名为<strong class="bold">目标数据</strong>的选项卡中，带有解码器目标序列的列被选中，从数字集合(整数)到一键张量转换类型的<strong class="bold">被再次启用。在多类分类问题中，字符再次被视为类；因此，分类交叉熵损失函数被用于训练过程。</strong></p>
+
+			<p>在第三个选项卡<strong class="bold">选项</strong>中，<a id="_idIndexMarker783"/>训练阶段被设置为最多运行120个时期，批量大小为128个数据行，在每个时期之前混排数据，并使用Adam作为默认设置的优化器算法。</p>
+
+			<p>在训练期间，我们使用Keras网络学习者节点的<strong class="bold">学习者监视器</strong>视图来监视性能，并在达到94%的准确率时决定停止学习过程。</p>
+
+			<h2 id="_idParaDest-154"><a id="_idTextAnchor310"/>提取训练好的编码器和解码器</h2>
+
+			<p>为了应用<a id="_idIndexMarker784"/>训练的模型来翻译新句子，我们需要将编码器和解码器分开。为此，使用<a id="_idIndexMarker786"/>DL Python网络编辑器节点中的几行Python代码从完整的<a id="_idIndexMarker785"/>网络中提取每个部分。该节点允许我们直接使用<strong class="bold"> Python库</strong>编辑和修改网络结构。</p>
+
+			<p>记住，解码器的输出是目标语言中所有字符的概率分布。在<a href="B16391_07_Final_NM_ePUB.xhtml#_idTextAnchor230"> <em class="italic">第7章</em> </a>、<em class="italic">实现NLP应用</em>中，我们介绍了两种基于输出概率分布预测下一个字符的方法。选项一选择概率最高的字符作为下一个字符。选项二根据给定的概率分布随机选取下一个字符。</p>
+
+			<p>在本案例研究中，我们使用<a id="_idIndexMarker787"/>选项一，并通过额外的<strong class="bold">λ层</strong>直接在解码器中实现。总而言之，在进行后处理时，我们需要执行以下步骤:</p>
+
+			<ul>
+
+				<li>分离网络的编码器和解码器部分。</li>
+
+				<li>Introduce a lambda layer with an argmax function that selects the character with the highest probability in the softmax layer.<p class="callout-heading">重要说明</p><p class="callout">Lamba层允许您在使用TensorFlow作为后端构建顺序和功能API模型时使用任意TensorFlow函数。Lambda层最适合简单操作或快速实验。</p></li>
+
+			</ul>
+
+			<p>让我们从提取编码器开始。</p>
+
+			<h3>取出编码器</h3>
+
+			<p>在下面的代码中，你可以<a id="_idIndexMarker789"/>看到用于提取编码器的Python代码:</p>
+
+			<ol>
+
+				<li value="1">加载包:<pre>from keras.models import Model from keras.layers import Input</pre></li>
+
+				<li>定义输入:<pre>new_input = Input((None,70))</pre></li>
+
+				<li>提取训练好的编码器LSTM并定义模型:<pre>encoder = input_network.layers[-3] output = encoder(new_input) output_network = Model(inputs=new_input, outputs=output)</pre></li>
+
+			</ol>
+
+			<p>首先定义输入，将其输入编码器的LSTM层，然后定义输出。</p>
+
+			<p>更详细地说，在前两行中，加载了所需的包。接下来，定义输入层；然后，提取<code>-3</code>层——编码器的训练LSTM层。最后，网络输出被定义为经过训练的编码器LSTM层的输出</p>
+
+			<p>现在我们已经<a id="_idIndexMarker790"/>提取了编码器，让我们看看如何提取解码器。</p>
+
+			<h3>提取解码器并添加λ层</h3>
+
+			<p>在下面的代码<a id="_idIndexMarker791"/>片段中，你可以看到<a id="_idIndexMarker792"/>中使用的代码<strong class="bold"> DL Python网络编辑器</strong>节点来<a id="_idIndexMarker793"/>提取解码器部分并添加lambda层到其中:</p>
+
+			<ol>
+
+				<li value="1">加载软件包:<pre>from keras.models import Model from keras.layers import Input, Lambda from keras import backend as K</pre></li>
+
+				<li>定义输入:<pre>state1 = Input((256,)) state2 = Input((256,)) new_input = Input((1,85))</pre></li>
+
+				<li>提取训练好的解码器LSTM层和softmax层:<pre>decoder_lstm = input_network.layers[-2] decoder_dense = input_network.layers[-1]</pre></li>
+
+				<li>应用<a id="_idIndexMarker794"/>LSTM和密集<a id="_idIndexMarker795"/>层:<pre>x, out_h, out_c = decoder_lstm(new_input, initial_state=[state1, state2]) probability_output = decoder_dense(x)</pre></li>
+
+				<li>添加lambda层并定义输出:<pre>argmax_output = Lambda(lambda x: K.argmax(x, axis=-1))(probability_output) output_network = Model(inputs=[new_input, state1, state2], outputs=[probability_output, argmax_output, out_h, out_c])</pre></li>
+
+			</ol>
+
+			<p>代码再次首先加载必要的包，然后定义三个输入——两个用于输入隐藏状态，一个用于一键编码的字符向量。接下来，它在解码器中提取训练的LSTM层和softmax层。最后，它用<code>argmax</code>函数引入lambda层并定义输出。</p>
+
+			<p>为了在部署期间更快地执行，使用<strong class="bold"> Keras到TensorFlow网络转换器</strong>节点将编码器和解码器转换为TensorFlow <a id="_idIndexMarker796"/>网络。</p>
+
+			<p>现在我们已经训练了神经机器翻译网络，并且我们已经分离了<a id="_idIndexMarker797"/>编码器和解码器，我们希望将它们应用于<a id="_idIndexMarker798"/>测试集中的句子。</p>
+
+			<p>完整的培训工作流程可在KNIME Hub:<a href="https://hub.knime.com/kathrin/spaces/Codeless%20Deep%20Learning%20with%20KNIME/latest/Chapter%208/.">https://Hub . KNIME . com/kathrin/spaces/Codeless % 20 deep % 20 learning % 20 with % 20 KNIME/latest/Chapter % 208/。</a></p>
+
+			<h2 id="_idParaDest-155"><a id="_idTextAnchor311"/>将训练好的网络用于神经机器翻译</h2>
+
+			<p>为了将编码器和<a id="_idIndexMarker799"/>解码器<a id="_idIndexMarker800"/>网络应用于测试数据，我们需要一个工作流程，首先将编码器应用于<a id="_idIndexMarker801"/>索引编码的英语句子以提取上下文信息，然后应用解码器产生翻译。</p>
+
+			<p>解码器应该用来自编码器的第一个隐藏状态和来自输入序列的开始标记来初始化，以在递归循环中逐字符地触发翻译。<em class="italic">图8.9 </em>与<a id="_idTextAnchor312"/>显示了流程:</p>
+
+			<div><div><img src="img/B16391_08_009.jpg" alt="Figure 8.9 – The idea of applying the encoder and decoder model during deployment"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图8.9–在部署期间应用编码器和解码器模型的想法</p>
+
+			<p>图8.10 中的<a id="_idIndexMarker802"/>工作流片段执行<a id="_idTextAnchor313"/>这些步骤:</p>
+
+			<div><div><img src="img/B16391_08_010.jpg" alt="Figure 8.10 – This workflow snippet applies the trained encoder-decoder neural architecture to translate English sentences into German sentences"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图8.10–该工作流片段应用经过训练的编码器-解码器神经架构将英语句子翻译成德语句子</p>
+
+			<p>它从一个<strong class="bold"> TensorFlow网络执行器</strong>节点开始(图8.10 中<em class="italic">左边第一个)。这个节点<a id="_idIndexMarker803"/>将编码器和索引编码的英语句子作为输入。在其配置窗口中，根据LSTM隐藏状态定义了两个输出。</em></p>
+
+			<p>接下来，我们创建一个开始标记，并将其转换成一个集合单元格。对于这个开始令牌，我们使用另一个<strong class="bold"> TensorFlow网络执行器</strong>节点(左起第二个)应用解码器网络。在配置窗口中，我们确保来自先前<strong class="bold">张量流网络执行器</strong>节点中产生的编码器的隐藏状态<a id="_idIndexMarker804"/>被用作输入。作为输出，我们再次设置隐藏状态，以及下一个<a id="_idIndexMarker805"/>预测字符——即翻译句子的第一个字符。</p>
+
+			<p>现在，我们进入递归循环，在这里这个过程使用来自最后一次迭代的更新的隐藏状态和最后一个预测的字符作为输入被重复多次。</p>
+
+			<p>最后，将德语词典应用于索引编码的预测字符，并获得最终翻译。以下是翻译结果摘录:</p>
+
+			<div><div><img src="img/B16391_08_011.jpg" alt="Figure 8.11 – Final results of the deployed translation network on new English sentences"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图8.11–新英语句子翻译网络的最终结果</p>
+
+			<p>第一栏是新的英语句子，第二栏是正确的翻译，最后一栏是网络生成的翻译。这些翻译中的大多数实际上是正确的，尽管它们与第二列中的句子不匹配，因为同一个句子可以有不同的翻译。另一方面，<code>Talk to Tom</code>句子的翻译不正确，因为<code>rune</code>不是德语单词。</p>
+
+			<p>KNIME Hub上提供了所描述的部署工作流:<a href="https://hub.knime.com/kathrin/spaces/Codeless%20Deep%20Learning%20with%20KNIME/latest/Chapter%208/">https://Hub . KNIME . com/kath rin/spaces/Codeless % 20 deep % 20 learning % 20 with % 20 KNIME/latest/Chapter % 208/</a>。</p>
+
+			<p>在本节中，您已经学习了如何基于字符级神经机器翻译的示例来定义、训练和应用编码器-解码器架构。</p>
+
+			<h1 id="_idParaDest-156"><a id="_idTextAnchor314"/>总结</h1>
+
+			<p>在这一章中，我们探讨了神经机器翻译的主题，并训练了一个网络来产生英语到德语的翻译。</p>
+
+			<p>我们从介绍自动机器翻译开始，涵盖了从基于规则的机器翻译到神经机器翻译的历史。接下来，我们介绍了基于RNN的编码器-解码器架构的概念，它可用于神经机器翻译。一般而言，编码器-解码器架构可用于序列间预测任务或问答系统。</p>
+
+			<p>之后，我们介绍了在字符级别训练和应用神经机器翻译模型所需的所有步骤，使用了一个简单的网络结构，编码器和解码器都只有一个LSTM单元。使用<strong class="bold">教师强制</strong>范例来训练来自编码器和解码器的组合的联合网络。</p>
+
+			<p>在训练阶段结束时和部署之前，在解码器部分插入一个<strong class="bold">λ层</strong>，以预测概率最高的字符。为了做到这一点，在训练过程之后，在DL Python网络编辑器节点中用几行Python代码修改了已训练网络的结构。Python代码将解码器和编码器网络分开，并添加了lambda层。这是唯一包含一小段简单的Python代码的部分。</p>
+
+			<p>当然，这个网络可以在许多方面得到进一步改善——例如，通过堆叠多个LSTM层，或者通过使用额外的嵌入在单词级别训练模型。</p>
+
+			<p>这是关于RNNs的最后一章。在下一章中，我们想继续讨论另一类神经网络，<strong class="bold">卷积神经网络</strong>(<strong class="bold">CNN</strong>)，它已经被证明在图像处理方面非常成功。</p>
+
+			<h1 id="_idParaDest-157"><a id="_idTextAnchor315"/>问题和练习</h1>
+
+			<ol>
+
+				<li value="1">An encoder-decoder model is a:<p>a.)多对一架构</p><p>b.)多对多架构</p><p>c.)一对多架构</p><p>d.)CNN架构</p></li>
+
+				<li>What is the task of the encoder in neural machine translation?<p>a.)对字符进行编码</p><p>b.)来生成翻译</p><p>c.)来提取目标语言内容的密集表示</p><p>d.)来提取源语言内容的密集表示</p></li>
+
+				<li>What is another application for encoder-decoder LSTM networks?<p>a.)文本分类</p><p>b.)问答系统</p><p>c.)语言检测</p><p>d.)异常检测</p></li>
+
+			</ol>
+
+		</div>
+
+	
+
+
+
+</body></html>

@@ -1,0 +1,824 @@
+<html><head/><body>
+
+
+    
+        <title>Learning from Data</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    Learning from Data
+                
+            
+            
+                
+<p class="mce-root">正如我们在前一章所看到的，对于复杂的数据集，数据准备需要大量的时间。然而，花在数据准备上的时间是值得的...这一点我可以保证！同样，投资时间来理解从数据中学习的基本理论对于任何想要加入深度学习领域的人来说都是超级重要的。每当你阅读新的算法或评估你自己的模型时，理解学习理论的基础将会有所收获。当你读到本书后面的章节时，它也会让你的生活变得容易得多。</p>
+<p class="mce-root">更具体地说，本章介绍了围绕深度学习理论的最基本的概念，包括测量回归和分类的性能，以及过度拟合的识别。它还对模型超参数的敏感性和优化的必要性提出了一些警告。</p>
+<p class="mce-root">本章的大纲如下:</p>
+<ul>
+<li class="mce-root">有目的的学习</li>
+<li class="mce-root">衡量成功和错误</li>
+<li class="mce-root">识别过度拟合和泛化</li>
+<li class="mce-root">学习背后的艺术</li>
+<li class="mce-root">训练深度学习算法的伦理含义</li>
+</ul>
+<h1 id="uuid-f4672afa-5ffd-4b3a-8a98-3fbbfb2a28dc" class="mce-root">有目的的学习</h1>
+<p>在<a href="https://cdp.packtpub.com/deep_learning_for_beginners/wp-admin/post.php?post=26&amp;action=edit">第三章</a>、<em>准备数据</em>中，我们讨论了两大类问题如何准备数据:<strong>回归</strong>和<strong>分类</strong>。在这一节中，我们将更详细地讨论分类和回归之间的技术差异。这些差异很重要，因为它们将限制您可以用来解决问题的机器学习算法的类型。</p>
+<h2 id="uuid-15d31fed-fbdb-48de-8cc3-a5aaa9613f68">分类</h2>
+<p>你怎么知道你的问题是不是分类？答案取决于两个主要因素:你试图解决的<strong>问题</strong>和你必须解决的<strong>数据</strong>。当然，可能还有其他因素，但这两个因素是最重要的。</p>
+<p>如果你的目的是建立一个模型，在给定一些输入的情况下，确定模型的响应或输出是区分两个或更多不同的类别，那么你就有一个分类问题。以下是分类问题示例的非详尽列表:</p>
+<ul>
+<li>给定一幅图像，指出它包含什么数字(区分10个类别:0-9位数)。</li>
+<li>给定一幅图像，指出它是否包含一只猫(区分两类:是或否)。</li>
+<li>给出一系列关于温度的读数，确定季节(区分四个类别:四季)。</li>
+<li>给定一条推文的文本，确定情绪(区分两类:积极或消极)。</li>
+<li>给定一个人的形象，确定年龄组(区分五类:&lt;18, 18-25, 26-35, 35-50, &gt; 50)。</li>
+<li>给定一只狗的图像，确定它的品种(区分120个类别:那些国际公认的品种)。</li>
+<li>给定整个文档，确定它是否被篡改(区分类别:真实的或被篡改的)。</li>
+<li>给定光谱辐射计的卫星读数，确定地理位置是否与植被的光谱特征匹配(区分两类:是或否)。</li>
+</ul>
+<p>从列表中的例子可以看出，不同类型的问题有不同类型的数据。我们在这些例子中看到的数据被称为<strong>标签数据</strong>。</p>
+<p>未标记的数据非常常见，但很少用于分类问题，除非进行某种处理，使数据样本与类别相匹配。例如，可以对未标记的数据使用无监督聚类，以将数据分配到特定的聚类(如组或类别)；此时，数据在技术上变成了“标记数据”</p>
+<p>列表中需要注意的另一件重要事情是，我们可以将分类问题分为两大类:</p>
+<ul>
+<li><strong>二元分类</strong>:仅用于任意两类之间的分类</li>
+<li><strong>多级分类</strong>:用于两级以上的分类</li>
+</ul>
+<p>这种区分似乎是武断的，但事实并非如此；事实上，分类的类型将限制您可以使用的学习算法的类型和您可以预期的性能。为了更好地理解这一点，让我们分别讨论每个分类。</p>
+<h3 id="uuid-df92f3d9-377a-49c6-ab74-62f27962bfdd">二元分类</h3>
+<p>这种类型的分类通常被认为是一个比多类简单得多的问题。事实上，如果我们能够解决二进制分类问题，从技术上来说，我们可以通过决定将问题分解为几个二进制分类问题的策略来解决多类问题(<em> Lorena，A. C. </em>等人，<em> 2008 </em>)。</p>
+<p>这被认为是一个简单问题的原因之一是因为二进制分类学习算法背后的算法和数学基础。假设我们有一个二元分类问题，比如<a href="https://cdp.packtpub.com/deep_learning_for_beginners/wp-admin/post.php?post=26&amp;action=edit">第三章</a>、<em>准备数据</em>中解释的Cleveland数据集。这个数据集由每个病人的13个医学观察组成——我们可以称之为<img class="fm-editor-equation" src="img/4ae6e047-6db7-4cea-89a7-d59b4577f989.png" style="width:3.58em;height:1.17em;"/>。对于这些患者记录中的每一个，都有一个相关的标签，表明该患者是否患有某种类型的心脏病(+1)或(-1)——我们将称之为<img class="fm-editor-equation" src="img/0f347d74-fa0b-4e7f-8523-3b84761dae43.png" style="width:6.75em;height:1.33em;"/>。因此，具有<em> N </em>个样本的整个数据集<img class="fm-editor-equation" src="img/fbdaf353-eb1c-4455-a3f5-cbebb2f0d6e7.png" style="width:0.67em;height:0.75em;"/>可以定义为一组数据和标签:</p>
+<p style="padding-left: 270px"><img class="fm-editor-equation" src="img/dff30c72-c9b3-4a6f-a20a-e3a3017c59e7.png" style="width:6.75em;height:1.50em;"/></p>
+<p>然后，正如在<a href="https://cdp.packtpub.com/deep_learning_for_beginners/wp-admin/post.php?post=24&amp;action=edit">第1章</a>、<em>机器学习简介</em>中所讨论的，学习的全部要点是使用一种算法，该算法将找到映射输入数据<strong> x </strong>的方法，为<sub> <img class="fm-editor-equation" src="img/fbdaf353-eb1c-4455-a3f5-cbebb2f0d6e7.png" style="width:0.67em;height:0.75em;"/> </sub>中的所有样本正确地标记<em> y </em>，并且能够进一步为已知数据集<img style="font-size: 1em;width:0.67em;height:0.75em;" class="fm-editor-equation" src="img/fbdaf353-eb1c-4455-a3f5-cbebb2f0d6e7.png"/>之外的样本这样做(希望如此)。使用一个感知器和一个对应的<strong>感知器学习算法</strong> ( <strong> PLA </strong>)，我们要的是找到能够满足以下的参数<sub> <img class="fm-editor-equation" src="img/72310c26-8d2e-4d7b-8b0e-2694ac960fbf.png" style="width:2.58em;height:1.17em;"/> </sub>:</p>
+<p style="padding-left: 240px"><img class="fm-editor-equation" src="img/a8cba13d-2fa4-48ee-907a-23d24d12ba66.png" style="width:9.75em;height:1.42em;"/></p>
+<p>对于所有样本，<em> i </em> = 1，2，...、<em> N. </em>然而，正如我们在<a href="https://cdp.packtpub.com/deep_learning_for_beginners/wp-admin/post.php?post=24&amp;action=edit">第一章</a>、<em>机器学习简介</em>中所讨论的，如果数据是非线性可分的，则方程不能满足。在这种情况下，我们可以得到一个近似值，或一个预测，这不一定是想要的结果；我们将这样的预测称为<img class="fm-editor-equation" src="img/ca21520f-7620-4ce7-8ba6-ef31faaed1e9.png" style="width:0.67em;height:1.33em;"/>。</p>
+<p>于是，学习算法的全部意义就变成了减少期望目标标签<img class="fm-editor-equation" src="img/67f2f764-f8f9-4e62-abfd-5c9dddfe4114.png" style="width:0.50em;height:0.83em;"/>和预测<img class="fm-editor-equation" src="img/dda3ec0e-9026-4af0-abb5-71bf7486e83c.png" style="width:0.67em;height:1.33em;"/>之间的差异。在一个理想的世界中，我们希望<img src="img/46139ee6-41db-420e-a2e9-95cc864cda3a.png" style="width:3.67em;height:1.25em;"/>适用于<em> i </em> = 1，2，...、<em> N. </em>在<em> i </em> where <img src="img/7f1182f2-7155-4ec8-aca1-50a4033f4c85.png" style="width:3.42em;height:1.25em;"/>的情况下，学习算法必须通过寻找有希望更好的新参数<img src="img/2be5be4c-924d-462b-b31e-0dd3771de027.png" style="width:3.25em;height:1.50em;"/>来做出调整(即训练自己)以避免将来犯这样的错误。</p>
+<p>这些算法背后的科学原理因型号而异，但最终目标通常是相同的:</p>
+<ul>
+<li>减少每次学习迭代中的错误数量<img src="img/dc0b01b2-c4f3-499b-8a4d-302e1d8fa01b.png" style="width:3.75em;height:1.25em;"/>。</li>
+<li>在尽可能少的迭代(步骤)中学习模型参数。</li>
+<li>尽快学习模型参数。</li>
+</ul>
+<p>由于大多数数据集处理不可分离的问题，PLA被忽略，以利于其他算法收敛更快，迭代次数更少。许多像这样的学习算法通过采取特定步骤来调整参数<img src="img/10030282-7398-4858-8911-a2f401ae5315.png" style="width:3.25em;height:1.42em;"/>以减少误差<img src="img/fa1abe60-b158-4da2-b57c-73f2a10d40cf.png" style="width:4.08em;height:1.42em;"/>，基于关于误差可变性的导数和参数的选择。因此，最成功的算法(至少在深度学习中)是基于某种梯度下降策略的算法(Hochreiter，s .等人，2001)。</p>
+<p>现在，让我们回顾一下最基本的迭代梯度策略。假设我们想要学习给定数据集<img src="img/66b34a6d-fe6c-42c0-b839-75629dd44781.png" style="width:0.83em;height:0.83em;"/>的参数<img class="fm-editor-equation" src="img/293a24a9-8122-473a-b0e9-3f3c1f5f62e0.png" style="width:2.58em;height:1.17em;"/>。我们将不得不对问题的表述做一个小小的调整，使事情变得简单一点。我们想要的是<img class="fm-editor-equation" src="img/4e82d5bd-8068-4b93-8586-84592a77fc05.png" style="width:4.58em;height:1.33em;"/>被隐含在<img src="img/4e4b289f-920a-4351-9622-14e68b8cacce.png" style="width:2.58em;height:1.25em;"/>这个表达中。唯一可行的方法是我们设置<img class="fm-editor-equation" src="img/f1ff6cd9-db78-495b-b8ed-23cf890c12cb.png" style="width:12.75em;height:1.58em;"/>和<img src="img/357ebb91-cfb5-4c22-b82d-49ddbb38b5f2.png" style="width:12.58em;height:1.67em;"/>。</p>
+<p>通过这种简化，我们可以简单地搜索<strong> w </strong>，这也意味着搜索<strong> b </strong>。具有固定<em>学习率</em>的梯度下降如下:</p>
+<ol start="1">
+<li>将权重初始化为零(<img src="img/1f4e3960-c78b-45c9-90e2-3921c8452c3a.png" style="width:2.92em;height:0.83em;"/>)并将迭代计数器初始化为零(<img class="fm-editor-equation" src="img/6ce01007-2b63-4bc4-8db8-4f1d0f7c33a1.png" style="width:2.75em;height:1.00em;"/>)。</li>
+<li>当<img src="img/429a3278-fffb-4640-8730-c1c103a64135.png" style="width:4.58em;height:1.25em;"/>时，执行以下操作:</li>
+</ol>
+<ol>
+<li style="padding-left: 60px">计算相对于<img src="img/23cda490-47ff-4f78-b5fc-195f6d6b2d0a.png" style="width:1.42em;height:0.92em;"/>的梯度，并存储在<img src="img/99c1192e-4889-40ad-9e1b-34a8ad598d5f.png" style="width:4.83em;height:0.92em;"/>中。</li>
+<li style="padding-left: 60px">更新<img src="img/8074e322-e8f8-4e22-828c-06357c3902b8.png" style="width:1.17em;height:0.83em;"/>，使其看起来像这样:<img src="img/1dfaa02c-ed8e-4bd1-aa7a-4ebd9003ccc8.png" style="width:7.58em;height:0.83em;"/>。</li>
+<li style="padding-left: 60px">增加迭代计数器并重复。</li>
+</ol>
+<p> </p>
+<p>这里有几件事需要解释一下:</p>
+<ul>
+<li>梯度计算<img class="fm-editor-equation" src="img/d6ee9c14-1d4a-4ce7-92eb-66e6f7639c98.png" style="width:3.92em;height:1.25em;"/>并不简单。对于一些特定的机器学习模型，可以解析确定；但在大多数情况下，它必须通过使用一些最新的算法进行数值确定。</li>
+<li>我们仍然需要定义如何计算误差<img class="fm-editor-equation" src="img/497c3550-a1d6-4dae-bbf2-c38fce7e4fe8.png" style="width:2.83em;height:1.17em;"/>；但这将在本章的下一节讨论。</li>
+<li>学习率<img src="img/1553a1e5-b84e-433e-8a44-39ec9c0a72ae.png" style="width:0.67em;height:1.00em;"/>也需要被指定，这本身就是一个问题。</li>
+</ul>
+<p>看待最后一个问题的一种方式是，为了找到使误差最小化的参数<img src="img/de1605e4-2c5a-4802-919c-f70cf201ca77.png" style="width:1.17em;height:0.83em;"/>，我们需要参数<img src="img/68663c10-bdf9-4cd2-8f73-e5c381771b62.png" style="width:0.67em;height:1.00em;"/>。现在，当应用梯度下降时，我们可以考虑寻找<img src="img/10ee9ff7-c459-40a1-ae7e-e9f5d4fdfbe5.png" style="width:0.67em;height:1.00em;"/>参数，但我们将陷入无限循环。我们不会更详细地讨论梯度下降及其学习率，因为现在梯度下降的算法通常包括自动计算梯度下降或调整梯度下降的自适应方法(Ruder，S. 2016)。</p>
+<h3 id="uuid-b420744f-812e-454f-8eff-49a254c021b4">多类分类</h3>
+<p>分类成多个类别对学习算法的性能有重要影响。一般来说，模型的性能会随着需要识别的类的数量而降低。例外情况是，如果你有大量的数据和大量的计算能力，因为如果你这样做，你可以克服存在类不平衡问题的差数据集的限制，你可以估计大规模梯度，并对模型进行大量计算和更新。计算能力在未来可能不是一个限制，但目前是。</p>
+<p>多类问题可以通过使用<strong>一对一</strong>或<strong>一对一</strong>等策略来解决。</p>
+<p>在“一个对所有”模式中，您实际上拥有一个专家二元分类器，能够很好地从所有其他模式中识别出一个模式，并且实施策略通常是级联的。这里显示了一个示例:</p>
+<pre class="mce-root">if classifierSummer says is Summer: you are done<br/>else:<br/> if classifierFall says is Fall: you are done<br/> else:<br/>   if classifierWinter says is Winter: you are done<br/>   else:<br/>     it must be Spring and, thus, you are done</pre>
+<p class="mce-root">下面是这种策略的图解说明。假设我们有二维数据，它告诉我们一年中四季的一些情况，如下所示:</p>
+<div><img src="img/6ea29b49-ff32-4be0-a0cc-40d19d1896f6.png" style="width:21.83em;height:15.75em;"/></div>
+<p>图4.1 -随机化的二维数据可以告诉我们一年中四季的一些情况</p>
+<p>在这个随机二维数据的例子中，我们有四个类别对应于一年中的四个季节。二元分类不会直接起作用。然而，我们可以训练专业的二元分类器，专门处理<em>一个</em>特定的类别<em>和所有其他的</em>。如果我们使用简单的感知器训练一个二元分类器来确定数据点是否属于Summer类别，我们可以得到如下所示的分离超平面:</p>
+<div><img src="img/ac4f8026-284f-43eb-89d9-1c25844ee256.png" style="width:22.00em;height:15.83em;"/></div>
+<p>图4.2:一个擅长区分夏季数据和其他季节数据的计划</p>
+<p>同样，我们可以训练其余的专家，直到我们有足够的证据来检验我们的整个假设；也就是说，直到我们能够区分所有的类。</p>
+<p>另一种选择是使用能够处理多个输出的分类器；例如，决策树或集成方法。但在深度学习和神经网络的情况下，这是指在输出层可以有多个神经元的网络，比如在<a href="https://cdp.packtpub.com/deep_learning_for_beginners/wp-admin/post.php?post=24&amp;action=edit">第一章</a>、<em>机器学习简介</em>中的<em>图1.6 </em>和<em>图1.9 </em>中描绘的网络。</p>
+<p>多输出神经网络的数学公式与单输出神经网络仅略有不同，因为输出不再是二进制值集，如<img class="fm-editor-equation" src="img/0f347d74-fa0b-4e7f-8523-3b84761dae43.png" style="width:5.92em;height:1.17em;"/>，而是一个独热编码值的向量，如<img class="fm-editor-equation" src="img/3476b823-1083-4257-a7e0-71949ade683a.png" style="width:3.50em;height:1.25em;"/>。在这种情况下，| <em> C </em> |表示集合<em> C </em>的大小，它包含所有不同的类标签。对于前面的例子，<em> C </em>将包含以下内容:<em> C </em> = {' <em>夏季</em>'，'<em>秋季</em>'，'<em>冬季</em>'，'<em>春季</em> '}。以下是每种热编码的样子:</p>
+<ul>
+<li><strong>夏天</strong> : <img class="fm-editor-equation" src="img/383c2835-581b-49ae-b2d7-745c43d5ed09.png" style="width:7.08em;height:1.42em;"/></li>
+<li><strong>摔倒</strong> : <img class="fm-editor-equation" src="img/08a54e98-f381-4fd1-8834-8ae7c8c6a885.png" style="width:7.50em;height:1.50em;"/></li>
+<li><strong>冬季</strong> : <img class="fm-editor-equation" src="img/1688ddb7-c3c5-48eb-9514-54e26474bb93.png" style="width:7.08em;height:1.42em;"/></li>
+<li><strong>弹簧</strong> : <img class="fm-editor-equation" src="img/6f45ab24-f3c6-45f1-b841-636832c00cf0.png" style="width:7.92em;height:1.58em;"/></li>
+</ul>
+<p>目标向量中的每个元素将对应于四个神经元的期望输出。我们还应该指出，数据集定义现在应该反映样本输入数据和标签都是向量:</p>
+<p style="padding-left: 240px"><img class="fm-editor-equation" src="img/556fdbd7-1f5b-4934-8441-d7a4d5a260d4.png" style="width:6.58em;height:1.42em;"/></p>
+<p>处理多类分类问题的另一种方法是使用<strong>回归</strong>。</p>
+<h2 id="uuid-2bc76e09-f6b8-420b-9790-585c0ba6164d">回归</h2>
+<p class="mce-root">以前，我们指定对于二进制分类，目标变量可以采用一组二进制值；比如<img class="fm-editor-equation" src="img/0f347d74-fa0b-4e7f-8523-3b84761dae43.png" style="width:6.33em;height:1.25em;"/>。我们还说过，对于多重分类，我们可以将目标变量修改为一个向量，其大小取决于类别的数量<img class="fm-editor-equation" src="img/a5246959-0c32-4040-aa86-b99a914f8c09.png" style="width:3.25em;height:1.17em;"/>。嗯，回归问题处理的是目标变量是任意实值的情况，<img class="fm-editor-equation" src="img/8dbf0dcb-9e08-48c6-888e-9e62c7d77f96.png" style="width:2.83em;height:1.25em;"/>。</p>
+<p>这里的含义非常有趣，因为利用回归模型和算法，我们可以从技术上<em>进行二进制分类，因为实数集包含任何二进制数集:</em></p>
+<p style="padding-left: 270px"><img class="fm-editor-equation" src="img/aeaca13b-8358-4c7e-8bf1-e50fae3e3f72.png" style="width:9.17em;height:1.33em;"/>。</p>
+<p>此外，如果我们将<em> C </em> = {' <em>夏季</em>'、<em>秋季</em>'、<em>冬季</em>'、<em>春季</em> '}改为数值表示，例如C = {0，1，2，3}，则<em>技术上为</em>，由于相同的性质，我们将再次使用回归:</p>
+<p style="padding-left: 270px"><img class="fm-editor-equation" src="img/c06b709f-7343-4fe6-9e3b-712fac9177ae.png" style="width:9.00em;height:1.25em;"/>。</p>
+<p>虽然回归模型可以解决分类问题，但建议您使用专门用于分类的模型，并将回归模型仅用于回归任务。</p>
+<p>即使回归模型可用于分类(Tan，x .，et.al. 2012)，它们也是目标变量为实数时的理想选择。以下是回归问题的示例列表:</p>
+<ul>
+<li>当给定一幅图像时，指出图像中有多少人(输出可以是&gt; =0的任何整数)。</li>
+<li>当给定一幅图像时，指出它包含一只猫的概率(输出可以是0到1之间的任何实数)。</li>
+<li>当给出一系列温度读数时，确定温度的实际感觉(输出可以是任何整数，其范围取决于单位)。</li>
+<li>当给定一条推文的文本时，确定它具有攻击性的概率(输出可以是0到1之间的任何实数)。</li>
+<li>当给定一个人的图像时，确定他们的年龄(输出可以是任何正整数，通常小于100)。</li>
+<li>给定整个文档时，确定可能的压缩率(输出可以是0到1之间的任何实数)。</li>
+<li>当给定光谱辐射计的卫星读数时，确定相应的红外值(输出可以是任何实数)。</li>
+<li>当给定一些主要报纸的标题时，确定石油的价格(输出可以是&gt; =0的任意实数)。</li>
+</ul>
+<p>正如您从该列表中看到的，由于实数的范围包含所有整数和所有正数和负数，因此存在许多可能性，即使该范围对于特定应用来说太宽，回归模型也可以放大或缩小以满足范围规格。</p>
+<p>为了解释回归模型的潜力，让我们从一个基本的<strong>线性回归</strong>模型开始，在后面的章节中，我们将涵盖基于深度学习的更复杂的回归模型。</p>
+<p>线性回归模型试图解决以下问题:</p>
+<p style="padding-left: 240px" class="mce-root"><img class="fm-editor-equation" src="img/970566f0-b7ac-4868-81dc-6b18e0b0fc2b.png" style="width:7.08em;height:1.42em;"/></p>
+<p class="mce-root">对于<em> i </em> = 1，2，...然而，我们可以使用与之前相同的技巧，将<em> b </em>的计算包含在同一个等式中。所以，我们可以说，我们正在努力解决以下问题:</p>
+<p style="padding-left: 240px"><img class="fm-editor-equation" src="img/c802c25e-40e3-46c3-92bc-22fc0113e952.png" style="width:5.25em;height:1.42em;"/></p>
+<p>再一次，我们试图学习参数<img class="fm-editor-equation" src="img/d59f4bf8-7872-4734-8050-abd4ec68ecab.png" style="width:1.08em;height:0.83em;"/>，该参数对于<em> i. </em>的所有情况产生<img class="fm-editor-equation" src="img/562075f4-c6a5-4f29-a6e4-84f8c4f329c3.png" style="width:3.17em;height:1.17em;"/>。在线性回归的情况下，如果输入数据<img style="font-size: 1em;width:1.08em;height:0.83em;" class="fm-editor-equation" src="img/5a5aa15c-23cf-45b3-801f-b4d8ca5449b8.png"/>以某种方式描述了一条完美的直线，则预测<img class="fm-editor-equation" src="img/ca21520f-7620-4ce7-8ba6-ef31faaed1e9.png" style="width:0.75em;height:1.50em;"/>应该理想地等于真实目标值<img style="font-size: 1em;width:0.75em;height:1.25em;" class="fm-editor-equation" src="img/2a654437-6c4b-4da0-a2ad-8d800b7847ac.png"/>。但是因为这是非常不可能的，必须有一种学习参数的方法，<img style="font-size: 1em;width:1.17em;height:0.92em;" class="fm-editor-equation" src="img/d1d74b08-42ed-48ee-b896-c39e9f170034.png"/>，即使<img style="font-size: 1em;width:3.42em;height:1.25em;" class="fm-editor-equation" src="img/95a975fe-111d-454d-b981-b65ab5053683.png"/>。为了实现这一点，线性回归学习算法首先描述了对小错误的低惩罚和对大错误的较大惩罚。这确实有道理，对吧？非常直观。</p>
+<p>按照错误大小的比例来惩罚错误的一种自然方法是计算预测值和目标值之间的差值的平方。下面是一个差异很小的例子:</p>
+<p style="padding-left: 180px"><img class="fm-editor-equation" src="img/3f4c1827-d243-4724-b234-61abbeae95c8.png" style="width:21.33em;height:1.42em;"/></p>
+<p>以下是差异较大时的一个示例:</p>
+<p style="padding-left: 180px"><img class="fm-editor-equation" src="img/879e3b84-a279-419f-bb57-1d71b48c3f14.png" style="width:18.83em;height:1.33em;"/></p>
+<p>在这两个例子中，期望的目标值是<kbd>1</kbd>。在第一种情况下，<kbd>0.98</kbd>的预测值非常接近目标值，并且平方差为<kbd>0.0004</kbd>，这与第二种情况相比很小。第二个预测被<kbd>14.8</kbd>关闭，这产生了<kbd>219.4</kbd>的平方差。对于构建学习算法来说，这似乎是合理和直观的；也就是说，根据错误的大小进行相应的惩罚。</p>
+<p>我们可以正式地将选择参数<strong> w </strong>的函数中的总平均误差定义为所有平方误差的平均和，也称为<strong>均方误差(MSE) </strong>:</p>
+<p style="padding-left: 270px"><img class="fm-editor-equation" src="img/6b88425f-07b8-4cf1-8c8c-5e15ad59dcc4.png" style="width:9.75em;height:2.83em;"/>。</p>
+<p>如果我们根据<img class="fm-editor-equation" src="img/1d7cd898-6ee9-4952-9d43-b441c2412c88.png" style="width:0.92em;height:0.75em;"/>的当前选择将预测定义为<img class="fm-editor-equation" src="img/2aa011c3-c882-4e20-a5b0-99e710545353.png" style="width:4.75em;height:1.33em;"/>，那么我们可以将误差函数重写如下:</p>
+<p style="padding-left: 270px"><img class="fm-editor-equation" src="img/b5a94efc-3f8c-47bc-8b0e-67bbf7851798.png" style="width:12.08em;height:3.08em;"/>。</p>
+<p>这可以根据<img class="fm-editor-equation" src="img/3f0e57b4-ce39-452d-ad17-78002c082199.png" style="width:1.17em;height:1.42em;"/>-范数(也称为欧几里德范数，<img class="fm-editor-equation" src="img/da7143d1-c3d3-4a85-aef9-2dd8b3aff0b3.png" style="width:1.67em;height:1.17em;"/>)进行简化，首先定义一个数据矩阵<img class="fm-editor-equation" src="img/15a5e1a8-a00b-478c-bd88-29ffbcd6374e.png" style="width:0.75em;height:0.75em;"/>，其元素是数据向量<img class="fm-editor-equation" src="img/a0383757-b717-41b7-8e94-64b4fc666f00.png" style="width:0.67em;height:0.75em;"/>和相应目标的向量，如下所示:</p>
+<p style="padding-left: 210px"><img class="fm-editor-equation" src="img/bdd9cc28-d833-4f38-b123-f42e24649ef5.png" style="width:11.83em;height:5.83em;"/>。</p>
+<p>误差的简化如下:</p>
+<p style="padding-left: 240px"><img class="fm-editor-equation" src="img/b8f14b75-d5fd-42ed-8486-9a0c2d91df10.png" style="width:10.08em;height:2.25em;"/></p>
+<p>这可以扩展成以下重要等式:</p>
+<p style="padding-left: 180px"><img class="fm-editor-equation" src="img/56c796c0-55f6-447a-b116-0a44e5b47bcf.png" style="width:18.83em;height:2.17em;"/>。</p>
+<p>这一点很重要，因为它有助于计算误差<img class="fm-editor-equation" src="img/53799600-8705-4a59-ba5e-55275c4b2c2c.png" style="width:2.08em;height:1.00em;"/>的导数，这是在导数方向上与误差成比例地调整参数<img class="fm-editor-equation" src="img/04db5ca2-e2be-4220-8c6d-e87905762461.png" style="width:0.83em;height:0.67em;"/>所必需的。现在，根据线性代数的基本性质，我们可以说误差的导数(称为梯度，因为它产生一个矩阵)如下:</p>
+<p style="padding-left: 210px"><img class="fm-editor-equation" src="img/ffea4ee4-25f6-4e04-be3f-e846f88d33f2.png" style="width:12.75em;height:2.17em;"/>。</p>
+<p>因为我们想要找到产生最小误差的参数，所以我们可以将梯度设置为<kbd>0</kbd>并求解<img class="fm-editor-equation" src="img/c50dc76b-19c9-43bb-818a-a8a9f7c6ee3d.png" style="width:1.08em;height:0.83em;"/>。<strong> </strong>通过将梯度设置为<kbd>0</kbd>并忽略常量值，我们得到如下结果:</p>
+<p style="padding-left: 240px"><img class="fm-editor-equation" src="img/5eb81dc2-15b3-4822-a5ae-a533d265eb0c.png" style="width:7.50em;height:1.42em;"/></p>
+<p style="padding-left: 240px"><img class="fm-editor-equation" src="img/7e5c5343-31fc-429b-8511-bc9a1c84fd1c.png" style="width:8.58em;height:1.33em;"/>。</p>
+<p>这些被称为<strong>正规</strong> <strong>方程</strong> <em> </em> (Krejn，S. G. E. 1982)。然后，如果我们简单地使用术语<img class="fm-editor-equation" src="img/aa319bc1-8e1a-4349-8dc1-72a4206a1995.png" style="width:7.92em;height:1.25em;"/>，我们得到一个<strong>伪逆</strong>的定义(g . Golub和w . Kahan，1965)。其美妙之处在于，我们不需要迭代计算梯度来选择最佳参数<img class="fm-editor-equation" src="img/0c2d89de-6794-45ef-9e8d-537d24518945.png" style="width:1.08em;height:0.83em;"/>。事实上，由于梯度是解析的和直接的，我们可以一次性计算出<img class="fm-editor-equation" src="img/b59769c0-1de8-4212-a587-0e18479a6b73.png" style="width:0.83em;height:0.67em;"/> <strong> </strong>，如这个线性回归算法所解释的:</p>
+<ol>
+<li>从<img class="fm-editor-equation" src="img/f94f1b86-f92e-4f64-99e2-2b8cd4d9a7e0.png" style="width:6.42em;height:1.42em;"/>开始，构建对，<img class="fm-editor-equation" src="img/29abe296-f275-4635-a806-55a85636b84d.png" style="width:2.42em;height:1.00em;"/>。</li>
+<li>估计伪逆<img class="fm-editor-equation" src="img/aa319bc1-8e1a-4349-8dc1-72a4206a1995.png" style="width:6.83em;height:1.08em;"/>。</li>
+<li>计算并返回<img class="fm-editor-equation" src="img/1905d8ba-cdea-4768-af8c-e0528aec4962.png" style="width:3.92em;height:1.08em;"/>。</li>
+</ol>
+<p class="mce-root">为了形象地说明这一点，假设我们有一个系统，它发送一个遵循线性函数的信号；然而，信号在传输时被带有<kbd>0</kbd>均值和单位方差的正常噪声污染，我们只能观察到噪声数据，如图所示:</p>
+<div><img src="img/0aaa35da-96e2-4872-9d97-880766124f97.png" style="width:28.42em;height:20.50em;"/></div>
+<p>图4.3 -被随机噪声污染的数据读数</p>
+<p>比方说，如果黑客读取这些数据并运行线性回归来尝试确定在数据被污染之前产生这些数据的真实函数，那么数据黑客将获得如下所示的解决方案:</p>
+<div><img src="img/cb38549f-33ef-47a1-a783-777e0249d647.png" style="width:26.83em;height:19.08em;"/></div>
+<p>图4.4 -给定噪声数据读数，找到真实函数问题的线性回归解决方案</p>
+<p>显然，如上图所示，线性回归解非常接近真实的原始线性函数。在这个特定的例子中，可以观察到高度的接近，因为数据被遵循<strong>白噪声</strong>模式的噪声污染；然而，对于不同类型的噪声，该模型的表现可能不如本例中的好。再者，大多数回归问题根本不是线性的；事实上，最有趣的回归问题是高度非线性的。尽管如此，基本的学习原则是相同的:</p>
+<ul>
+<li>减少每次学习迭代中的错误数量<img class="fm-editor-equation" src="img/53799600-8705-4a59-ba5e-55275c4b2c2c.png" style="width:2.08em;height:1.00em;"/>(或者直接一次完成，比如线性回归)。</li>
+<li>在尽可能少的迭代(步骤)中学习模型参数。</li>
+<li>尽快学习模型参数。</li>
+</ul>
+<p>指导学习过程的另一个主要部分是关于参数选择的成功或错误的计算方式<img class="fm-editor-equation" src="img/53799600-8705-4a59-ba5e-55275c4b2c2c.png" style="width:2.42em;height:1.17em;"/>。就解放军而言，它只是发现了一个错误，并就此进行了调整。对于多个类别，这是通过某种误差度量的梯度下降过程，而在线性回归中，这是通过使用MSE的直接梯度计算。但是现在，让我们更深入地研究其他类型的错误度量和成功，它们可以是定量的和定性的。</p>
+<h1 id="uuid-6785843d-4e3d-4c21-bf9f-c7d0c257cbc4" class="mce-root">衡量成功和错误</h1>
+<p>人们在深度学习模型中使用的性能指标有很多种，如准确性、平衡错误率、均方误差等。为了让事情有条理，我们将它们分成三组:用于二进制分类、用于多类和用于回归。</p>
+<h2 id="uuid-172a614b-974e-48a7-8d1f-350cefb102ce">二元分类</h2>
+<p>在分析和衡量我们模型的成功时，有一个必不可少的工具。它被称为<strong>c</strong>T6】融合矩阵。混淆矩阵不仅有助于直观地显示模型如何做出预测，而且我们还可以从中检索其他有趣的信息。下图显示了混淆矩阵的模板:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/e700456f-66b7-4e67-91cc-b5cfa91d005d.png" style="width:31.75em;height:17.42em;"/></p>
+<p>图4.5 -一个混淆矩阵和从它得到的性能度量</p>
+<p>混淆矩阵和从它得到的所有度量是传达你的模型有多好的一个非常重要的方式。你应该把这一页加入书签，需要的时候再回来看。</p>
+<p>在前面的混淆矩阵中，您会注意到它在纵轴上有两列表示真实目标值，而在横轴上则表示预测值。行和列的交叉点表示应该预测的内容与实际预测的内容之间的关系。矩阵中的每一项都有特殊的含义，并且可以产生其他有意义的综合绩效指标。</p>
+<p>以下是指标列表及其含义:</p>
+<table style="border-collapse: collapse;width: 100%" border="1">
+<tbody>
+<tr>
+<td>
+<p><strong>缩写</strong></p>
+</td>
+<td>
+<p><strong>描述</strong></p>
+</td>
+<td>
+<p><strong>释义</strong></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>东帝汶的网络域名代号</p>
+</td>
+<td>
+<p><em>真阳性</em></p>
+</td>
+<td>
+<p>这是当数据点属于正类并且被正确预测为正类时。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>长吨</p>
+</td>
+<td>
+<p><em>真否定</em></p>
+</td>
+<td>
+<p>这是当数据点属于负类并且被正确预测为负类时。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>冰点</p>
+</td>
+<td>
+<p><em>假阳性</em></p>
+</td>
+<td>
+<p>这是当数据点属于负类并且被错误地预测为正类时。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>【数学】函数</p>
+</td>
+<td>
+<p><em>假阴性</em></p>
+</td>
+<td>
+<p>这是当数据点属于正类并且被错误地预测为负类时。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>收视费</p>
+</td>
+<td>
+<p><em>阳性预测值</em>或<em>精度</em></p>
+</td>
+<td>
+<p>这是预测正确的正值在所有预测为正值的值中所占的比例。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>净现值</p>
+</td>
+<td>
+<p><em>阴性预测值</em></p>
+</td>
+<td>
+<p>这是预测正确的负值在所有预测为负值的值中所占的比例。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>FranklinDelanoRoosevelt富兰克林.德兰诺.罗斯福（美国第三十二任总统）</p>
+</td>
+<td>
+<p><em>误发现率</em></p>
+</td>
+<td>
+<p>这是在所有预测为正的值中，错误预测为假阳性的比例。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>为</p>
+</td>
+<td>
+<p><em>假漏检率</em></p>
+</td>
+<td>
+<p>这是所有预测为负的值中，错误预测为假阴性的比例。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>pulse</p>
+</td>
+<td>
+<p><em>真阳性率，</em>T35】灵敏度，<em>召回率</em>，<em>命中率</em></p>
+</td>
+<td>
+<p>这是所有应该是阳性的预测阳性中实际上是阳性的比例。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>定期用量法(Fixed Period Requirements)</p>
+</td>
+<td>
+<p><em>假阳性率</em>或<em>脱落</em></p>
+</td>
+<td>
+<p>这是所有应该是负面的预测中实际上是负面的比例。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>TNR</p>
+</td>
+<td>
+<p><em> <em>真阴性率</em> </em>，<em>特异性，</em>或<em>选择性</em></p>
+</td>
+<td>
+<p>这是所有应该是负面的预测中，实际上是负面的比例。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>FNR</p>
+</td>
+<td>
+<p><em> <em>假阴性率</em> </em> <em> </em>或<em>漏检率</em></p>
+</td>
+<td>
+<p>这是所有应该是正面的预测负面中实际上是正面的比例。</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>其中一些可能有点难以理解；然而，你不必现在就背下来，你可以随时回到这张桌子。</p>
+<p>还有其他一些计算起来有点复杂的指标，例如:</p>
+<table style="border-collapse: collapse;width: 100%" border="1">
+<tbody>
+<tr>
+<td>
+<p><strong>缩写</strong></p>
+</td>
+<td>
+<p><strong>描述</strong></p>
+</td>
+<td>
+<p><strong>释义</strong></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>(美)空中管制中心(Air Control Center)</p>
+</td>
+<td>
+<p><em>精度</em></p>
+</td>
+<td>
+<p>这是所有样本中正确预测阳性和阴性的比率。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em>F</em>T19】1</p>
+</td>
+<td>
+<p><em>F</em>T23】1T25】得分</p>
+</td>
+<td>
+<p>这是精度<em>和灵敏度</em>的平均值。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>玛丽勒本板球俱乐部</p>
+</td>
+<td>
+<p><em>马修斯相关系数</em></p>
+</td>
+<td>
+<p>这是期望类和预测类之间的相关性。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>比特误差率(bit erro rate)</p>
+</td>
+<td>
+<p><em>均衡错误率</em></p>
+</td>
+<td>
+<p>这是存在类别不平衡的情况下的平均错误率。</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p> </p>
+<p>在这个<em>复杂的</em> <em> </em>计算列表中，我加入了一些首字母缩写词，如<strong> ACC </strong>和<strong> BER </strong>，这些首字母缩写词有着非常直观的含义。然而，主要的问题是，当我们有多个类时，这些将会变化。因此，在多个类中，它们的计算会略有不同。其余的度量仍然是二元分类所独有的(如所定义的那样)。</p>
+<p>在我们讨论多个类的指标之前，下面是计算前面指标的公式:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/5276ec41-4004-4150-8622-dcf51e6d52c6.png" style="width:14.58em;height:1.83em;"/></p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/40867f27-e549-47ff-95e9-55fe50bf85ad.png" style="width:9.83em;height:2.17em;"/></p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/29c0a645-a95a-43e3-9a0a-6e7b4f2d3152.png" style="width:19.17em;height:2.25em;"/></p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/17310bd8-85d1-4b80-8976-ec16f0bdd58b.png" style="width:11.08em;height:2.08em;"/></p>
+<p>一般来说，你希望<strong> ACC </strong>、<strong> F <sub> 1 </sub> </strong>、<strong> MCC </strong>为高，<strong> BER </strong>为低。</p>
+<h2 id="uuid-d6ba982c-104e-44d9-963d-7f49e54062ae">多个类别</h2>
+<p>当我们超越简单的二元分类时，往往会处理多个类，比如<em> C </em> = {' <em>夏</em>'，'<em>秋</em>'，'<em>冬</em>'，'<em>春</em> '}或者<em> C </em> = {0，1，2，3}。这在一定程度上限制了我们衡量错误或成功的方式。</p>
+<p>考虑这里显示的多个类的混淆矩阵:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/8b825d44-a56e-451e-8e4f-213c04487453.png" style="width:27.33em;height:17.92em;"/></p>
+<p>图4.6 -多个类别的混淆矩阵</p>
+<p>从下图中可以明显看出，真正的正或负的概念已经消失，因为我们不再只有正类和负类，还有有限类的集合:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f9d6ecb6-50a5-4079-84ed-85028b1436ab.png" style="width:9.17em;height:1.25em;"/></p>
+<p>单个类，<img class="fm-editor-equation" src="img/16d50594-4373-4352-bfa9-e7c0c228c469.png" style="width:0.92em;height:0.92em;"/>，可以是字符串，也可以是数字，只要遵循集合的规则。也就是说，类的集合<img class="fm-editor-equation" src="img/35755034-de0c-4834-9eb3-e8d7445dc5dd.png" style="width:0.75em;height:0.92em;"/>必须是有限且唯一的。</p>
+<p>为了在这里测量ACC，我们将计算混淆矩阵主对角线中的所有元素，并将其除以样本总数:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/cb518092-12fe-4555-986f-95df3fd0102d.png" style="width:6.83em;height:2.33em;"/></p>
+<p>在该等式中，<img class="fm-editor-equation" src="img/7e28c26a-52a3-4d61-ba59-d9c1bd3b9356.png" style="width:1.08em;height:0.92em;"/>表示混淆矩阵，<img class="fm-editor-equation" src="img/130d0fd7-ce83-47e6-b8c3-df493c208c66.png" style="width:1.92em;height:1.08em;"/>表示跟踪操作；即一个方阵的主对角线上的元素之和。因此，总误差为<kbd>1-ACC</kbd>，但在类别不平衡的情况下，误差度量或简单的精度可能具有欺骗性。为此，我们必须使用BER度量，对于多个类别，它可以定义如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/e9878abc-5d61-4822-8244-c05f31a27b88.png" style="width:13.25em;height:3.33em;"/></p>
+<p>在这个新的BER公式中，<img class="fm-editor-equation" src="img/69426ee5-6e9a-46cf-a421-8d20e26857e7.png" style="width:1.50em;height:1.08em;"/>是指混淆矩阵<img class="fm-editor-equation" src="img/308bc727-30e0-4f7f-b86d-9ca99ac39cc7.png" style="width:1.42em;height:1.25em;"/>的第<em> j </em>行第<em> i </em>列的元素。</p>
+<p>一些机器学习学派使用混淆矩阵的行来表示真实标签，使用列来表示预测标签。分析背后的理论是一样的，解释也是一样的。不要担心<kbd>sklearn</kbd>使用翻转方法；这是不相关的，你不应该有任何问题，以下任何关于这一点的讨论。</p>
+<p>例如，考虑之前在<em>图4.1 </em>中显示的数据集。如果我们运行一个五层神经网络分类器，我们可以获得如下决策边界:</p>
+<div><img src="img/170655fa-57cc-4652-bd30-d34d624664c8.png" style="width:29.33em;height:21.17em;"/></div>
+<p>图4.7 -具有五层神经网络的二维样本数据集的分类区域</p>
+<p>显然，数据集不能被非线性超平面完全分离；每个类别都有一些跨越界限的数据点。在上图中，我们可以看到只有<em> Summer </em>类没有基于分类边界被错误分类的点。</p>
+<p>然而，如果我们实际计算并显示混淆矩阵，这一点会更加明显，如下所示:</p>
+<div><img src="img/dc71ff7b-05ae-410b-9ec5-b66bf34c08b0.png" style="width:22.92em;height:20.00em;"/></div>
+<p>图4.8 -从样本二维数据集的训练误差中获得的混淆矩阵</p>
+<p>在这种情况下，精度可以计算为ACC=(25+23+22+24)/100，得出ACC为0.94，看起来不错，错误率为1-ACC = 0.06。这个特殊的例子有轻微的阶级不平衡。以下是每个类别的示例:</p>
+<ul>
+<li>夏季:25</li>
+<li>秋季:25</li>
+<li>冬季:24</li>
+<li>春天:26</li>
+</ul>
+<p>冬季组的例子比其他组少，春季组的例子比其他组多。虽然这是一个非常小的类不平衡，但它足以产生一个令人迷惑的低错误率。我们现在必须计算平衡误码率BER。</p>
+<p>BER可以计算如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/585f5334-7957-47d0-b576-3aec44b83eac.png" style="width:15.92em;height:2.25em;"/></p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/366a761b-958b-4dea-bf40-3ca41bcaaa2a.png" style="width:28.58em;height:2.33em;"/></p>
+<p>这里，误码率和BER之间的差异是0.01%的误差低估。然而，对于高度不平衡的类别，差距可能会更大，我们有责任仔细测量并报告适当的误差度量BER。</p>
+<p>关于BER的另一个有趣的事实是，它直观上是平衡精度的对应物；这意味着，如果我们移除BER等式中的<kbd>1–</kbd>项，我们将获得平衡的精度。此外，如果我们检查分子中的项，我们可以看到它上面的分数导致特定于类的精度；例如，第一个类“夏季”的准确率为100%，第二个类“秋季”的准确率为92%，依此类推。</p>
+<p>在Python中，<kbd>sklearn</kbd>库有一个类，可以在给定真实和预测标签的情况下，自动确定混淆矩阵。这个类叫做<kbd>confusion_matrix</kbd>，它属于<kbd>metrics</kbd>超类，我们可以如下使用它:</p>
+<pre>from sklearn.metrics import confusion_matrix<br/>cm = confusion_matrix(y, y_pred)<br/>print(cm)</pre>
+<p>如果<kbd>y</kbd>包含真实标签，而<kbd>y_pred</kbd>包含预测标签，那么前面的指令将输出如下内容:</p>
+<pre>[[25 0 0 0]<br/> [ 0 23 1 1]<br/> [ 1 0 22 1]<br/> [ 0 1 1 24]]</pre>
+<p>我们可以通过简单地这样做来计算BER:</p>
+<pre>BER = []<br/>for i in range(len(cm)):<br/> BER.append(cm[i,i]/sum(cm[i,:]))<br/>print('BER:', 1 - sum(BER)/len(BER))</pre>
+<p>这将输出以下内容:</p>
+<pre>BER: 0.06006410256410266</pre>
+<p>或者，<kbd>sklearn</kbd>有一个内置函数来计算与混淆矩阵在同一个超类中的平衡准确度分数。该类被称为<kbd>balanced_accuracy_score</kbd>，我们可以通过执行以下操作来生成BER:</p>
+<pre>from sklearn.metrics import balanced_accuracy_score<br/>print('BER', 1- balanced_accuracy_score(y, y_pred))</pre>
+<p>我们得到以下输出:</p>
+<pre>BER: 0.06006410256410266</pre>
+<p>现在让我们讨论回归的度量标准。</p>
+<h2 id="uuid-3b2376a8-fd9d-4136-a613-91e920b9d98a">回归</h2>
+<p>最流行的度量是<strong> MSE </strong>，我们在本章前面解释线性回归如何工作时讨论过它。然而，我们将其解释为超参数选择的函数。这里，我们将在一般意义上对其重新定义如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ce4606dc-3c6f-42b1-9172-4094989cc388.png" style="width:11.58em;height:3.42em;"/></p>
+<p>另一个与MSE非常相似的度量是<strong>平均绝对误差</strong> ( <strong> MAE </strong>)。虽然MSE对大错误的惩罚更多(二次)，对小错误的惩罚更少，但MAE对所有错误的惩罚都与应该和预测之间的绝对差异成正比。这是MAE的正式定义:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/240ba3a7-8194-473f-9e0f-5bda05e4c582.png" style="width:11.17em;height:3.42em;"/></p>
+<p>最后，在回归的其他度量中，深度学习中流行的选择是<strong> <em> R </em> <sup> 2 </sup>得分</strong>，<strong> </strong>也称为<strong>决定系数</strong>。此度量表示方差的比例，由模型中的独立变量来解释。它衡量模型在与训练数据遵循相同统计分布的不可见数据上表现良好的可能性。这是它的定义:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/0f2c6d77-a573-4d0a-b3c6-b582c4f166c7.png" style="width:12.08em;height:3.33em;"/></p>
+<p>样本均值定义如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/7de549fd-f078-464a-904d-b20a8675fead.png" style="width:7.92em;height:4.25em;"/></p>
+<p>Scikit-learn为这些指标中的每一个都提供了类别，如下表所示:</p>
+<table style="border-collapse: collapse;width: 100%" border="1">
+<tbody>
+<tr>
+<td>
+<p><strong>回归指标</strong></p>
+</td>
+<td>
+<p><strong> Scikit-learn类</strong></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em>R</em>T12】2得分</p>
+</td>
+<td>
+<p><kbd>sklearn.metrics.r2_score</kbd></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>平均绝对误差</p>
+</td>
+<td>
+<p><kbd>sklearn.metrics.mean_absolute_error</kbd></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>均方误差(mean square error)</p>
+</td>
+<td>
+<p><kbd>sklearn.metrics.mean_squared_error</kbd></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p> </p>
+<p>所有这些类都将真实标签和预测标签作为输入参数。</p>
+<p>例如，如果我们将图4.3 和图4.4 所示的数据和线性回归模型作为输入，我们可以确定三个误差度量，如下所示:</p>
+<pre>from sklearn.metrics import mean_absolute_error<br/>from sklearn.metrics import mean_squared_error<br/>from sklearn.metrics import r2_score<br/><br/>r2 = r2_score(y,y_pred)<br/>mae = mean_absolute_error(y,y_pred)<br/>mse = mean_squared_error(y,y_pred)<br/><br/>print('R_2 score:', r2)<br/>print('MAE:', mae)<br/>print('MSE:', mse)</pre>
+<p>上述代码的输出如下:</p>
+<pre>R_2 score: 0.9350586211501963<br/>MAE: 0.1259473720654865<br/>MSE: 0.022262066145814736</pre>
+<p>下图显示了使用的样本数据以及获得的性能。显然，使用三个性能指标的性能是好的:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/d22cb47d-a379-462d-bf76-0acbf7ddda8e.png" style="width:27.83em;height:19.92em;"/></p>
+<p>图4.9 -受白噪声污染的数据的线性回归模型的误差度量</p>
+<p>一般来说，您总是希望有一个尽可能接近<kbd>1</kbd>的决定系数，并且您的所有误差(MSE和MAE)尽可能接近<kbd>0</kbd>。但是，尽管所有这些都是报告我们模型的好指标，我们需要小心地在<strong>看不见的验证</strong>或<strong>测试数据</strong>上报告这些指标。这是为了让我们准确地测量模型的泛化能力，并在过度拟合成为灾难性错误之前识别出模型中的过度拟合。</p>
+<h1 id="uuid-28ef3e02-df13-4220-9a04-77ae8feb3722" class="mce-root">识别过度拟合和泛化</h1>
+<p>通常，当我们处于受控的机器学习环境中时，我们会得到一个可以用于训练的数据集和一个可以用于测试的不同数据集。这个想法是，你只在<strong>训练</strong>数据上运行学习算法，但是当涉及到看你的模型有多好的时候，你把<strong>测试</strong>数据馈送给你的模型并观察输出。比赛和黑客马拉松通常会给出测试数据，但保留与之相关的标签，因为获胜者将根据模型在测试数据上的表现来选择，您不希望他们通过查看测试数据的标签并进行调整来作弊。如果是这种情况，我们可以使用一个<strong>验证</strong>数据集，我们可以通过分离一部分训练数据作为验证数据来自己创建这个数据集。</p>
+<p>拥有单独的数据集(即验证或测试数据集)的全部意义在于衡量这些数据的性能，因为我们知道我们的模型不是用这些数据训练的。一个模型在看不见的验证或测试数据上表现同样好或接近同样好的能力被称为<strong>泛化。</strong></p>
+<p>泛化是大多数学习算法的终极目标；我们所有的专业人员和深度学习的实践者都梦想在我们所有的模型中实现伟大的通用化。同样，我们最大的噩梦就是<strong>过拟合</strong>。</p>
+<p>过度拟合是泛化的反义词。当我们的模型在训练数据上表现得非常好，但在验证或测试数据面前，性能显著下降时，就会出现这种情况。这表明，我们的模型几乎记住了训练数据的复杂性，而错过了导致良好模型的样本空间的总体情况。</p>
+<p>在本章和后续章节中，我们将遵循以下关于数据拆分的规则:</p>
+<ul>
+<li>如果给我们测试数据(带标签)，我们将在训练集上训练，并根据测试集报告性能。</li>
+<li>如果我们没有测试数据(或者如果我们有没有标签的测试数据)，我们将分割训练集，创建一个验证集，我们可以使用交叉验证策略来报告性能。</li>
+</ul>
+<p>让我们分别讨论每个场景。</p>
+<h2 id="uuid-3d96340a-86b5-40b6-bc50-7e31cc589723">如果我们有测试数据</h2>
+<p>为了开始这个讨论，假设我们有一个深度学习模型，它有一组超参数，<img class="fm-editor-equation" src="img/fb401be2-c787-431a-ac8a-47d74004dcb3.png" style="width:0.58em;height:1.00em;"/>，这些参数可以是模型的权重、神经元的数量、层数、学习率、辍学率等等。然后，我们可以说，用训练数据<img class="fm-editor-equation" src="img/dff30c72-c9b3-4a6f-a20a-e3a3017c59e7.png" style="width:6.42em;height:1.42em;"/>训练的模型<img class="fm-editor-equation" src="img/d790c8ca-2267-4437-b9df-2eb6ca27611c.png" style="width:1.08em;height:0.92em;"/>(具有参数<img class="fm-editor-equation" src="img/cb15d854-ebcd-426f-9120-961cdcc51165.png" style="width:0.58em;height:1.00em;"/>)可以具有如下训练精度:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/43cdd752-074f-4433-a75a-6c958eb9dbda.png" style="width:9.67em;height:2.17em;"/></p>
+<p>这是已训练模型对训练数据的训练精度。因此，如果给我们带标签的测试数据<img class="fm-editor-equation" src="img/b2cc358b-36e4-4460-a96e-6f6234315997.png" style="width:6.92em;height:1.50em;"/>和<em> M个</em>数据点，我们可以通过计算如下简单地估计<strong>测试精度</strong>:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b3b5f613-b3a4-40fb-9e26-a7097dd0ea7b.png" style="width:10.08em;height:2.25em;"/></p>
+<p>报告测试精度时的一个重要属性通常适用于大多数情况——所有测试精度通常小于训练精度加上参数选择不当导致的一些噪声:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/1e080952-7eb2-4e89-9893-848d25b5e9ae.png" style="width:17.75em;height:1.33em;"/></p>
+<p>这通常意味着，如果您的测试精度明显大于您的训练精度，那么可能是训练好的模型有问题。此外，我们可以考虑这样一种可能性，即测试数据在其统计分布和描述它的多维流形方面与训练数据完全不同。</p>
+<p>总之，如果我们有正确选择的测试数据，报告测试集的性能是非常重要的。尽管如此，表现不如训练时是完全正常的。然而，如果它明显较低，可能存在过度拟合的问题，如果它明显较高，则可能存在代码、模型甚至测试数据选择的问题。过拟合问题可以通过选择更好的参数<img class="fm-editor-equation" src="img/cee96f36-9658-4621-9c99-9eadf7d7d500.png" style="width:0.50em;height:0.92em;"/>或选择不同的模型<img class="fm-editor-equation" src="img/d01418e4-a07a-41a4-83dd-3c65bde9d857.png" style="width:1.08em;height:0.92em;"/>来解决，这将在下一节讨论。</p>
+<p>现在，让我们简单讨论一个没有测试数据或者有没有标签的测试数据的情况。</p>
+<h2 id="uuid-ebf5b7e5-c399-43ee-8ac5-62c8f6f397f7">没有测试数据？没问题-交叉验证</h2>
+<p>交叉验证是一种技术，它允许我们将训练数据<img class="fm-editor-equation" src="img/dff30c72-c9b3-4a6f-a20a-e3a3017c59e7.png" style="width:6.75em;height:1.50em;"/>分成更小的组，用于训练目的。需要记住的最重要的一点是，理想情况下，拆分是由相同数量的样本组成的，我们希望轮换训练和验证集的组选择。</p>
+<p>让我们讨论一下著名的交叉验证策略，称为<strong><em>k</em>——折叠交叉验证</strong> (Kohavi，R. 1995)。这里的想法是将训练数据分成<em> k </em>组，这些组(理想情况下)一样大，然后选择<em> k </em> -1组来训练模型，并测量被遗漏的组的性能。然后，每次都要改变组，直到所有的组都被选中进行测试。</p>
+<p>在前面的章节中，我们讨论了使用标准精度ACC来测量性能，但是我们可以使用任何性能指标。为了说明这一点，我们现在将计算MSE。这就是<em> k </em>折叠交叉验证算法的样子:</p>
+<ol>
+<li>输入数据集、<img class="fm-editor-equation" src="img/e304304b-b22e-44a6-bb16-5f682710918c.png" style="width:0.75em;height:0.83em;"/>、模型、<img class="fm-editor-equation" src="img/17eb0626-a42f-4af0-a282-6e8b4763660f.png" style="width:0.83em;height:0.75em;"/>、参数、<img class="fm-editor-equation" src="img/37ac0424-1c5a-4d6a-9ce1-5e7a1eaff343.png" style="width:0.50em;height:0.92em;"/>和褶皱数、<img class="fm-editor-equation" src="img/1d85f939-85aa-4c66-8a53-c5451f35ba70.png" style="width:0.83em;height:0.75em;"/>。</li>
+<li>将索引集<img class="fm-editor-equation" src="img/7976dcab-c59d-4f7d-adc1-46aa541730e0.png" style="width:8.75em;height:1.17em;"/>分成<img class="fm-editor-equation" src="img/7853dbb6-4144-4bdc-b6e9-f536bad0862d.png" style="width:0.92em;height:0.83em;"/>组(理想情况下大小相等)<img class="fm-editor-equation" src="img/1dab9af3-28c9-4288-b612-2871cba7b80e.png" style="width:3.17em;height:1.17em;"/>，这样<img class="fm-editor-equation" src="img/09103fa9-8eb1-4d3c-bda9-34629dee8f42.png" style="width:10.25em;height:1.33em;"/>。</li>
+<li>对于<img src="img/3ae133ea-6268-4366-b1b1-8a00537970d7.png" style="width:7.42em;height:1.17em;"/>的每种情况，执行以下操作:</li>
+</ol>
+<ul>
+<li style="padding-left: 30px">选择训练的指标为<sub> <img class="fm-editor-equation" src="img/84dc0f45-f878-48b2-ade1-11e12122e33d.png" style="width:12.08em;height:1.08em;"/> </sub>，形成训练集<sub> <img class="fm-editor-equation" src="img/5bedbb94-b2d2-43fa-b526-2eda18f88551.png" style="width:6.42em;height:1.17em;"/> </sub>。</li>
+<li style="padding-left: 30px">选择验证的指标为<img class="fm-editor-equation" src="img/5e3df28e-3838-4ca1-b407-8f00962e9d85.png" style="width:4.92em;height:1.25em;"/>，形成验证集<img class="fm-editor-equation" src="img/107f4c15-a2f6-4f29-8a47-2393165addff.png" style="width:8.42em;height:1.58em;"/>。</li>
+<li style="padding-left: 30px">通过训练集选择参数来训练模型:<img class="fm-editor-equation" src="img/9b069e01-510c-4bad-b188-0df9797af76a.png" style="width:2.33em;height:0.92em;"/>。</li>
+<li style="padding-left: 30px">计算模型的误差，<sub> <img class="fm-editor-equation" src="img/40685b40-6076-4fba-b045-11a6d39face0.png" style="width:1.25em;height:1.08em;"/> </sub>，在验证集上:<sub> <img class="fm-editor-equation" src="img/cb27f873-4b41-48ee-b205-215589f73273.png" style="width:16.25em;height:3.00em;"/> </sub></li>
+</ul>
+<ol start="4">
+<li>对于<img class="fm-editor-equation" src="img/355f6774-f073-4a73-9a57-c7df89a2cbbe.png" style="width:8.08em;height:1.25em;"/>的所有情况，返回<img class="fm-editor-equation" src="img/c8557d04-4efd-4275-845a-ca9183a4be72.png" style="width:3.00em;height:1.17em;"/>。</li>
+</ol>
+<p class="mce-root">据此，我们可以通过下式计算交叉验证误差(MSE ):</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f2e94af6-ec29-4bc0-9c9c-8cb59ba9ed2e.png" style="width:11.00em;height:3.67em;"/></p>
+<p>我们还可以计算其相应的标准差:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/bba147e0-2d91-4e2c-bcb8-fb4db4c08f9a.png" style="width:16.42em;height:3.25em;"/>。</p>
+<p>不管选择什么，查看我们的性能指标的标准偏差通常是一个好主意，因为它给出了我们在验证集上的性能有多一致的想法。理想情况下，我们希望交叉验证的MSE为<kbd>0</kbd>、<img class="fm-editor-equation" src="img/5f2ba80e-d9bd-4d27-9965-a87fa2cb272a.png" style="width:3.75em;height:1.17em;"/>，标准差为<kbd>1</kbd>、<img class="fm-editor-equation" src="img/51bcebac-4507-44fd-bae4-111feca2dbd9.png" style="width:4.92em;height:1.17em;"/>。</p>
+<p>为了说明这一点，我们可以用被白噪声污染的样本数据的回归例子，如图<em>图4.3 </em>和<em>图4.4 </em>所示。为了使这个例子简单，我们将使用总共100个样本，<em> N </em> =100，我们将使用3个折叠。我们将在<kbd>model_selection</kbd>超类中使用scikit-learn的<kbd>KFold</kbd>类，我们将获得交叉验证的MSE及其标准偏差。</p>
+<p>要做到这一点，我们可以使用以下代码，并包括其他指标:</p>
+<pre>import numpy as np<br/>from sklearn.metrics import mean_absolute_error<br/>from sklearn.metrics import mean_squared_error<br/>from sklearn.metrics import r2_score<br/>from sklearn.model_selection import KFold<br/><br/># These will be used to save the performance at each split<br/>cv_r2 = []<br/>cv_mae = []<br/>cv_mse = []<br/><br/># Change this for more splits<br/>kf = KFold(n_splits=3)<br/>k = 0<br/><br/># Assuming we have pre-loaded training data X and targets y<br/>for S_D, S_V in kf.split(X):<br/>  X_train, X_test = X[S_D], X[S_V]<br/>  y_train, y_test = y[S_D], y[S_V]<br/><br/>  # Train your model here with X_train and y_train and...<br/>  # ... test your model on X_test saving the output on y_pred<br/><br/>  r2 = r2_score(y_test,y_pred)<br/>  mae = mean_absolute_error(y_test,y_pred)<br/>  mse = mean_squared_error(y_test,y_pred)<br/> <br/>  cv_r2.append(r2)<br/>  cv_mae.append(mae)<br/>  cv_mse.append(mse)<br/><br/>print("R_2: {0:.6}  Std: {1:0.5}".format(np.mean(cv_r2),np.std(cv_r2)))<br/>print("MAE: {0:.6}  Std: {1:0.5}".format(np.mean(cv_mae),np.std(cv_mae)))<br/>print("MSE: {0:.6}  Std: {1:0.5}".format(np.mean(cv_mse),np.std(cv_mse)))</pre>
+<p class="mce-root"/>
+<p>这段代码的结果将返回如下内容:</p>
+<pre>R_2: 0.935006  Std: 0.054835<br/>MAE: 0.106212  Std: 0.042851<br/>MSE: 0.0184534  Std: 0.014333</pre>
+<p>这些结果是交叉验证的，并给出了模型的泛化能力更清晰的图片。为了便于比较，请参见图4.9 中显示的结果。您将会注意到，在使用图4.9 中的整个数据集之前测量的性能与现在仅使用大约66%的数据(因为我们将其分成三组)进行训练和大约33%的数据进行测试之间的结果非常一致，如图所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/352f369c-e46e-403f-80db-daee8d4fc3d2.png" style="width:27.75em;height:19.33em;"/></p>
+<p>图4.10 -交叉验证的性能指标，标准偏差在括号中</p>
+<p>上图显示了每次数据分割的线性回归解以及真实的原始函数；您可以看到找到的解决方案相当接近真实模型，产生了良好的性能，如通过<strong> <em> R </em> <sup> 2 </sup> </strong>、<strong> MAE </strong>和<strong> MSE </strong>所测量的。</p>
+<div><strong>Exercise</strong><br/>
+Go ahead and change the number of folds, progressively increasing it, and document your observations. What happens to the cross-validated performances? Do they stay the same, increase, or decrease? What happens to the standard deviations of the cross-validated performances? Do they stay the same, increase, or decrease? What do you think this means?</div>
+<p>通常，交叉验证用于数据集<img class="fm-editor-equation" src="img/e304304b-b22e-44a6-bb16-5f682710918c.png" style="width:0.75em;height:0.83em;"/>，模型<img class="fm-editor-equation" src="img/17eb0626-a42f-4af0-a282-6e8b4763660f.png" style="width:0.92em;height:0.83em;"/>，参数<img class="fm-editor-equation" src="img/37ac0424-1c5a-4d6a-9ce1-5e7a1eaff343.png" style="width:0.50em;height:0.83em;"/>。然而，学习算法的最大挑战之一是找到能够产生最佳(测试或交叉验证)性能的最佳参数集<img class="fm-editor-equation" src="img/37ac0424-1c5a-4d6a-9ce1-5e7a1eaff343.png" style="width:0.50em;height:0.83em;"/>。许多机器学习科学家认为，选择一组参数可以通过一些算法自动完成，其他人认为这是一门艺术。</p>
+<h1 id="uuid-b1c1ea57-76a2-46e9-a1f7-edc9d25cd65b" class="mce-root">学习背后的艺术</h1>
+<p>对于我们这些花了几十年时间研究机器学习的人来说，经验决定了我们为学习算法选择参数的方式。但对于那些新手来说，这是一项需要发展的技能，这项技能是在学习算法如何工作之后产生的。一旦你读完这本书，我相信你会有足够的知识来明智地选择你的参数。同时，我们可以在这里讨论一些使用标准和新颖算法自动寻找参数的想法。</p>
+<p>在我们进一步讨论之前，我们需要在这一点上做出区分，并定义两组在学习算法中很重要的参数。这些措施如下:</p>
+<ul>
+<li><strong>模型参数:</strong>这些是表示模型所表示的解的参数。例如，在感知器和线性回归中，这将是向量<img class="fm-editor-equation" src="img/5c1ca364-6e24-407a-8b15-dd412d3dda71.png" style="width:1.08em;height:0.83em;"/> <strong> </strong>和标量<img class="fm-editor-equation" src="img/f8b8288d-5510-4840-9753-7b375f040e5a.png" style="width:0.50em;height:1.00em;"/>，而对于深度神经网络，这将是权重矩阵<img class="fm-editor-equation" src="img/74c8f74e-3b92-4f54-b1c7-85e2dcc4318e.png" style="width:1.08em;height:0.75em;"/>和偏差向量<img class="fm-editor-equation" src="img/9fe4b0b9-c94e-4df7-bb9b-9efa507ee211.png" style="width:0.67em;height:0.92em;"/>。对于卷积网络，这将是滤波器组。</li>
+<li><strong>超参数:</strong>这些是模型所需要的参数，用来指导学习过程寻找解(模型参数)，通常表示为<img class="fm-editor-equation" src="img/37ac0424-1c5a-4d6a-9ce1-5e7a1eaff343.png" style="width:0.58em;height:1.00em;"/>。例如，在PLA中，超参数是迭代的最大次数；在深度神经网络中，它是层的数量、神经元的数量、神经元的激活函数和学习速率；对于一个<strong>卷积神经网络</strong> ( <strong> CNN </strong>)，它将是过滤器的数量、过滤器的大小、步幅、池大小等等。</li>
+</ul>
+<p>换句话说，模型参数部分由超参数的选择决定。通常，除非存在数值异常，否则所有的学习算法都会一致地找到同一组超参数的解(模型参数)。因此，学习时的主要任务之一是找到最佳超参数集，这将为我们提供最佳解决方案。</p>
+<p>为了观察改变模型的超参数的影响，让我们再次考虑季节的四级分类问题，如前面的<em>图4.7 </em>所示。我们将假设我们使用的是全连接网络，比如第一章<a href="e3181710-1bb7-4069-825a-a235355bc116.xhtml"><em/></a>、<em>机器学习简介</em>中描述的网络，我们要确定的超参数是最佳层数。出于教学目的，假设每一层中的神经元数量将在每一层中呈指数增长，如下所示:</p>
+<table style="border-collapse: collapse;width: 100%" border="1">
+<tbody>
+<tr>
+<td>
+<p><strong>层</strong></p>
+</td>
+<td>
+<p><strong>每层神经元</strong></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>一</p>
+</td>
+<td>
+<p>(8)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>2</p>
+</td>
+<td>
+<p>(16, 8)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>3</p>
+</td>
+<td>
+<p>(32, 16, 8)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>四</p>
+</td>
+<td>
+<p>(64, 32, 16, 8)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>5</p>
+</td>
+<td>
+<p>(128, 64, 32, 16, 8)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>6</p>
+</td>
+<td>
+<p>(256, 128, 64, 32, 16, 8)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>七</p>
+</td>
+<td>
+<p>(512, 256, 128, 64, 32, 16, 8)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p> </p>
+<p>在前面的配置中，括号中的第一个数字对应于最靠近输入层的神经元的数量，而括号中的最后一个数字对应于最靠近输出层的神经元的数量(由4个神经元组成，每类一个)。</p>
+<p>所以，在这个例子中，层数代表<img class="fm-editor-equation" src="img/37ac0424-1c5a-4d6a-9ce1-5e7a1eaff343.png" style="width:0.58em;height:1.00em;"/>。如果我们遍历每个配置并确定交叉验证的BER，我们就可以确定哪种架构产生最佳性能；也就是说，我们正在优化<img class="fm-editor-equation" src="img/37ac0424-1c5a-4d6a-9ce1-5e7a1eaff343.png" style="width:0.58em;height:1.00em;"/>的性能。获得的结果将如下所示:</p>
+<table style="border-collapse: collapse;width: 100%" border="1">
+<tbody>
+<tr>
+<td>
+<p><strong>图层—<sub><img src="img/37ac0424-1c5a-4d6a-9ce1-5e7a1eaff343.png" style="width:0.75em;height:1.33em;"/></sub></strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p><strong> 1 </strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p><strong> 2 </strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p><strong> 3 </strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p><strong> 4 </strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p><strong> 5 </strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p><strong> 6 </strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p><strong> 7 </strong></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong> BER </strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.275</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.104</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.100</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.096</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.067</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.079</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.088</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong>标准偏差</strong></p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.22</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.10</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.08</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.10</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.05</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.04</p>
+</td>
+<td class="CDPAlignCenter CDPAlign">
+<p>0.08</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p> </p>
+<p>从结果中，我们可以很容易地确定最佳架构是五层架构，因为它具有最低的BER和第二小的标准偏差。事实上，我们可以收集每种配置在每次分割时的所有数据，并生成如下所示的箱线图:</p>
+<div><img src="img/3c159f1a-3d99-48ee-8517-ac6a33da553e.png" style="width:32.83em;height:23.25em;"/></div>
+<p>图4.11 -优化层数的交叉验证数据的箱线图</p>
+<p>这个方框图说明了几个要点。首先，当层数增加到<kbd>5</kbd>时，模型具有降低BER的明显趋势，然后增加。这在机器学习中非常常见，它被称为<strong>过拟合曲线</strong>，通常是一个<em> u </em>形状(或<em> n </em>形状，对于更高值上更好的性能指标)。在这种情况下，最低点将指示最佳超参数集(在<kbd>5</kbd>)；左边的任何东西代表<strong>欠配合</strong>，右边的任何东西代表<strong>过配合</strong>。箱线图显示的第二件事是，即使几个模型具有相似的BER，我们也会选择可变性更小、一致性最强的模型。</p>
+<p>为了说明欠拟合、良好拟合和过拟合之间的区别，我们将展示由最差欠拟合、最佳拟合和最差过拟合产生的决策边界。在这种情况下，最差的欠拟合是一层，最佳拟合是五层，最差的过拟合是七层。它们各自的决策边界分别如图<em>图4.12 </em>、<em>图4.13 </em>和<em>图4.14 </em>所示:</p>
+<div><img src="img/7e730ac9-4d3a-4868-9313-a783b113408f.png" style="width:23.25em;height:16.75em;"/></div>
+<p>图4.12 -欠拟合的单隐层网络的分类边界</p>
+<p>在上图中，我们可以看到，由于存在阻止许多数据点被正确分类的决策边界，因此下拟合是明显的:</p>
+<div><img src="img/5e2f7982-3a60-4d8d-941a-0dc2d14e0b42.png" style="width:23.83em;height:17.17em;"/></div>
+<p>图4.13 -具有相对较好拟合的五隐层网络的分类边界</p>
+<p>类似地，上图显示了决策边界，但与<em>图4.12 </em>相比，这些边界似乎为不同组提供了更好的数据点分离——非常合适:</p>
+<div><img src="img/60fedb99-d5fc-4dfb-b89c-53f1318e7d43.png" style="width:25.92em;height:18.67em;"/></div>
+<p>图4.14 -过度拟合的七隐层网络的分类边界</p>
+<p>如果你仔细观察，<em>图4.12 </em>显示一些区域被指定得很差，而在<em>图4.14 </em>中，网络架构试图<em>过于努力</em>来完美地对所有示例进行分类，以至于<em> Fall </em>类中的异常值(黄色点)进入<em> Winter </em>类的区域(蓝色点)中，有其自己的小区域，这可能会产生负面影响在大多数情况下，图4.13 中的类对于一些异常值似乎是健壮的，并且具有定义良好的区域。</p>
+<p>随着本书的进展，我们将处理更复杂的超参数集。这里我们只处理了一个，但是理论是一样的。这种寻找最佳超参数集的方法被称为穷举搜索。然而，还有其他查看参数的方法，例如执行<strong>网格搜索。</strong></p>
+<p>假设你没有固定的方法知道每一层中神经元的数量(与前面的例子相反)；你只知道你希望在<kbd>4</kbd>和<kbd>1024</kbd>神经元之间有一些东西，在<kbd>1</kbd>和<kbd>100</kbd>层之间有一些东西，以允许深度或浅度模型。在这种情况下，您无法进行彻底的搜索；那会花太多时间！在这里，网格搜索<strong> </strong>被用作一种解决方案，它将在通常等间距的区域中对搜索空间进行采样。</p>
+<p>例如，网格搜索可以在10个等距值上查看<kbd>[4, 1024]</kbd>范围内的多个神经元— <kbd>4</kbd>、<kbd>117</kbd>、<kbd>230</kbd>、<kbd>344</kbd>、<kbd>457</kbd>、<kbd>570</kbd>、<kbd>684</kbd>、<kbd>797</kbd>、<kbd>910</kbd>和<kbd>1024</kbd>—以及在10个等距值上查看<kbd>[1,100]</kbd>范围内的层数— <kbd>1</kbd>、<kbd>12</kbd>、<kbd>23</kbd>、<kbd>34</kbd>、<kbd>45</kbd>、<kbd>56</kbd>、<kbd>56</kbd>它不是查看1020*100=102，000个搜索，而是查看10*10=100个搜索。</p>
+<p>在<kbd>sklearn</kbd>中，有一个类<kbd>GridSearchCV</kbd>，可以返回交叉验证中的最佳模型和超参数；它是<kbd>model_selection</kbd>超类的一部分。同一个类组还有另一个类，叫做<kbd>RandomizedSearchCV</kbd>，包含了一个基于随机搜索空间的方法论。这叫做<strong>随机搜索。</strong></p>
+<p>在<strong>随机搜索</strong>中，前提是它将分别在<kbd>[4, 1024]</kbd>范围和<kbd>[1,100]</kbd>范围内寻找神经元和层，通过均匀随机抽取数字，直到达到总迭代次数的最大限度。</p>
+<p>通常，如果你知道参数搜索空间的范围和分布，在你认为可能有更好的交叉验证性能的空间上尝试<strong>网格搜索</strong>方法。然而，如果你对参数搜索空间知之甚少或一无所知，使用<strong>随机搜索</strong>方法。实际上，这两种方法都很有效。</p>
+<p>还有其他更复杂的方法也能很好地工作，但是它们在Python中的实现还不是标准的，所以我们在这里不详细讨论它们。但是，你应该了解他们:</p>
+<ul>
+<li>贝叶斯超参数优化(福雷尔等人，2015年)</li>
+<li>基于进化论的超参数优化(Loshchilov等人，2016年)</li>
+<li>基于梯度的超参数优化(Maclaurin，d .等人，2015年)</li>
+<li>基于最小二乘法的超参数优化(Rivas-Perea，p .等人，2014年)</li>
+</ul>
+<h1 id="uuid-d6b4a3af-b9bf-4355-83dc-96dce3e5ece9" class="mce-root">训练深度学习算法的伦理含义</h1>
+<p>关于训练深度学习模型的伦理含义，有几件事可以说。每当你处理代表人类感知的数据时，都有潜在的危害。此外，在创建一个基于这些数据进行归纳的模型之前，必须严格保护和仔细检查关于人类和人类互动的数据。这些想法被组织在下面的章节中。</p>
+<h2 id="uuid-d64cd6b1-8c10-47ca-9c7f-1fe84c7ad5ec">使用适当的绩效指标进行报告</h2>
+<p>通过选择一个让你的模型看起来不错的性能指标来避免假装良好的性能。阅读多类分类模型的文章和报告并不罕见，这些模型是在清晰的、类不平衡的数据集上训练的，但报告了标准的准确性。最有可能的是，这些模型将报告高标准的准确性，因为模型将偏向于过采样类，而不是欠采样组。因此，这些类型的模型必须报告平衡的精度或平衡的误差率。</p>
+<p>类似地，对于其他类型的分类和回归问题，您必须报告适当的性能指标。如果有疑问，尽可能多地报告绩效指标。没有人抱怨过有人使用太多的指标来报告模型性能。</p>
+<p>不报告适当的度量标准的后果包括:有偏见的模型未被发现，并被部署到生产系统中，带来灾难性的后果；有误导性的信息，可能不利于我们对特定问题以及模型如何执行的理解。我们必须记住，我们的所作所为可能会影响他人，我们需要保持警惕。</p>
+<h2 id="uuid-ac89ff66-83e1-43e0-8cb9-2bf523be7273">小心离群值并验证它们</h2>
+<p>在学习过程中，离群值通常被认为是不好的事情，我同意这一点。模型应该对异常值具有鲁棒性，除非它们不是真正的异常值。如果我们有一些数据，但我们对此一无所知，将异常值解释为异常值是一个安全的假设。</p>
+<p>然而，如果我们知道关于数据的任何事情(因为我们收集了它，得到了关于它的所有信息，或者知道产生它的传感器)，那么我们可以验证异常值确实是异常值。我们必须验证它们是输入数据时人为错误的产物，还是由有故障的传感器、数据转换错误或一些其他人为因素产生的，因为如果异常值不是这些原因的产物，我们就没有合理的基础来假设它是异常值。事实上，像这样的数据为我们提供了关于可能不会经常发生但最终会再次发生的情况的重要信息，模型需要做出正确的响应。</p>
+<p>考虑下图中显示的数据。如果我们在没有验证的情况下武断地决定忽略异常值(例如在上面的图中)，可能它们实际上并不是真正的异常值，模型将创建一个忽略异常值的狭窄决策空间。在本例中，结果是一个点将被错误地分类为属于另一个组，而另一个点可能会被排除在多数组之外:</p>
+<div><img src="img/ad524a4e-52df-40bc-a71f-6c80e34dd76c.png"/></div>
+<p>图4.15 -我的模型的学习空间的差异。上图显示了忽略异常值的结果。下图显示了包含异常值的结果</p>
+<p>但是，如果我们验证数据并发现异常值是完全有效的输入，模型可能会学习到一个可能包含异常值的更好的决策空间。尽管如此，这可能产生第二个问题，即一个点被分类为属于两个具有不同隶属度的不同组。虽然这是一个问题，但这比错误分类要小得多。比如说，一个点最好有60%的把握属于一个类，40%的把握属于另一个类，而不是100%的把握错误地分类。</p>
+<p>如果你想一想，通过忽略异常值而构建的模型，然后部署到政府系统中，可能会导致歧视问题。他们可能对少数群体或受保护的人口群体有偏见。如果部署到新入学的学生选拔中，它可能会导致优秀学生被拒绝。如果部署到DNA分类系统中，它可能会错误地忽略两个非常接近的DNA组的相似性。因此，如果可以的话，总是要验证异常值。</p>
+<h2 id="uuid-b0096942-3272-4d93-b4a8-0f4545bdd25f">具有欠采样组的权重类</h2>
+<p>如果你有一个类不平衡，如图4.15中的<em/>，我建议你通过获取更多的数据而不是减少数据来平衡类。如果这不是一个选项，研究允许你不同地加权一些类的算法，以便平衡不平衡。以下是一些最常见的技术:</p>
+<ul>
+<li>在小数据集上，使用<kbd>sklearn</kbd>和<kbd>class_weight</kbd>选项。当训练一个模型时，它根据为该类提供的权重惩罚错误。有几个你可以研究的自动替代品也会有帮助，比如<kbd>class_weight="auto"</kbd>和<kbd>class_weight="balanced"</kbd>。</li>
+<li>在使用批量训练的大型数据集上，使用Keras和<kbd>BalancedBatchGenerator</kbd>类。这将准备每次都一致平衡的样本(批次)的选择，从而指导学习算法平等地考虑所有组。该类是<kbd>imblearn.keras</kbd>的一部分。</li>
+</ul>
+<p>每当你想拥有一个不偏向多数群体的模型时，你都应该尝试使用这些策略。这一点的伦理含义类似于前面已经提到的要点。但最重要的是，我们必须保护生命，尊重他人；所有人都有平等的、无限的价值。</p>
+<h1 id="uuid-668f5ff7-b5c6-40a6-8003-71f12dc436c4">摘要</h1>
+<p>在这基础的一章中，我们讨论了学习算法的基础和它们的目的。然后，我们研究了通过使用精确度、误差和其他统计设备的性能分析来衡量成功和失败的最基本的方法。我们还研究了过度拟合的问题以及与之相对应的泛化的超级重要的概念。然后，我们讨论了正确选择超参数和自动搜索策略背后的艺术。</p>
+<p>阅读本章后，您现在能够解释分类和回归之间的技术差异，以及如何根据不同的任务计算不同的性能指标，如ACC、BER、MSE等。现在，您可以通过使用交叉验证策略下的训练、验证和测试数据集来检测过度拟合，您可以试验并观察改变学习模型的超参数的效果。你也准备好批判性地思考防止深度学习算法对人类造成伤害所必需的预防措施和设备。</p>
+<p>接下来的章节是<a href="4e4b45a6-1924-4918-b2cd-81f0448fb213.xhtml"> <em>第五章</em> </a>，<em>训练单个神经元，</em>对神经元的概念进行了修正和扩展，在<a href="e3181710-1bb7-4069-825a-a235355bc116.xhtml"> <em>第一章</em> </a>，<em>机器学习简介</em>中有介绍，并展示了其在Python中的实现，使用不同的数据集来分析不同数据的潜在影响；即线性和非线性可分离数据。然而，在我们去那里之前，请试着用下面的问题来测验你自己。</p>
+<h1 id="uuid-5fe6cc9b-fdcd-4e04-998c-7d2e12551b24">问题和答案</h1>
+<ol>
+<li class="mce-root">当你做交叉验证练习时，标准差发生了什么变化，这意味着什么？</li>
+</ol>
+<p style="padding-left: 60px" class="mce-root">标准偏差在更多的折叠中稳定并减少。这意味着性能测量更加可靠；它是泛化或过度拟合的精确度量。</p>
+<ol start="2">
+<li class="mce-root"><strong>超参数和模型参数有什么区别？</strong></li>
+</ol>
+<p style="padding-left: 60px" class="mce-root">模型参数是学习算法的数值解；超参数是模型需要知道的，以便有效地找到解决方案。</p>
+<ol start="3">
+<li class="mce-root"><strong>网格搜索比随机搜索超参数快吗？</strong></li>
+</ol>
+<p style="padding-left: 60px" class="mce-root">看情况。如果超参数的选择影响了学习算法的计算复杂度，那么两者可能表现不同。然而，在相似的搜索空间和分摊的情况下，两者应该在大约相同的时间结束。</p>
+<ol start="4">
+<li class="mce-root">对于分类问题，我可以使用基于回归的学习算法吗？</li>
+</ol>
+<p style="padding-left: 60px" class="mce-root">可以，只要标签、类别或组被映射到实数集合中的一个数字。</p>
+<ol start="5">
+<li class="mce-root">我可以对回归问题使用基于分类的学习算法吗？</li>
+</ol>
+<p style="padding-left: 60px" class="mce-root">号码</p>
+<ol start="6">
+<li><strong>损失函数的概念与误差指标相同吗？</strong></li>
+</ol>
+<p style="padding-left: 60px">是和不是。是的，在某种意义上，损失函数将衡量性能；然而，性能不一定与分类或回归数据的准确性有关；它可能与其他东西有关，例如信息理论空间中的群体质量或距离。例如，线性回归基于MSE算法作为最小化的损失函数，而K-means算法的损失函数是数据到其均值的平方距离之和，其目的是最小化，但这并不一定意味着它是错误的。在后一种情况下，它被认为是一种集群质量度量。</p>
+<h1 id="uuid-0d869d63-5d22-4a9b-832f-8a513fff7bd3">参考</h1>
+<ul>
+<li>Lorena，A. C .，De Carvalho，A. C .，&amp; Gama，J. M. (2008)，多类问题中二元分类器的组合综述，<em>人工智能评论</em>，30(1-4)，19</li>
+<li>Hochreiter，s .，Younger，A. S .，&amp; Conwell，P. R. (2001年8月)，使用梯度下降学习，载于<em>人工神经网络国际会议</em>(第87-94页)，施普林格:柏林，海德堡</li>
+<li>Ruder，S. (2016)，梯度下降优化算法综述，<em> arXiv </em> <em>预印本</em> arXiv:1609.04747</li>
+<li>谭，陈，张，杨，唐，邵，吴，庄，杨(2012，10)，Logistic张量回归分类，载于<em>智能科学与智能数据工程国际会议</em>(第573-581页)，施普林格:柏林，海德堡</li>
+<li>Krejn，S. G. E. (1982)，<em>Banach空间中的线性方程，</em>birkhuser:Boston</li>
+<li>Golub，g .，&amp; Kahan，W. (1965)，计算矩阵的奇异值和伪逆，<em>工业和应用数学学会杂志</em>，系列B:数值分析，2(2)，(第205-224页)</li>
+<li>Kohavi，R. (1995年8月)，精确度估计和模型选择的交叉验证和引导研究，载于<em> IJCAI </em>，14(2)，(第1137-1145页)</li>
+<li>Bergstra，J. S .，Bardenet，r .，Bengio，y .，&amp; Kégl，B. (2011)，超参数优化算法，载于<em>神经信息处理系统进展，</em>(第2546-2554页)</li>
+<li>福雷尔，m .，斯普林根伯格，J. T .，，胡特，F. (2015年2月)，通过元学习初始化贝叶斯超参数优化，在<em>第二十九届AAAI人工智能会议</em></li>
+</ul>
+<ul>
+<li>Loshchilov，I .，&amp; Hutter，F. (2016)，深度神经网络超参数优化的CMA-ES，<em> arXiv预印本</em> arXiv:1604.07269</li>
+<li>Maclaurin，d .、Duvenaud .和Adams，R. (2015年6月)，通过可逆学习进行基于梯度的超参数优化，载于<em>机器学习国际会议</em>(第2113-2122页)</li>
+<li>Rivas-Perea，p .，Cota-Ruiz，j .，&amp; Rosiles，J. G. (2014)，LP-SVR超参数选择的非线性最小二乘拟牛顿策略，<em>国际机器学习和控制论杂志</em>，5(4)，(第579-597页)</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

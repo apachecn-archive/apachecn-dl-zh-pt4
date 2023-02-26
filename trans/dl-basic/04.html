@@ -1,0 +1,773 @@
+<html><head/><body>
+
+
+	
+		<title>Chapter_3_SMP_ePub</title>
+		
+	
+	
+		<div><div/>
+		</div>
+		<div><h1 id="_idParaDest-61"><a id="_idTextAnchor062"/> 3。神经网络</h1>
+		</div>
+		<div><p>上一章我们学习了感知机，有好消息也有坏消息。好消息是，感知器很可能代表复杂的功能。例如，感知器可以(理论上)表示由计算机执行的复杂过程，如前一章所述。坏消息是，为了满足预期的输入和输出，在确定适当的权重之前，必须首先手动定义权重。在前一章中，我们使用了带有AND和OR门的真值表来手动确定适当的权重。</p>
+			<p>神经网络的存在是为了解决坏消息。更具体地说，神经网络的一个重要特性是它可以从数据中自动学习适当的权重参数。这一章提供了神经网络的概述，并重点介绍了它们的区别。下一章将描述它如何从数据中学习权重参数。</p>
+			<h2 id="_idParaDest-62"><a id="_idTextAnchor063"/>从感知机到神经网络</h2>
+			<p>神经网络在许多方面与前一章描述的感知器相似。神经网络如何工作，以及它如何不同于感知器，将在这一节中描述。</p>
+			<h3 id="_idParaDest-63"><a id="_idTextAnchor064"/>神经网络示例</h3>
+			<p><em class="italics">图3.1 </em>显示了一个神经网络示例。这里，左列称为<strong class="bold">输入层</strong>，右列称为<strong class="bold">输出层</strong>，中间列称为<strong class="bold">中间层</strong>。中间层也称为隐藏层。“隐藏”是指隐藏层中的神经元是不可见的(不像输入和输出层中的神经元)。在本书中，我们将从输入层到输出层将这些层称为第0层、第1层和第2层(层编号从第0层开始，因为当这些层稍后在Python中实现时这样做很方便)。在<em class="italics">图3.1 </em>中，0层是输入层，1层是中间层，2层是输出层:</p>
+			<div><div><img src="img/fig03_1.jpg" alt="Figure 3.1: Neural network example&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.1:神经网络示例</h6>
+			<h4>注意</h4>
+			<p class="callout">虽然<em class="italics">图3.1 </em>中的网络由三层组成，但我们称之为“两层网络”，因为它有两层带权。有些书根据构成网络的层数将其称为“三层网络”，但在本书中，网络名称是根据具有权重的层数(即输入层、隐藏层和输出层的总数减1)。</p>
+			<p><em class="italics">图3.1 </em>中的神经网络在形状上与上一章的感知器相似。其实就神经元如何连接而言，和我们上一章看到的感知器没什么区别。那么，信号是如何在神经网络中传递的呢？</p>
+			<h3 id="_idParaDest-64"><a id="_idTextAnchor065"/>回顾感知器</h3>
+			<p>要回答这个问题，我们首先需要回顾一下感知器。考虑一个具有以下结构的网络:</p>
+			<div><div><img src="img/fig03_2.jpg" alt="Figure 3.2: Reviewing the perceptron&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.2:检查感知器</h6>
+			<p><em class="italics">图3.2 </em>显示了接收两个输入信号(x1和x2)并输出y的感知器。如前所述，<em class="italics">图3.2 </em>中的感知器由等式(3.1)表示:</p>
+			<table id="table001-1" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_3.2a.png" alt="4"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(3.1)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>这里，b是一个称为“偏差”的参数，它控制着神经元放电的难易程度。同时，w1和w2是指示各个信号的“权重”以控制其重要性的参数。</p>
+			<p>你可能注意到了<em class="italics">图3.2 </em>中的网络是没有偏置的，b .我们可以指明<em class="italics">图3.3 </em>中所示的偏置，如果我们愿意的话。在<em class="italics">图3.3 </em>中增加了重量b和输入1的信号。这个感知器接收三个信号(x1、x2和1)作为神经元的输入，并在将信号传输到下一个神经元之前，将信号乘以每个权重。下一个神经元对加权信号求和，如果和超过0，则输出1。如果没有，它输出0。下图中的神经元以纯灰色显示，以区别于其他神经元。这是因为偏置的输入信号总是1:</p>
+			<div><div><img src="img/fig03_3.jpg" alt="Figure 3.3: Showing the bias explicitly&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.3:明确显示偏差</h6>
+			<p>现在，我们想简化方程(3.1)。为此，我们使用单个函数来表示条件，其中如果总和超过0，则<code>1</code>是输出，如果总和不超过0，则0是输出。这里，我们将引入一个新函数，<em class="italics"> h </em> ( <em class="italics"> x </em>)，并将方程式(3.1)改写为方程式(3.2)和(3.3)，如下所示:</p>
+			<table id="table002-1" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_3.3a.png" alt="5"/></div>T42】</div></td>
+						<td class="No-Table-Style">
+							<p>(3.2)</p>
+						</td>
+					</tr>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div>T44<img src="img/Figure_3.3b.png" alt="5a"/>T46】T47】</div></td>
+						<td class="No-Table-Style">
+							<p>(3.3)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>等式(3.2)表示<em class="italics"> h </em> ( <em class="italics"> x </em>)函数将输入信号之和转换为输出y。等式(3.3)表示的<em class="italics"> h </em> ( <em class="italics"> x </em>)函数如果输入超过0则返回1，否则返回0。因此，等式(3.2)和(3.3)的运算方式与等式(3.1)相同。</p>
+			<h3 id="_idParaDest-65"><a id="_idTextAnchor066"/>引入激活功能</h3>
+			<p>这里出现的<em class="italics"> h </em> ( <em class="italics"> x </em>)函数一般称为<strong class="bold">激活函数</strong>。它将输入信号的总和转换成输出信号。顾名思义，激活函数决定了输入信号的和如何激活(即如何触发)。</p>
+			<p>现在，我们可以再次重写等式(3.2)。等式(3.2)执行两个过程:加权的输入信号被求和，并且该和被激活函数转换。因此，可以将方程(3.2)分成以下两个方程:</p>
+			<table id="table003-1" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_3.3c.png" alt="7"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(3.4)</p>
+						</td>
+					</tr>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_3.3d.png" alt="8"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(3.5)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>在等式(3.4)中，加权输入信号和偏置之和成为a，在等式(3.5)中，a由<em class="italics"> h() </em>转换，输出<em class="italics"> y </em>。</p>
+			<p>到目前为止，一个神经元显示为一个圆圈。图3.4 明确显示了方程式(3.4)和(3.5):</p>
+			<div><div><img src="img/fig03_4.jpg" alt="Figure 3.4: Showing the process performed by the activation function explicitly&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.4:显示了激活函数执行的过程</h6>
+			<p><em class="italics">图3.4 </em>明确显示了神经元循环中激活功能所执行的过程。我们可以清楚地看到，加权信号之和成为节点<em class="italics"> a </em>，并通过激活函数<em class="italics"> h </em>()转换为节点<em class="italics"> y </em>。在本书中，术语“神经元”和“结”可以互换使用。在这里，圆<em class="italics"> a </em>和<em class="italics"> y </em>被称为“节点”，其用法与之前使用的“神经元”相同。</p>
+			<p>我们将继续把一个神经元显示为一个圆圈，如<em class="italics">图3.5 </em>左侧所示。在本书中，我们还将展示激活过程(在<em class="italics">图3.5 </em>的右边)，如果神经网络的行为可以被阐明的话:</p>
+			<div><div><img src="img/fig03_5.jpg" alt="Figure 3.5: The left-hand image is an ordinary image that shows a neuron, while the right-hand image explicitly shows the process of activation in a neuron (a is the sum of input signals, h() is the activation function, and y is the output)&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.5:左边的图像是显示一个神经元的普通图像，而右边的图像明确地显示了一个神经元中激活的过程(a是输入信号的总和，h()是激活函数，y是输出)</h6>
+			<p>现在，让我们关注激活函数，它是从感知器到神经网络的桥梁。</p>
+			<h4>注意</h4>
+			<p class="callout">在本书中，“感知器”这个词所表示的算法并没有严格定义。通常，“简单感知器”是单层网络，其中在阈值处改变输出值的阶跃函数被用作激活函数。“多层感知器”通常是指包含多层并使用平滑激活函数(如sigmoid函数)的神经网络。</p>
+			<h2 id="_idParaDest-66"><a id="_idTextAnchor067"/>激活功能</h2>
+			<p>由等式(3.3)表示的激活函数在阈值处改变输出值，并且被称为“阶梯函数”或“阶梯函数”因此，我们可以说，“一个感知器使用一个阶跃函数作为激活函数。”换句话说，感知器从许多候选函数中选择一个“阶跃函数”作为激活函数。当感知器使用阶跃函数作为激活函数时，如果使用阶跃函数以外的函数作为激活函数会发生什么？嗯，通过将激活函数从阶跃函数改为另一个函数，我们可以进入神经网络的世界。下一节将介绍神经网络的激活函数。</p>
+			<h3 id="_idParaDest-67"><a id="_idTextAnchor068"/>乙状结肠功能</h3>
+			<p>神经网络中常用的激活函数之一是<strong class="bold"> sigmoid函数</strong>，由等式(3.6)表示:</p>
+			<table id="table004" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div>T52<img src="img/Figure_3.5a.png" alt="9"/>T54】T55】</div></td>
+						<td class="No-Table-Style">
+							<p>(3.6)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>方程式(3.6)中的exp(- <em class="italics"> x </em>)表示<em class="italics"> e </em> -x，实数<em class="italics"> e </em>是纳皮尔数，2.7182...等式(3.6)表示的sigmoid函数看似复杂，但它只是一个“函数”函数是在提供输入时返回输出的转换器。例如，当向sigmoid函数提供1.0和2.0等值时，将返回<em class="italics"> h </em> (1.0) = 0.731…和<em class="italics"> h </em> (2.0) = 0.880…等值。</p>
+			<p>在神经网络中，通常使用sigmoid函数作为激活函数来转换信号，并将转换后的信号传递给下一个神经元。事实上，上一章描述的感知器和这里描述的神经网络的主要区别在于激活函数。其他方面，比如神经元多层连接的结构，信号是如何传递的，基本上和感知机一样。现在，让我们通过将sigmoid函数(用作激活函数)与阶跃函数进行比较来更仔细地观察它。</p>
+			<h3 id="_idParaDest-68"><a id="_idTextAnchor069"/>实现步进功能</h3>
+			<p>这里，我们将使用Python来展示一个阶跃函数的图形。如等式(3.3)所示，当输入超过0时，阶跃函数输出1，否则输出0。下面显示了step函数的一个简单实现:</p>
+			<pre>    def step_function(x):
+        if x &gt; 0:
+            return 1
+        else:
+            return 0</pre>
+			<p>这个实现简单易懂，但是它只接受一个实数(浮点数)作为参数<code>x</code>。因此，<code>step_function(3.0)</code>是允许的。但是，该函数不能将NumPy数组作为参数。由此可见，<code>step_function(np.array([1.0, 2.0]))</code>是不允许的。在这里，我们希望更改未来的实现，以便它可以接受NumPy数组。为此，我们可以编写如下实现:</p>
+			<pre>    def step_function(x):
+        y = x &gt; 0
+        return y.astype(np.int)</pre>
+			<p>虽然前面的函数只包含两行，但理解起来可能有点困难，因为它使用了NumPy的一个有用的“技巧”。在这里，来自Python解释器的以下示例用于描述使用了哪种技巧。在这个例子中，提供了NumPy <code>x</code>数组。对于NumPy数组，执行比较运算符:</p>
+			<pre>&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; x = np.array([-1.0, 1.0, 2.0])
+&gt;&gt;&gt; x
+array([-1., 1., 2.])
+&gt;&gt;&gt; y = x &gt; 0
+&gt;&gt;&gt; y
+array([False, True, True], dtype=bool)</pre>
+			<p>当对NumPy数组进行<em class="italics">大于</em>比较时，比较数组中的每个元素，生成一个布尔数组。这里，<code>x</code>数组中的每个元素在超过0时被转换成<code>True</code>，否则被转换成<code>False</code>。然后，生成新数组<code>y</code>。</p>
+			<p><code>y</code>数组为布尔型，所需的阶跃函数必须返回<code>int</code>类型的<code>0</code>或<code>1</code>。因此，我们将数组<code>y</code>的元素类型从布尔值转换为<code>int</code>:</p>
+			<pre>&gt;&gt;&gt; y = y.astype(np.int)
+&gt;&gt;&gt; y
+array([0, 1, 1])</pre>
+			<p>如此处所示，<code>astype()</code>方法用于转换NumPy数组的类型。<code>astype()</code>方法将所需的类型(在本例中为<code>np.int</code>)作为参数。在Python中，<code>True</code>转换为<code>1</code>，通过将Boolean类型转换为int类型将<code>False</code>转换为<code>0</code>。前面的代码解释了NumPy在实现step函数时使用的“技巧”。</p>
+			<h3 id="_idParaDest-69"><a id="_idTextAnchor070"/>阶跃函数图</h3>
+			<p>现在，让我们画出之前定义的阶跃函数的图形。为此，我们需要使用Matplotlib库:</p>
+			<pre>import numpy as np
+import matplotlib.pylab as plt
+def step_function(x):
+    return np.array(x &gt; 0, dtype=np.int)
+x = np.arange(-5.0, 5.0, 0.1)
+y = step_function(x)
+plt.plot(x, y)
+plt.ylim(-0.1, 1.1) # Specify the range of the y-axis
+plt.show()</pre>
+			<p><code>np.arange(-5.0, 5.0, 0.1)</code>生成一个NumPy数组，包含<code>-5.0</code>到<code>5.0</code>的值在<code>0.1</code>步骤中，<code>([-5.0, -4.9, …, 4.9]). step_function()</code>将NumPy数组作为自变量。它对数组中的每个元素执行step函数，并返回一个数组作为结果。绘制这些<code>x</code>和<code>y</code>数组时，显示图<em class="italics">图3.6 </em>所示的图形:</p>
+			<div><div><img src="img/fig03_6.jpg" alt="Figure 3.6: Step function graph&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.6:阶跃函数图</h6>
+			<p>如图<em class="italics">图3.6 </em>所示，阶跃函数的输出在阈值0处从0变为1(或1变为0)。阶跃函数有时被称为“阶梯函数”，因为输出代表阶梯的步数，如图<em class="italics">图3.6 </em>所示。</p>
+			<h3 id="_idParaDest-70"><a id="_idTextAnchor071"/>实现一个Sigmoid函数</h3>
+			<p>现在，让我们实现一个sigmoid函数。我们可以用Python编写等式(3.6)的sigmoid函数如下:</p>
+			<pre>def sigmoid(x):
+    return 1 / (1 + np.exp(-x))</pre>
+			<p>这里，<code>np.exp(-x)</code>对应于等式中的<code>exp(−x)</code>。这个实现不是很难。即使NumPy数组作为<code>x</code>参数提供，也会返回正确的结果。当此sigmoid函数接收NumPy数组时，它会正确计算，如下所示:</p>
+			<pre>&gt;&gt;&gt; x = np.array([-1.0, 1.0, 2.0])
+&gt;&gt;&gt; sigmoid(x)
+array([0.26894142,  0.73105858,  0.88079708])</pre>
+			<p>由于NumPy的广播，sigmoid函数的实现支持NumPy数组(详见<em class="italics">第一章</em>、<em class="italics">Python简介</em>中的<em class="italics">广播</em>部分)。当对标量和NumPy数组执行操作时，由于广播，操作在标量和NumPy数组的每个元素之间执行。</p>
+			<pre>&gt;&gt;&gt; t = np.array([1.0, 2.0, 3.0])
+&gt;&gt;&gt; 1.0 + t
+array([2., 3., 4.])
+&gt;&gt;&gt; 1.0 / t
+array([1.  ,  0.5  ,   0.33333333])</pre>
+			<p>在前面的例子中，在标量值(这里是1.0)和NumPy数组之间执行算术运算(比如<code>+</code>和<code>/</code>)。因此，标量值和NumPy数组的每个元素都用于运算，结果作为NumPy数组输出。在sigmoid函数的这个实现中，因为<code>np.exp(-x)</code>生成一个NumPy数组，<code>1 / (1 + np.exp(-x))</code>也使用NumPy数组的每个元素进行运算。</p>
+			<p>现在，让我们画出sigmoid函数的图形。绘图的代码与step函数的代码几乎相同。唯一不同的是输出<code>y</code>的函数改为sigmoid函数:</p>
+			<pre>x = np.arange(-5.0, 5.0, 0.1)
+y = sigmoid(x)
+plt.plot(x, y)
+plt.ylim(-0.1, 1.1) # Specify the range of the y-axis
+plt.show()</pre>
+			<p>执行上述代码时，会创建如图3.7 所示的图表:</p>
+			<div><div><img src="img/fig03_7.jpg" alt="Figure 3.7: Graph of the sigmoid function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.7:sigmoid函数的图形</h6>
+			<h3 id="_idParaDest-71"><a id="_idTextAnchor072"/>比较Sigmoid函数和阶跃函数</h3>
+			<p>我们来比较一下sigmoid函数和step函数。<em class="italics">图3.8 </em>显示了s形函数和阶跃函数。这两种功能在哪些方面有所不同？他们在哪些方面相似？我们可以考虑<em class="italics">图3.8 </em>并思考一下这个问题。</p>
+			<p>当您查看<em class="italics">图3.8 </em>时，您可能会注意到平滑度的差异。sigmoid函数是一条平滑曲线，其中输出基于输入连续变化。另一方面，阶跃函数的输出在<code>0</code>处突然改变。sigmoid函数的这种光滑性在训练神经网络时具有重要意义:</p>
+			<div><div><img src="img/fig03_8.jpg" alt="Figure 3.8: Step function and sigmoid function (the dashed line shows the step function)&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.8:阶跃函数和sigmoid函数(虚线显示阶跃函数)</h6>
+			<p>就前面提到的平滑度而言，它们是不同的，因为step函数只返回0或1，而sigmoid函数返回实数，如0.731...和0.880...也就是说，0和1的二进制信号在感知器的神经元之间流动，而连续实数的信号在神经网络中流动。</p>
+			<p>当我们用“水”来描述这两个函数的行为时，step函数可以比作“shishi-odoshi”(水从管子中流出后，竹筒在石头上发出噼啪声)，而sigmoid函数可以比作“水车”。step函数执行两个操作:它排出或储存水(0或1)，而sigmoid函数根据到达它的水量像“水车”一样控制水的流动。</p>
+			<p>现在，考虑阶跃函数和sigmoid函数的相似之处。它们在“平滑度”上有所不同，但是当你从更广阔的视角看<em class="italics">图3.8 </em>时，你可能会注意到它们在形状上是相似的。实际上，当输入很小时，两者都输出接近/0的值，随着输入变大，输出接近/达到1。当输入信号包含重要信息时，阶跃函数和sigmoid函数输出大值，当不包含重要信息时，输出小值。它们的相似之处还在于，无论输入信号的值有多大，它们都输出0到1之间的值。</p>
+			<h3 id="_idParaDest-72"><a id="_idTextAnchor073"/>非线性函数</h3>
+			<p>阶跃函数和sigmoid函数在另一方面是相似的。一个重要的相似之处是，它们都是非线性函数。sigmoid函数用曲线表示，而step函数用看起来像楼梯的直线表示。它们都被归类为非线性函数。</p>
+			<h4>注意</h4>
+			<p class="callout">当使用激活函数时，术语“非线性函数”和“线性函数”经常出现。函数是一个“转换器”，当提供一个值时，它返回一个值。输出输入值乘以常数的函数称为线性函数(用方程<em class="italics">h</em>(<em class="italics">x</em>)=<em class="italics">CX</em>，其中<em class="italics"> c </em>为常数)。因此，线性函数的图形是一条直线。同时，顾名思义，非线性函数的图形不是一条简单的直线。</p>
+			<p>在神经网络中，必须使用非线性函数作为激活函数。换句话说，线性函数不能用作激活函数。为什么不能使用线性函数？原因是，如果使用线性函数，增加神经网络的层数将变得毫无用处。</p>
+			<p>线性函数的问题是由这样一个事实引起的，即无论增加多少层，执行相同任务的“没有隐藏层的网络”总是存在的。为了更具体地(也更直观地)理解这一点，让我们考虑一个简单的例子。这里，线性函数<em class="italics"> h </em> ( <em class="italics"> x </em> ) = <em class="italics"> cx </em>)被用作激活函数，并且<em class="italics">y</em>(<em class="italics">x</em>)=<em class="italics">h</em>(<em class="italics">h</em>(<em class="italics">h</em>(<em class="italics">x</em>))的计算如在三层网络中一样被执行。它包含y(x) = c×c×c×x的乘法运算，同样的运算可以用<em class="italics">y</em>(<em class="italics">x</em>)=<em class="italics">ax</em>(其中<em class="italics"> a </em> = <em class="italics"> c </em> 3)的一次乘法来表示。因此，它可以用没有隐藏层的网络来表示。如本例所示，使用线性函数抵消了多层的优势。因此，为了利用多层，必须使用非线性函数作为激活函数。</p>
+			<h3 id="_idParaDest-73"><a id="_idTextAnchor074"/> ReLU功能</h3>
+			<p>到目前为止，我们已经了解了作为激活函数的阶跃函数和sigmoid函数。虽然sigmoid函数在神经网络的历史上已经使用了很长时间，但目前主要使用一种称为<strong class="bold">整流线性单元</strong> ( <strong class="bold"> ReLU </strong>)的函数。</p>
+			<p>如果输入超过0，ReLU函数将原样输出输入。如果输入等于或小于0，则输出0(参见<em class="italics">图3.9 </em>):</p>
+			<div><div><img src="img/fig03_9.jpg" alt="Figure 3.9: ReLU function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.9: ReLU函数</h6>
+			<p>等式(3.7)表示ReLU函数:</p>
+			<table id="table005" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_3.9a.png" alt="10"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(3.7)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>如图和等式所示，ReLU函数非常简单。因此，我们也可以轻松地实现它，如下所示:</p>
+			<pre>def relu(x):
+    return np.maximum(0, x)</pre>
+			<p>这里使用了NumPy的最大值函数。它输出较大的输入值。</p>
+			<p>虽然sigmoid函数将在本章后面用作激活函数，但ReLU函数主要在本书的后半部分使用。</p>
+			<h2 id="_idParaDest-74"><a id="_idTextAnchor075"/>计算多维数组</h2>
+			<p>如果您学习如何使用NumPy计算多维数组，您将能够高效地实现神经网络。首先，我们将看看如何使用NumPy来计算多维数组。然后，我们将实现一个神经网络。</p>
+			<h3 id="_idParaDest-75"><a id="_idTextAnchor076"/>多维数组</h3>
+			<p>简单来说，多维数组就是排列成一行、一个矩形、三维或者(更一般的)N维的“一组数”，称为多维数组。让我们使用NumPy创建一个多维数组。首先，我们将创建一个一维数组，如上所述:</p>
+			<pre>&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; A = np.array([1, 2, 3, 4])
+&gt;&gt;&gt; print(A)
+[1 2 3 4]
+&gt;&gt;&gt; np.ndim(A)
+1
+&gt;&gt;&gt; A.shape
+(4,)
+&gt;&gt;&gt; A.shape[0]
+4</pre>
+			<p>如此处所示，您可以使用<code>np.ndim()</code>函数来获取数组的维数。您还可以使用实例变量<code>shape</code>来获得数组的形状。前面的例子显示了<code>A</code>是一个由四个元素组成的一维数组。请注意，<code>A.shape</code>的结果是一个元组。这是因为一维数组和多维数组的结果以相同的格式返回。例如，二维数组返回(4，3)元组，三维数组返回(4，3，2)元组。因此，对于一维数组，也会返回一个元组。现在，让我们创建一个二维数组:</p>
+			<pre>&gt;&gt;&gt; B = np.array([[1,2], [3,4], [5,6]])
+&gt;&gt;&gt; print(B)
+[[1 2]
+[3 4]
+[5 6]]
+&gt;&gt;&gt; np.ndim(B)
+2
+&gt;&gt;&gt; B.shape
+(3, 2)</pre>
+			<p>这里创建了一个3x2的数组B。一个3x2的数组意味着它在第一维有三个元素，在下一维有两个元素。第一个维度是维度0，下一个维度是维度Python中一个索引从0开始)。二维数组称为矩阵。如图<em class="italics">图3.10 </em>所示，一个数组中的水平序列称为<strong class="bold">行</strong>，垂直序列称为<strong class="bold">列</strong>:</p>
+			<div><div><img src="img/fig03_10.jpg" alt="Figure 3.10: A horizontal sequence is called a &quot;row,&quot; and a vertical one is called a &quot;column&quot;&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.10:水平序列称为“行”，垂直序列称为“列”</h6>
+			<h3 id="_idParaDest-76"><a id="_idTextAnchor077"/>矩阵乘法</h3>
+			<p>现在，考虑矩阵的乘积(二维数组)。对于2x2矩阵，矩阵乘法的计算如<em class="italics">图3.11 </em>所示(定义为本程序中的计算):</p>
+			<div><div><img src="img/fig03_11.jpg" alt="Figure 3.11: Calculating matrix multiplication &#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.11:计算矩阵乘法</h6>
+			<p>如该示例所示，矩阵乘法是通过将左矩阵的(水平)行和右矩阵的(垂直)列之间的元素相乘并将结果相加来计算的。计算结果存储为一个新的多维数组的元素。例如，A的第一行和B的第一列之间的结果成为第一行中的第一个元素，而A的第二行和B的第一列之间的结果成为第二行中的第一个元素。在本书中，方程中的矩阵用粗体显示。例如，矩阵显示为<code>A</code>以区别于具有一个元素的标量值(例如，a或b)。该计算在Python中实现如下:</p>
+			<pre>&gt;&gt;&gt; A = np.array([[1,2], [3,4]])
+&gt;&gt;&gt; A.shape
+(2, 2)
+&gt;&gt;&gt; B = np.array([[5,6], [7,8]])
+&gt;&gt;&gt; B.shape
+(2, 2)
+&gt;&gt;&gt; np.dot(A, B)
+array([[19, 22],
+    [43, 50]])</pre>
+			<p>a和B是2x2矩阵。NumPy的<code>np.dot()</code>函数用于计算矩阵A和B的乘积(这里的“点”表示点积)。<code>np.dot (dot product)</code>计算一维数组的向量内积和二维数组的矩阵乘法。你应该注意到<code>np.dot(A, B)</code>和<code>np.dot(B, A)</code>可以返回不同的值。与正则运算(+、*等)不同，当操作数(A和B)的顺序不同时，矩阵的乘积也变得不同。</p>
+			<p>前面的示例显示了2x2矩阵的乘积。你也可以计算不同形状的矩阵的乘积。例如，2×3和3×2矩阵的乘积可以用Python实现，如下所示:</p>
+			<pre>&gt;&gt;&gt; A = np.array([[1,2,3], [4,5,6]])
+&gt;&gt;&gt; A.shape
+(2, 3)
+&gt;&gt;&gt; B = np.array([[1,2], [3,4], [5,6]])
+&gt;&gt;&gt; B.shape
+(3, 2)
+&gt;&gt;&gt; np.dot(A, B)
+array([[22, 28],
+    [49, 64]])</pre>
+			<p>前面的代码显示了如何实现2×3矩阵A和3×2矩阵B的乘积。在这里，你必须小心“矩阵的形状”具体来说，矩阵A的维度1中的元素数(列数)必须与矩阵B的维度0中的元素数(行数)相同。实际上，在前面的示例中，矩阵A是2×3，矩阵B是3×2。矩阵A (3)的维度1中的元素数量与矩阵B (3)的维度0中的元素数量相同。如果它们不同，就不能计算矩阵的乘积。因此，如果您尝试在Python中计算2×3矩阵A和2×2矩阵C的乘积，就会出现以下错误:</p>
+			<pre>&gt;&gt;&gt; C = np.array([[1,2],  [3,4]])
+&gt;&gt;&gt; C.shape
+(2, 2)
+&gt;&gt;&gt; A.shape
+(2, 3)
+&gt;&gt;&gt; np.dot(A, C)</pre>
+			<p>回溯(最近一次呼叫):</p>
+			<pre>    File "&lt;stdin&gt;", line 1, in &lt;module&gt;
+ValueError: shapes (2,3) and (2,2) not aligned: 3 (dim 1) != 2 (dim 0)</pre>
+			<p>这个错误说的是矩阵A的维度1和矩阵C的维度0在元素个数上是不一样的(一个维度的索引从零开始)。换句话说，要计算多维数组的乘积，两个矩阵对应维中的元素个数必须相同。因为这是很重要的一点，所以让我们在<em class="italics">图3.12 </em>中再检查一遍:</p>
+			<div><div><img src="img/fig03_12.jpg" alt="Figure 3.12: The number of elements in corresponding dimensions must be the &#13;&#10;same for matrix multiplication&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.12:矩阵乘法中相应维度的元素数量必须相同</h6>
+			<p><em class="italics">图3.12 </em>给出了一个3x2矩阵A和2x4矩阵B的乘积的例子，得到了3x4矩阵c，我们可以看到，矩阵A和B的对应维数中的元素个数必须相同。得到的矩阵C由与矩阵A一样多的行和与矩阵b一样多的列组成，这也很重要。</p>
+			<p>即使当A是一个二维矩阵，B是一个一维数组时，同样的原理(对应维中的元素个数必须相同)也适用，如图<em class="italics">图3.13 </em>所示:</p>
+			<div><div><img src="img/fig03_13.jpg" alt="Figure 3.13: The number of elements in the corresponding dimensions must be the same, even when A is a two-dimensional matrix and B is a one-dimensional array &#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.13:对应维度中的元素数量必须相同，即使A是二维矩阵，B是一维数组</h6>
+			<p><em class="italics">图3.13 </em>中的示例可以用Python实现如下:</p>
+			<pre>&gt;&gt;&gt; A = np.array([[1,2], [3, 4], [5,6]])
+&gt;&gt;&gt; A.shape
+(3, 2)
+&gt;&gt;&gt; B = np.array([7,8])
+&gt;&gt;&gt; B.shape
+(2,)
+&gt;&gt;&gt; np.dot(A,  B)
+array([23, 53, 83])</pre>
+			<h3 id="_idParaDest-77"><a id="_idTextAnchor078"/>神经网络中的矩阵乘法</h3>
+			<p>现在，让我们使用NumPy矩阵来实现一个神经网络，如图<em class="italics">图3.14 </em>所示。我们假设神经网络只有权值。已经省略了偏置和激活功能。</p>
+			<div><div><img src="img/fig03_14.jpg" alt="Figure 3.14: Using matrix multiplication to calculate a neural network&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.14:使用矩阵乘法计算神经网络</h6>
+			<p>在这个实现中，我们必须小心<code>X</code>、<code>W</code>和<code>Y</code>的形状。重要的是<code>X</code>和<code>W</code>的相应尺寸中的元件数量相同:</p>
+			<pre>&gt;&gt;&gt; X = np.array([1, 2])
+&gt;&gt;&gt; X.shape
+(2,)
+&gt;&gt;&gt; W = np.array([[1, 3, 5], [2, 4, 6]])
+&gt;&gt;&gt; print(W)
+[[1 3 5]
+[2 4 6]]
+&gt;&gt;&gt; W.shape
+(2, 3)
+&gt;&gt;&gt; Y = np.dot(X, W)
+&gt;&gt;&gt; print(Y)
+[ 5  11  17]</pre>
+			<p>如此处所示，您可以使用<code>np.dot</code>(多维矩阵的点积)一次性计算结果<code>Y</code>。这意味着，即使<code>Y</code>的元素个数是100个或者1000个，也可以一次性全部计算出来。没有<code>np.dot</code>，就必须把<code>Y</code>的每个元素都拿出来(并且用一个<code>for</code>语句)进行计算，很累人。因此，我们可以说，利用矩阵乘法计算多维矩阵乘积的技巧是非常重要的。</p>
+			<h2 id="_idParaDest-78"><a id="_idTextAnchor079"/>实现三层神经网络</h2>
+			<p>现在，让我们实现一个“实用的”神经网络。这里我们将在<em class="italics">图3.15 </em>所示的三层神经网络中实现从其输入到其输出的过程(一个正向的过程)。我们将使用NumPy的多维数组(如前一节所述)来实现。通过充分利用NumPy数组，您可以为神经网络中的正向过程编写一些简短的代码。</p>
+			<h3 id="_idParaDest-79"><a id="_idTextAnchor080"/>检查符号</h3>
+			<p>这里，我们将使用诸如<img src="img/Figure_3.15a_-_Copy.png" alt="5c"/>和<img src="img/Figure_3.15b.png" alt="5d"/>的符号来解释神经网络中执行的过程。它们可能看起来有点复杂。您可以浏览这一部分，因为这些符号只在这里使用:</p>
+			<div><div><img src="img/fig03_15.jpg" alt="Figure 3.15: A three-layer neural network consisting of two neurons in the input layer (layer 0), three neurons in the first hidden layer (layer 1), two neurons in the second hidden layer (layer 2), and two neurons in the output layer (layer 3)&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.15:一个三层神经网络，由输入层(第0层)的两个神经元、第一隐层(第1层)的三个神经元、第二隐层(第2层)的两个神经元和输出层(第3层)的两个神经元组成</h6>
+			<h4>注意</h4>
+			<p class="callout">在本节中重要的是，计算神经网络可以作为矩阵计算来共同进行。计算神经网络中的每一层可以使用矩阵乘法集体进行(这可以从更大的角度来考虑)。所以，即使你忘记了与这些符号相关的详细规则，理解随后的解释也没有问题。</p>
+			<p>让我们从定义符号开始。看<em class="italics">图3.16 </em>。该图说明了从输入层x2到下一层中的神经元<em class="italics">a<img src="img/Figure_3.15c.png" alt="5e"/>T10】的权重。</em></p>
+			<p>如图<em class="italics">图3.16 </em>所示，“(1)”放在一个权值或隐含层神经元的右上方。这个数字表示第1层的权重或神经元。一个权重右下角有两个数字，分别是上下一层神经元的索引号。例如，<em class="italics"> <img src="img/Figure_3.15d.png" alt="5f"/> </em>表示它是从上一层第二个神经元(<em class="italics"> x </em> 2)到下一层第一个神经元(<em class="italics"> <img src="img/Figure_3.15e.png" alt="5g"/> </em>)的权重。权重右下角的索引号必须按照“下一层的编号和上一层的编号”的顺序排列:</p>
+			<div><div><img src="img/fig03_16.jpg" alt="Figure 3.16: Weight symbols&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.16:重量符号</h6>
+			<h3 id="_idParaDest-80"><a id="_idTextAnchor081"/>在各层实现信号传输</h3>
+			<p>现在，让我们来看看将信号从输入层传输到“第一层的第一个神经元”<em class="italics">图3.17 </em>以图形方式显示了这一点:</p>
+			<div><div><img src="img/fig03_17.jpg" alt="Figure 3.17: Transmitting signals from the input layer to layer 1&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.17:将信号从输入层传输到第1层</h6>
+			<p>如图<em class="italics">图3.17 </em>所示，①被添加为一个偏向神经元。请注意，在偏差的右下方只有一个指数。这是因为前一层只存在一个偏置神经元(①神经元)。现在，让我们把<em class="italics"> <img src="img/Figure_3.15g.png" alt="11"/> </em>表示成一个方程，来复习一下到目前为止我们所学的内容。<em class="italics"> <img src="img/Figure_3.15f.png" alt="12"/> </em>是加权信号和偏差之和，计算如下:</p>
+			<table id="table006" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div>T33<img src="img/Figure_3.17h.png" alt="13"/>T35】T36】</div></td>
+						<td class="No-Table-Style">
+							<p>(3.8)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>通过使用矩阵乘法，您可以将第1层的“加权和”统一表示如下:</p>
+			<table id="table007" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div>T38<img src="img/Figure_3.17i.png" alt="14"/>T40</div></td>
+						<td class="No-Table-Style">
+							<p>(3.9)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>这里，A(1)、X、B(1)和W(1)如下:</p>
+			<p class="Normal"><img src="img/Figure_3.17j.png" alt="15"/></p>
+			<p>现在，让我们使用NumPy的多维数组来实现等式(3.9)。在此为输入信号、权重和偏差设置任意值:</p>
+			<pre>X = np.array([1.0, 0.5])
+W1 = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
+B1 = np.array([0.1, 0.2, 0.3])
+print(W1.shape) # (2, 3)
+print(X.shape)  # (2,)
+print(B1.shape) # (3,)
+A1 = np.dot(X, W1) + B1</pre>
+			<p>该计算与上一节中的计算相同。W1是一个2×3的数组，X是一个包含两个元素的一维数组。此外，在这种情况下，W1和X的对应维度中的元素数量相同。</p>
+			<p>现在，考虑由第1层中的激活功能执行的过程。<em class="italics">图3.18 </em>以图形方式显示了这些过程。</p>
+			<p>如图<em class="italics">图3.18 </em>所示，一个隐层中的加权和(加权信号和偏差的总和)表示为<em class="italics">a’</em>s，用激活函数转换后的信号表示为<em class="italics">z</em>s，这里激活函数表示为<em class="italics"> h </em>()使用一个sigmoid函数:</p>
+			<div><div><img src="img/fig03_18.jpg" alt="Figure 3.18: Transmitting signals from the input layer to layer 1&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.18:将信号从输入层传输到第1层</h6>
+			<p>这个过程在Python中实现如下:</p>
+			<pre>Z1 = sigmoid(A1)
+print(A1) # [0.3, 0.7, 1.1]
+print(Z1) # [0.57444252, 0.66818777, 0.75026011]</pre>
+			<p>这个<code>sigmoid()</code>函数是我们之前定义的函数。它接受一个NumPy数组，并返回一个包含相同数量元素的NumPy数组。</p>
+			<p>现在让我们继续从第1层到第2层的实现(<em class="italics">图3.19 </em>):</p>
+			<div><div><img src="img/fig03_19.jpg" alt="Figure 3.19: Transmitting signals from layer 1 to layer 2&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.19:将信号从第1层传输到第2层</h6>
+			<p>除了第1层(Z1)的输出是第2层的输入之外，该实现与前一实现相同。如您所见，您可以使用NumPy数组轻松编写信号从一层到另一层的传输:</p>
+			<pre>W2 = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
+B2 = np.array([0.1, 0.2])
+print(Z1.shape) # (3,)
+print(W2.shape) # (3, 2)
+print(B2.shape) # (2,)
+A2 = np.dot(Z1, W2) + B2
+Z2 = sigmoid(A2)</pre>
+			<p>最后，我们来实现信号从第二层到输出层的传输(<em class="italics">图3.20 </em>)。您可以用与我们到目前为止看到的其他实现几乎相同的方式来实现输出层。只有最后一个激活函数不同于我们到目前为止看到的隐藏层的激活函数:</p>
+			<pre>def identity_function(x): 
+    return x
+W3 = np.array([[0.1, 0.3], [0.2, 0.4]])
+B3 = np.array([0.1, 0.2])
+<code>A3 = np.dot(Z2, W3) + B3</code>
+<code>Y = identity_function(A3)</code> # or Y = A3</pre>
+			<p>这里，我们将定义一个名为<code>identity_function()</code>的函数，并将其用作输出层的激活函数。恒等函数按原样输出输入。尽管在这个例子中您不需要定义<code>identity_function()</code>，但是使用这个实现是为了与前面的实现保持一致。在<em class="italics">图3.20 </em>中，输出层的激活函数显示为<code>σ()</code>，以表示它不同于隐藏层的激活函数<em class="italics">h</em>()(<code>σ</code>称为<strong class="bold">∑</strong>):</p>
+			<div><div><img src="img/fig03_20.jpg" alt="Figure 3.20: Transmitting signals from layer 2 to the output layer&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.20:将信号从第2层传输到输出层</h6>
+			<p>您可以选择输出层中使用的激活函数，这取决于您希望解决的问题类型。通常，一个恒等式函数用于回归问题，一个sigmoid函数用于两类分类问题，一个softmax函数用于多类分类问题。下一节将详细解释输出层的激活功能。</p>
+			<h3 id="_idParaDest-81"><a id="_idTextAnchor082"/>实施总结</h3>
+			<p>这就完成了我们对三层神经网络的研究。下面总结了到目前为止我们已经执行的实现。按照神经网络实现中的惯例，只有权重以大写形式书写(例如W1)，而其他项(例如偏差和中间结果)以小写形式书写:</p>
+			<pre>def init_network(): 
+    network = {}
+    network['W1'] = np.array([[0.1,  0.3,  0.5],  [0.2,  0.4,  0.6]])
+    network['b1'] = np.array([0.1,  0.2,  0.3])
+    network['W2'] = np.array([[0.1,  0.4],  [0.2,  0.5],  [0.3,  0.6]])
+    network['b2'] = np.array([0.1,  0.2])
+    network['W3'] = np.array([[0.1,  0.3],  [0.2,  0.4]]) 
+    network['b3'] = np.array([0.1,  0.2])
+    return network
+def forward(network, x):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, W2)  +  b2 
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2,  W3)  +  b3
+    y = identity_function(a3)
+    return y
+network = init_network() 
+x =  np.array([1.0,  0.5]) 
+y = forward(network, x)
+print(y) # [ 0.31682708 0.69627909]</pre>
+			<p>这里定义了<code>init_network()</code>和<code>forward()</code>功能。<code>init_network()</code>函数初始化权重和偏差，并将其存储在一个字典类型变量<code>network</code>中，该变量存储各个层、权重和偏差所需的参数。<code>forward()</code>功能共同实现将输入信号转换为输出信号的过程。</p>
+			<p>这里的“转发”一词表示从输入到输出的传输过程。稍后，当我们训练一个神经网络时，我们将从向后的方向(从输出到输入)来看这个过程。</p>
+			<p>这就完成了正向三层神经网络的实现。通过使用NumPy的多维数组，我们能够高效地实现神经网络。</p>
+			<h2 id="_idParaDest-82"><a id="_idTextAnchor083"/>设计输出层</h2>
+			<p>您可以将神经网络用于分类问题和回归问题。但是，您必须更改输出层的激活函数，这取决于您使用神经网络解决的问题。通常，身份函数用于回归问题，而softmax函数用于分类问题。</p>
+			<h4>注意</h4>
+			<p class="callout">机器学习问题可以大致分为“分类问题”和“回归问题”。分类问题是识别数据属于哪一类的问题，例如，将图像中的人分类为男人或女人，而回归问题是从某些输入数据预测(连续)数的问题，例如，预测图像中的人的体重。</p>
+			<h2 id="_idParaDest-83"><a id="_idTextAnchor084"/>身份函数和Softmax函数</h2>
+			<p>恒等函数按原样输出输入。不做任何事情就输出输入内容的函数是恒等函数。因此，当对输出层使用恒等函数时，输入信号将按原样返回。使用我们到目前为止使用的神经网络图，您可以通过一个标识函数来表示该过程，如图<em class="italics">图3.21 </em>所示。通过身份函数的转换过程可以用一个箭头来表示，以与我们到目前为止看到的激活函数相同的方式:</p>
+			<div><div><img src="img/fig03_21.jpg" alt="Figure 3.21: Identity function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.21:身份功能</h6>
+			<p>用于分类问题的softmax函数由以下等式表示:</p>
+			<table id="table008" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_3.21a.png" alt="16"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(3.10)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p><code>exp(x)</code>是表示ex的指数函数(e是纳皮尔常数，2.7182…)。假设输出层的总数为n，等式提供第k个输出yk。如式(3.10)所示，softmax函数的分子是输入信号的指数函数，<em class="italics"> a </em> k，分母是所有输入信号的指数函数之和。</p>
+			<p><em class="italics">图3.22 </em>以图形方式显示了softmax功能。如您所见，softmax函数的输出通过箭头与所有输入信号相连。如等式(3.10)的分母所示，输出的每个神经元受所有输入信号的影响:</p>
+			<div><div><img src="img/fig03_22.jpg" alt="Figure 3.22: Softmax function&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.22: Softmax函数</h6>
+			<p>现在，让我们实现softmax函数，使用Python解释器逐个检查结果:</p>
+			<pre>&gt;&gt;&gt; a = np.array([0.3, 2.9, 4.0])
+&gt;&gt;&gt;
+&gt;&gt;&gt; exp_a = np.exp(a) # Exponential function
+&gt;&gt;&gt; print(exp_a)
+[ 1.34985881 18.17414537 54.59815003]
+&gt;&gt;&gt;
+&gt;&gt;&gt; sum_exp_a = np.sum(exp_a) # Sum of exponential functions
+&gt;&gt;&gt; print(sum_exp_a)
+74.1221542102
+&gt;&gt;&gt;
+&gt;&gt;&gt; y = exp_a / sum_exp_a
+&gt;&gt;&gt; print(y)
+[ 0.01821127 0.24519181 0.73659691]</pre>
+			<p>该实现用Python表示等式(3.10)的softmax函数。因此，不需要特别的描述。当稍后考虑使用softmax函数时，我们将把它定义为Python函数，如下所示:</p>
+			<pre>def softmax(a):
+    exp_a = np.exp(a) 
+    sum_exp_a = np.sum(exp_a)
+    y = exp_a / sum_exp_a
+    return y</pre>
+			<h3 id="_idParaDest-84"><a id="_idTextAnchor085"/>执行Softmax功能时的问题</h3>
+			<p>softmax函数的上述实现正确地表示了等式(3.10)，但是它对于计算机计算是有缺陷的。这个缺陷是一个溢出问题。实现softmax函数需要计算指数函数，而指数函数的值可能非常大。例如，<em class="italics"> e </em> 10大于20，000，<em class="italics"> e </em> 100是超过40位的大值。<em class="italics"> e </em> 1000的结果返回<code>inf</code>，表示一个无穷大的值。将这些大值相除会返回一个“不稳定”的结果。</p>
+			<h4>注意</h4>
+			<p class="callout">当计算机处理一个“数”时，它是以有限的数据宽度存储的，比如四个或八个字节。这意味着一个数有许多有效数字。可以表示的数的范围是有限的。因此，存在不能表达非常大的值的问题。这就是所谓的溢出，所以我们在使用计算机进行计算时一定要小心。</p>
+			<p>softmax函数的改进实现可通过下式获得:</p>
+			<table id="table009" class="No-Table-Style">
+				<colgroup>
+					<col/>
+					<col/>
+				</colgroup>
+				<tbody>
+					<tr class="No-Table-Style">
+						<td class="No-Table-Style CellOverride-1"><div><div><img src="img/Figure_3.22a.png" alt="17"/></div></div></td>
+						<td class="No-Table-Style">
+							<p>(3.11)</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>首先，通过将分子和分母都乘以任意常数<em class="italics"> C </em>来变换等式(3.11)(因为分子和分母都乘以相同的常数，所以执行相同的计算)。然后，将C移入指数函数(exp)作为log <em class="italics"> C </em>。最后，log <em class="italics"> C </em>被替换为另一个符号<em class="italics">C’</em>。</p>
+			<p>等式(3.11)表示，当计算softmax函数中的指数函数时，增加或减去某个常数不会改变结果。虽然在这里可以使用任何数字作为<em class="italics">C’</em>，但输入信号的最大值通常用于防止溢出。考虑下面的例子:</p>
+			<pre>&gt;&gt;&gt; a = np.array([1010, 1000, 990])
+&gt;&gt;&gt; np.exp(a) / np.sum(np.exp(a)) # Calculating the softmax function
+array([  nan,   nan,   nan]) # Not calculated correctly
+&gt;&gt;&gt;
+&gt;&gt;&gt; c = np.max(a) # 1010
+&gt;&gt;&gt; a - c
+array([ 0, -10, -20])
+&gt;&gt;&gt;
+&gt;&gt;&gt; np.exp(a - c) / np.sum(np.exp(a - c))
+array([   9.99954600e-01,	4.53978686e-05,	2.06106005e-09])</pre>
+			<p>如该示例所示，当减去输入信号的最大值(<em class="italics"> c </em>，此处)时，可以正确计算该函数。否则，返回nan(不是数字:不稳定)值。基于此描述，我们可以如下实现softmax函数:</p>
+			<pre>def softmax(a):
+    c = np.max(a)
+    exp_a = np.exp(a - c) # Prevent an overflow
+    sum_exp_a = np.sum(exp_a)
+    y = exp_a / sum_exp_a 
+    return y</pre>
+			<h3 id="_idParaDest-85"><a id="_idTextAnchor086"/>soft max功能的特征</h3>
+			<p>您可以使用<code>softmax()</code>函数来计算神经网络的输出，如下所示:</p>
+			<pre>&gt;&gt;&gt; a = np.array([0.3, 2.9, 4.0])
+&gt;&gt;&gt; y = softmax(a)
+&gt;&gt;&gt; print(y)
+[ 0.01821127 0.24519181 0.73659691]
+&gt;&gt;&gt; np.sum(y)
+1.0</pre>
+			<p>softmax函数输出一个介于0和1.0之间的实数。softmax函数的总输出为1。总和为1的事实是softmax函数的一个重要特征，因为这意味着我们可以将softmax函数的输出解释为“概率”</p>
+			<p>例如，在前面的例子中，我们可以将<code>y[0]</code>的概率解释为<code>0.018</code> (1.8%)，将<code>y[1]</code>的概率解释为<code>0.245</code> (24.5%)，将<code>y[2]</code>的概率解释为<code>0.737</code> (73.7%)。从这些概率，我们可以说，“因为第二个元素是最有可能的，所以答案是第二类。”我们甚至可以用概率来回答:“答案是第二类概率为74%，第一类概率为25%，第零类概率为1%。”因此，您可以使用softmax函数从概率上(统计上)处理问题。</p>
+			<p>我们应该注意，应用softmax函数不会改变元素的顺序。这是因为指数函数<em class="italics"> (y = exp(x)) </em>单调增加。实际上，在前面的例子中，<code>a</code>中元素的顺序与<code>y</code>中元素的顺序相同。<code>a</code>中的最大值是二次元，<code>y</code>中的最大值也是二次元。</p>
+			<p>通常，由神经网络进行的类别分类仅识别对应于具有最大输出的神经元的类别。使用softmax功能不会改变最大输出神经元的位置。因此，您可以从神经网络分类中省略输出图层的softmax函数。实际上，输出图层的softmax函数通常被省略，因为指数函数需要一些计算。</p>
+			<h4>注意</h4>
+			<p class="callout">解决机器学习问题的过程包括两个阶段:“训练”和“预测”首先，在训练阶段训练一个模型，然后在推理阶段使用训练好的模型预测(分类)未知数据。如前所述，输出层的softmax函数通常在推断阶段被省略。我们对输出层使用softmax函数的原因将与神经网络训练相关(有关更多详细信息，请参考下一章)。</p>
+			<h3 id="_idParaDest-86"><a id="_idTextAnchor087"/>输出层中神经元的数量</h3>
+			<p>您必须根据要解决的问题，适当地确定输出层中神经元的数量。对于分类问题，通常用要分类的类别数作为输出层的神经元数。例如，从一幅输入图像(10级分类)预测一个从<code>0</code>到<code>9</code>的数，在输出层放置10个神经元，如图<em class="italics">图3.23 </em>所示:</p>
+			<div><div><img src="img/fig03_23.jpg" alt="Figure 3.23: The neuron in the output layer corresponds to each number&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.23:输出层的神经元对应每个数字</h6>
+			<p>如图<em class="italics">图3.23 </em>所示，输出层的神经元对应数字0，1，...，从上面数第9个。这里，各种灰色阴影代表输出层中神经元的值。在这个例子中，<em class="italics"> y </em> 2的颜色是最暗的，因为<em class="italics"> y </em> 2神经元输出最大值。说明这个神经网络预测输入属于对应于<em class="italics"> y </em> 2的类；也就是“2。”</p>
+			<h2 id="_idParaDest-87"><a id="_idTextAnchor088"/>手写数字识别</h2>
+			<p>既然我们已经讨论了神经网络的机制，让我们考虑一个实际问题。我们将对一些手写数字图像进行分类。假设训练已经完成，我们将使用训练好的参数在神经网络中实现“推理”。这种推断也称为神经网络中的前向传播。</p>
+			<h4>注意</h4>
+			<p class="callout">与解决机器学习问题的过程(包括两个阶段，“训练”和“推理”)相同，为了使用神经网络解决问题，我们将使用训练数据来训练权重参数，然后在预测的同时使用训练的参数来对输入数据进行分类。</p>
+			<h3 id="_idParaDest-88"><a id="_idTextAnchor089"/> MNIST数据集</h3>
+			<p>这里，我们将使用一组称为MNIST的手写数字图像。MNIST是机器学习领域最著名的数据集之一，从简单的实验到研究，它的用途非常广泛。当你阅读关于图像识别或机器学习的研究论文时，你会经常注意到MNIST数据集被用作实验数据。</p>
+			<p>MNIST数据集由数字从0到9的图像组成(<em class="italics">图3。24 </em>)。它包含60，000幅训练图像和10，000幅测试图像，它们用于训练和推理。当我们使用MNIST数据集时，我们通常使用训练图像进行训练，并测量训练后的模型对测试图像进行分类的正确程度:</p>
+			<div><div><img src="img/fig03_24.jpg" alt="Figure 3.24: Examples from the MNIST image dataset&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.24:来自MNIST影像数据集的示例</h6>
+			<p>MNIST的图像数据是28x28灰度图像(一个通道)，每个像素具有从0到255的值。每个图像数据都有标签，如“7”、“2”和“1”</p>
+			<p>这本书提供了一个方便的Python脚本<code>mnist.py</code>，它位于<code>dataset</code>目录下。它支持下载MNIST数据集并将影像数据转换为NumPy数组。要使用<code>mnist.py</code>脚本，当前目录必须是<code>ch01</code>、<code>ch02</code>、<code>ch03</code>、...，或<code>ch08</code>目录。通过使用<code>mnist.py</code>中的<code>load_mnist()</code>功能，您可以轻松加载MNIST数据，如下所示:</p>
+			<pre>import sys, os
+sys.path.append(os.pardir) # Configure to import the files in the parent directory
+from dataset.mnist import load_mnist
+# Waits for a few minutes for the first call ... 
+(x_train, t_train), (x_test, t_test) = ∖
+<a id="_idTextAnchor090"/>    load_mnist(flatten=True, normalize=False)
+# Output the shape of each data
+print(x_train.shape) # (60000, 784)
+print(t_train.shape) # (60000,)
+print(x_test.shape) # (10000, 784)
+print(t_test.shape) # (10000,)</pre>
+			<p>首先，配置在父目录中导入文件的详细信息。然后，从<code>dataset</code> / <code>mnist.py</code>中导入<code>load_mnist</code>函数。最后，使用导入的<code>load_mnist</code>函数加载MNIST数据集。当你第一次给<code>load_mnist</code>打电话时，需要互联网连接来下载MNIST的数据。后续调用会立即完成，因为它只加载本地保存的文件(pickle文件)。</p>
+			<h4>注意</h4>
+			<p class="callout">用于加载MNIST图像的文件存在于本书提供的源代码的数据集目录中。假设仅从<code>ch01</code>、<code>ch02</code>、<code>ch03</code>使用该MNIST数据集，...，或<code>ch08</code>目录。因此，要使用数据集，需要使用<code>sys.path.append(os.pardir)</code>语句。这是因为必须导入父目录(数据集目录)中的文件。</p>
+			<p><code>load_mnist</code>函数以<code>(training image, training label), (test image, test label)</code>的格式返回加载的MNIST数据。它可以带三个参数:<code>load_mnist(normalize=True, flatten=True, one_hot_label=False)</code>。第一个参数<code>normalize</code>指定是否在0.0和1.0之间归一化输入图像。如果<code>False</code>被设置，输入图像的像素保持在0和255之间。第二个参数<code>flatten</code>指定是否展平输入图像(将其转换为一维数组)。如果<code>False</code>置位，输入图像存储为三维数组(1 × 28 × 28)。如果<code>True</code>被设置，它被存储为一个有784个元素的一维数组。第三个参数<code>one_hot_label</code>指定是否使用独热编码来存储标签。在独热编码数组中，只有正确标签的元素为1，其他元素为0，例如在[0，0，1，0，0，0，0，0，0，0]中。当<code>one_hot_label</code>为<code>False</code>时，只存储正确的标签，如7或2。如果<code>one_hot_label</code>是<code>True</code>，标签被存储为一个独热编码数组。</p>
+			<h4>注意</h4>
+			<p class="callout">Python有一个方便的特性叫做pickle，它可以在程序执行时将对象保存为文件。通过加载保存的pickle文件，您可以立即恢复程序执行期间使用的对象。加载MNIST数据集的<code>load_mnist()</code>函数也使用pickle(用于第二或后续加载阶段)。通过使用pickle的功能，您可以快速准备MNIST数据。</p>
+			<p>现在，让我们显示MNIST图像来检查数据。我们将使用<code>ch03/mnist_show.py</code>):</p>
+			<pre>import sys, os
+sys.path.append(os.pardir)
+import numpy as np
+from dataset.mnist import load_mnist
+from PIL import Image
+def img_show(img):
+    pil_img = Image.fromarray(np.uint8(img)) 
+    pil_img.show()
+(x_train, t_train), (x_test, t_test) = /
+    load_mnist(flatten=True, normalize=False)
+    img = x_train[0] 
+    label = t_train[0] 
+    print(label) # 5
+    print(img.shape)	# (784,)
+    img = img.reshape(28, 28) # Reshape the image based on the original size
+    print(img.shape)	# (28, 28) 
+    img_show(img)</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/fig03_25.jpg" alt="Figure 3.25: Displaying an MNIST image&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.25:显示MNIST图像</h6>
+			<p>请注意，当<code>flatten=True</code>时，加载的图像存储为一行中的NumPy数组(一维)。因此，要显示图像，您必须将其调整为原来的28x28大小。您可以使用<code>reshape()</code>方法，通过用一个参数指定所需的形状来改变NumPy数组的形状。您还必须将存储为NumPy数组的图像数据转换为PIL的数据对象。您可以使用<code>Image.fromarray()</code>进行此转换。</p>
+			<h3 id="_idParaDest-89"><a id="_idTextAnchor091"/>用于神经网络的推理</h3>
+			<p>现在，让我们实现一个神经网络来预测这个MNIST数据集。该网络由包含784个神经元的输入层和包含10个神经元的输出层组成。输入图层的数字784来自图像大小(28 x 28 = 784)，而输出图层的数字10来自10级分类(数字0到9的10级)。有两个隐藏层:第一层有50个神经元，第二层有100个神经元。你可以随意改变数字50和100。首先，让我们定义三个函数，<code>get_data()</code>、<code>init_network()</code>和<code>predict()</code>(下面的源代码位于<code>ch03/neuralnet_mnist.py</code>):</p>
+			<pre>def get_data():
+    (x_train, t_train), (x_test, t_test) = /
+        load_mnist(normalize=True, flatten=True, one_hot_label=False)
+    return x_test, t_test
+def init_network():
+    with open("sample_weight.pkl", 'rb') as f: 
+        network = pickle.load(f)
+    return network
+def predict(network, x):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, W2) + b2
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2, W3) + b3
+    y = softmax(a3)
+    return y</pre>
+			<p><code>init_network()</code>功能加载存储在pickle文件<code>sample_weight.pkl</code>中的训练重量参数。该文件包含作为字典类型变量的权重和偏差参数。剩下的两个函数与目前为止描述的实现几乎相同，因此不需要描述它们。现在，我们将使用这三个函数通过神经网络进行预测。我们想要评估识别精度，也就是说，它的分类正确程度:</p>
+			<pre>x, t = get_data() 
+network = init_network()
+accuracy_cnt = 0
+for i in range(len(x)):
+    y = predict(network, x[i])
+    p = np.argmax(y) # Obtain the index of the most probable element
+    if p == t[i]:
+        accuracy_cnt += 1
+print("Accuracy:" + str(float(accuracy_cnt) / len(x)))</pre>
+			<p>这里，我们将获取MNIST数据集并构建一个网络，然后使用一个<code>for</code>语句获取存储在<code>x</code>中的每个图像数据，并使用<code>predict()</code>函数对其进行分类。<code>predict()</code>函数返回一个包含每个标签概率的NumPy数组。例如，返回[0.1，0.3，0.2，…，0.04]这样的数组，表示“0”的概率是0.1，“1”的概率是0.3，以此类推。获得该概率列表中具有最大值的索引作为预测结果，该索引指示最可能的元素。您可以使用<code>np.argmax(x)</code>来获取数组中最大元素的索引。它返回由<code>x</code>参数指定的数组中最大元素的索引。最后，将神经网络预测的答案与正确的标签进行比较，并将正确预测的比率显示为识别精度(准确度)。</p>
+			<p>执行上述代码时，显示<code>Accuracy:0.9352</code>。这表明93.52%的分类是正确的。我们不会在这里讨论识别精度，因为我们的目标是运行一个经过训练的神经网络，但在本书的后面，我们将改进神经网络的结构和训练方法，以获得更高的识别精度。实际上准确率会超过99%。</p>
+			<p>在本例中，<code>load_mnist</code>函数的参数<code>normalize</code>被设置为<code>True</code>。当<code>normalize</code>为<code>True</code>时，该函数将图像中每个像素的值除以255，使数据值介于0.0和1.0之间。转换数据使其适合某一范围称为<strong class="bold">归一化</strong>，而以定义的方式转换神经网络的输入数据称为<strong class="bold">预处理</strong>。这里，输入图像数据被归一化作为预处理。</p>
+			<h4>注意</h4>
+			<p class="callout">在实际使用中，预处理通常用于神经网络(深度学习)。预处理的有效性，如在提高辨别能力和更快的学习中，已经通过实验得到了证明。在前面的示例中，通过使用预处理将每个像素的值除以255来进行简单的归一化。实际上，通常在考虑整个数据的分布时进行预处理。通过使用整个数据的平均值和标准偏差来进行标准化，以便所有数据都分布在0附近或符合某个范围。此外，还进行了<strong class="bold">白化</strong>，使所有数据分布更加均匀。</p>
+			<h3 id="_idParaDest-90"><a id="_idTextAnchor092"/>批量处理</h3>
+			<p>这个过程就是使用MNIST数据集实现一个神经网络。这里，我们将重新检查前面的实现，同时注意输入数据和权重参数的“形状”。</p>
+			<p>让我们使用Python解释器来输出前面神经网络中每一层的权重形状:</p>
+			<pre>&gt;&gt;&gt; x, _ = get_data( )
+&gt;&gt;&gt; network = init_network( )
+&gt;&gt;&gt; W1, W2, W3 = network['W1'], network['W2'], network['W3']
+&gt;&gt;&gt;
+&gt;&gt;&gt; x.shape
+(10000, 784)
+&gt;&gt;&gt; x[0].shape
+(784,)
+&gt;&gt;&gt; W1.shape
+(784, 50)
+&gt;&gt;&gt; W2.shape
+(50, 100)
+&gt;&gt;&gt; W3.shape
+(100, 10)</pre>
+			<p>让我们检查多维数组的相应维度中的元素数量是否与前面的结果相同(偏差被忽略)。图3.26用图形显示了这一点。这里，多维数组的相应维度中的元素数量是相同的。验证具有10个元素的一维数组y是否作为最终结果返回:</p>
+			<div><div><img src="img/fig03_26.jpg" alt="Figure 3.26: Transition of the shapes of arrays&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.26:数组形状的转换</h6>
+			<p><em class="italics">图3.26 </em>给出一个有784个元素的一维数组(原来是一个二维的28x28数组)，返回一个有10个元素的一维数组的流程。这是输入单个图像时的过程。</p>
+			<p>现在，让我们考虑一下一次输入多个图像的过程。例如，让我们假设您想使用<code>predict()</code>功能一次处理100张图像。为此，您可以将<code>x</code>的形状改为<code>100×784</code>，这样您就可以将100幅图像作为输入数据一起输入。<em class="italics">图3.27 </em>以图形方式显示了这一点:</p>
+			<div><div><img src="img/fig03_27.jpg" alt="Figure 3.27: Transition of the shapes of arrays in batch processing&#13;&#10;"/>
+				</div>
+			</div>
+			<h6>图3.27:批处理中阵列形状的转换</h6>
+			<p>如图<em class="italics">图3.27 </em>所示，输入数据的形状为100x784，输出数据的形状为100x10。这表示一次返回100个图像的输入数据的结果。例如，<code>x[0]</code>和<code>y[0]</code>存储图像并预测第0幅图像的结果，<code>x[1],</code>和<code>y[1]</code>存储图像并预测第一幅图像的结果，以此类推。</p>
+			<p>如此处所述，一组有组织的输入数据被称为<strong class="bold">批次</strong>。一批是一堆图像，如一叠钞票。</p>
+			<h4>注意</h4>
+			<p class="callout">批处理在计算机计算中有很大的优势。它可以大大减少每个图像的处理时间，因为许多处理数值计算的库都经过了高度优化，因此可以高效地计算大型数组。当数据传输导致神经网络计算出现瓶颈时，批处理可以减少总线带宽上的负载(即:可以增加操作与数据加载的比率)。虽然批处理需要计算一个大数组，但是一次性计算一个大数组比一点一点分割小数组计算要快。</p>
+			<p>现在，让我们在实现中使用批处理。这里，与前面代码的不同之处以粗体显示:</p>
+			<pre>x, t = get_data( ) 
+network = init_network( )
+<code>batch_size = 100 # Number of batches</code>
+accuracy_cnt = 0
+<code>for i in range(0, len(x), batch_size):</code>
+<code>    x_batch = x[i:i+batch_size]</code>
+<code>    y_batch = predict(network, x_batch)</code>
+<code>    p = np.argmax(y_batch, axis=1)</code>
+<code>    accuracy_cnt += np.sum(p == t[i:i+batch_size])</code>
+print("Accuracy:" + str(float(accuracy_cnt) / len(x)))</pre>
+			<p>现在，我们将描述以粗体显示的每个部分。首先，我们来看一下<code>range()</code>函数。可以使用<code>range()</code>函数，比如<code>range(start, end)</code>，生成一个从<code>start</code>到<code>end-1</code>的整数列表。通过指定三个整数，如在<code>range(start, end, step)</code>中，您可以生成一个整数列表，其中的值按<code>step</code>指定的值递增，如下例所示:</p>
+			<pre>&gt;&gt;&gt; list( range(0, 10) )
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+&gt;&gt;&gt; list( range(0, 10, 3) )
+[0, 3, 6, 9]</pre>
+			<p>根据<code>range()</code>函数返回的列表，<code>x[i:i+batch_size]</code>用于从输入数据中提取一个批次。<code>x[i:i+batch_n]</code>获取输入数据中第<code>i-</code>到第<code>i+batch_n-</code>个数据。在这个例子中，从开始获得100项数据，例如x[0:100]，x[100:200]，…</p>
+			<p>然后，<code>argmax()</code>获得最大值的指标。请注意，这里指定了一个参数<code>axis=1</code>。表示在一个100x10的数组中，最大值的索引是在维度1的元素中找到的(轴几乎与维度相同)，如下所示:</p>
+			<pre>&gt;&gt;&gt; x = np.array([[0.1, 0.8, 0.1], [0.3, 0.1, 0.6],
+... [0.2, 0.5, 0.3], [0.8, 0.1, 0.1]])
+&gt;&gt;&gt; y = np.argmax(x, axis=1)
+&gt;&gt;&gt; print(y)
+[1 2 1 0]</pre>
+			<p>最后，将每一批的分类结果与实际答案进行比较。为此，使用比较运算符(<code>==</code>)来比较NumPy数组。返回一个布尔数组<code>True</code> / <code>False</code>，并计算Trues的数量，如下所示:</p>
+			<pre>&gt;&gt;&gt; y = np.array([1, 2, 1, 0])
+&gt;&gt;&gt; t = np.array([1, 2, 0, 0])
+&gt;&gt;&gt; print(y==t)
+[True True False True]
+&gt;&gt;&gt; np.sum(y==t)
+3</pre>
+			<p>这就是使用批处理的实现。批处理实现了快速高效的处理。当我们在下一章学习神经网络时，成批的图像数据将用于训练。在那里，我们还将构建批处理的实现，就像我们在本章中所做的那样。</p>
+			<h2 id="_idParaDest-91"><a id="_idTextAnchor093"/>摘要</h2>
+			<p>本章描述了神经网络中的前向传播。我们在本章中解释的神经网络与前一章中的感知器是一样的，因为神经元的信号是分级传输的。然而，当信号传递到下一个神经元时，改变信号的激活功能存在很大的差异。作为激活函数，神经网络使用sigmoid函数，它平滑地改变信号，而感知器使用阶跃函数，它急剧地改变信号。这种差异在神经网络训练中很重要，将在下一章中描述。本章包括以下几点:</p>
+			<ul>
+				<li>神经网络使用平滑变化的函数(如sigmoid函数或ReLU函数)作为激活函数。</li>
+				<li>通过使用NumPy的多维数组，您可以高效地实现神经网络。</li>
+				<li>机器学习问题可以大致分为分类问题和回归问题。</li>
+				<li>对输出图层使用激活函数时，身份函数通常用于回归问题，而softmax函数用于分类问题。</li>
+				<li>对于分类问题，要分类的类的数量被用作输出层中神经元的数量。</li>
+				<li>一组输入数据称为一批。每批预测加快了计算过程。</li>
+			</ul>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+	
+
+</body></html>

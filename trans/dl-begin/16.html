@@ -1,0 +1,344 @@
+<html><head/><body>
+
+
+    
+        <title>Recurrent Neural Networks</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    Recurrent Neural Networks
+                
+            
+            
+                
+<p class="mce-root">本章介绍了递归神经网络，从基本模型开始，然后进入<em>更新的</em>递归层，这些递归层能够处理内部记忆学习，以记住或忘记数据集中的某些模式。我们将首先展示递归网络在推断时间或顺序模式的情况下是强大的，然后我们将介绍对具有内部记忆的模型的传统范式的改进，该模型可以在时间空间的两个方向上应用。</p>
+<p class="mce-root">我们将通过将情感分析问题视为序列到向量的应用来处理学习任务，然后我们将同时关注作为向量到序列和序列到序列模型的自动编码器。本章结束时，你将能够解释为什么长短期记忆模型比传统的密集方法更好。你将能够描述双向长短期记忆模型如何比单向方法更有优势。你将能够实现自己的递归网络，并将其应用于NLP问题或图像相关的应用，包括序列到向量、向量到序列和序列到序列的建模。</p>
+<p class="mce-root">本章组织如下:</p>
+<ul>
+<li>递归神经网络导论</li>
+<li>长短期记忆模型</li>
+<li>序列到向量模型</li>
+<li>向量到序列模型</li>
+<li>序列间模型</li>
+<li>伦理含义</li>
+</ul>
+<h1 id="uuid-97fa8734-83d0-49fb-9aee-bebcfcd14ec9">递归神经网络导论</h1>
+<p><strong>递归神经网络</strong> ( <strong> RNNs </strong>)基于鲁梅尔哈特(Rumelhart，D. E .等人(1986))的早期工作，鲁梅尔哈特是一位心理学家，他与辛顿密切合作，我们已经在这里提到过他几次。这个概念很简单，但在使用数据序列的模式识别领域是革命性的。</p>
+<p><strong>数据序列</strong>是在时间或空间上具有高度相关性的任何数据。例子包括音频序列和图像。</p>
+<p>RNNs中的递归概念可以如下图所示进行说明。如果你想到一个密集的神经单元层，这些可以在不同的时间步长使用一些输入来刺激。<em>图13.1 (b) </em>和<em> (c) </em>显示了具有五个时间步长的RNN<img class="fm-editor-equation" src="img/9c53c6b3-e449-4a6f-9c95-12ff4cb30010.png" style="width:2.75em;height:1.08em;"/>。我们可以在图13.1 (b) 和<em> (c) </em>中看到不同时间步长的输入，但更重要的是，神经单元的输出也可用于下一层神经元:</p>
+<div><img src="img/1f337f3e-cee6-404b-a74b-db34d983cdfa.png" style="width:40.33em;height:40.92em;"/></div>
+<p>图13.1。循环层的不同表示法:(a)将是本书的首选用法；(b)描述了神经单元和反馈回路；(c)是(b)的扩展版本，显示了在训练过程中实际发生的情况</p>
+<p>RNN能够看到前一层神经元是如何被刺激的，这有助于网络比没有额外信息的情况下更好地解释序列。然而，这是有代价的:由于存在与输入<img class="fm-editor-equation" src="img/37624e33-af8b-4b40-8359-c74bd9dec3cd.png" style="width:1.17em;height:1.00em;"/>和先前输出<img class="fm-editor-equation" src="img/5869c1cc-4186-404b-802e-caadae5f3bbe.png" style="width:2.33em;height:1.08em;"/>相关联的权重，与传统的密集层相比，将有更多的参数要计算。</p>
+<h2 id="uuid-441924ac-b014-4da8-a554-f96110a25867">简单RNNs</h2>
+<p>在Keras中，我们可以创建一个简单的RNN，具有<strong>五个时间步长</strong>和<strong> 10个神经单元</strong>(参见<em>图13.1 </em>)，如下所示:</p>
+<pre>from tensorflow.keras import Sequential<br/>from tensorflow.keras.layers import <strong>SimpleRNN</strong><br/><br/>n_units = <strong>10</strong><br/>t_steps = <strong>5</strong><br/>inpt_ftrs=2<br/>model = Sequential()<br/>model.add(<strong>SimpleRNN</strong>(n_units, input_shape=(t_steps, inpt_ftrs)))<br/>model.summary()</pre>
+<p>这给出了以下摘要:</p>
+<pre>Model: "sequential"<br/>_________________________________________________________________<br/>Layer (type)            Output Shape  Param # <br/>=================================================================<br/>simple_rnn (SimpleRNN)  (None, 10)    130 <br/>=================================================================<br/>Total params: 130<br/>Trainable params: 130<br/>Non-trainable params: 0</pre>
+<p>前面的示例代码假设输入中的<strong>特性的数量将只有<strong>两个</strong>；例如，我们可以有二维的序列数据。这些类型的rnn被称为<em>简单</em>，因为它们类似于具有<kbd>tanh</kbd>激活和递归方面的密集网络的简单性。</strong></p>
+<p>rnn通常绑定到嵌入层，我们接下来将讨论这一点。</p>
+<h2 id="uuid-fce08f99-342c-4e5c-a09c-734c1006c8d3">嵌入层</h2>
+<p>当存在需要额外处理的序列时，嵌入层通常与RNNs配对，以使RNNs更加鲁棒。考虑这样一种情况，当你有一个句子<em>“这是一个小向量”</em>，你想训练一个RNN来检测句子什么时候写得正确或者写得不好。你可以用你能想到的所有长度为五的句子训练一个RNN，包括<em>“这是一个小向量”。为此，你必须想办法把一个句子转换成RNN人能理解的东西。嵌入层来拯救。</em></p>
+<p>有一种技术叫做<strong>单词嵌入</strong>，它的任务是将一个单词转换成一个向量。有几种成功的方法，如Word2Vec (Mikolov，t .等人，2013年)或GloVe (Pennington，j .等人，2014年)。然而，我们将把重点放在一个容易获得的简单技术上。我们将逐步做到这一点:</p>
+<ol>
+<li>确定你想学习的句子的长度。这将成为RNN图层输入的维度。对于嵌入层的设计来说，这一步并不是必须的，但是对于RNN层来说，你很快就会需要这一步，尽早决定这一点很重要。</li>
+<li>确定数据集中不同单词的数量，并给它们分配一个数字，创建一个字典:单词到索引。这就是所谓的词汇。</li>
+</ol>
+<p>大多数人会确定词汇表，然后计算每个单词的频率来对词汇表中的单词进行排序，以使索引0对应于数据集中最常见的单词，最后一个索引对应于最不常用的单词。例如，如果您想忽略最常用的单词或最不常用的单词，这可能会很有帮助。</p>
+<ol start="3">
+<li>用相应的索引替换数据集中所有句子中的单词。</li>
+<li>确定单词嵌入的维度，并训练嵌入层以从数字索引映射到具有期望维度的实值向量。</li>
+</ol>
+<p>看<em>图13.2 </em>中的例子。如果我们把单词<em>这个</em>，它的给定索引是7，一些训练过的嵌入层可以把那个数映射成大小为10的向量，如图<em>图13.2 (b) </em>所示。那就是单词嵌入过程。</p>
+<p>你可以对完整的句子<em>“这是一个小向量”</em>重复这个过程，它可以映射到一个索引为[7，0，6，1，28]的<strong>序列</strong>，它会为你产生一个向量的<strong>序列</strong>；参见<em>图13.2 (c) </em>。换句话说，它将产生一个<strong>单词嵌入序列</strong>。RNN可以很容易地处理这些序列，并确定这些序列所代表的句子是否是正确的句子。</p>
+<p>然而，我们必须说，确定一个句子是否正确是一个具有挑战性和有趣的问题(Rivas，P. et al. (2019)):</p>
+<div><img src="img/d91edafe-3594-4b85-890f-9cb37ef14142.png" style="width:37.75em;height:37.42em;"/></div>
+<p>图13.2。嵌入层:(a)将是本书的首选用途；(b)示出了单词嵌入的例子；以及(c)示出了单词序列及其对应的单词嵌入矩阵</p>
+<p class="mce-root">基于<em>图13.2 </em>中所示的模型，Keras中的嵌入层可创建如下:</p>
+<pre>from tensorflow.keras import Sequential<br/>from tensorflow.keras.layers import <strong>Embedding</strong><br/><br/>vocab_size = 30<br/>embddng_dim = 10<br/>seqnc_lngth = 5<br/><br/>model = Sequential()<br/>model.add(<strong>Embedding</strong>(<strong>vocab_size</strong>, <strong>embddng_dim</strong>, input_length=<strong>seqnc_lngth</strong>))<br/>model.summary()</pre>
+<p>这会产生以下摘要:</p>
+<pre>Model: "sequential"<br/>_________________________________________________________________<br/>Layer (type)             Output Shape     Param # <br/>=================================================================<br/>embedding (Embedding)    (None, 5, 10)    300 <br/>=================================================================<br/>Total params: 300<br/>Trainable params: 300<br/>Non-trainable params: 0</pre>
+<p>然而，请注意，对于大多数常见语言中的典型NLP任务，词汇表的大小通常在数千的数量级。想想你那本好的老式字典吧...它有多少个条目？通常是几千个。</p>
+<p>类似地，句子通常长于五个单词，所以你应该期望有比前一个例子更长的序列。</p>
+<p>最后，嵌入维度取决于您希望模型在嵌入空间中有多丰富，或者取决于您的模型空间约束。如果你想要一个更小的模型，可以考虑嵌入50维。但是如果空间不是问题，并且您有一个包含数百万条目的优秀数据集，并且您有无限的GPU能力，那么您应该尝试嵌入500、700甚至1000+维度。</p>
+<p>现在，让我们试着用一个真实的例子把这些碎片拼在一起。</p>
+<h2 id="uuid-b3e4798c-19bc-421d-8408-af95631c888b">IMDb上的词嵌入和RNNs</h2>
+<p>IMDb数据集在前面的章节中已经解释过了，但是为了简单起见，我们说它有基于文本的电影评论和与每个条目相关的正面(1)或负面(0)评论。</p>
+<p>Keras允许您访问这个数据集，并提供了几个很好的特性来优化设计模型时的时间。例如，数据集已经根据每个单词的频率进行了处理，使得最小的索引与频繁出现的单词相关联，反之亦然。记住这一点，你也可以排除英语中最常见的单词，比如10个或20个。你甚至可以限制词汇量，比如说，5000或10000个单词。</p>
+<p>在我们进一步讨论之前，我们必须证明一些你将要看到的事情:</p>
+<ul>
+<li>词汇量为10，000。我们可以支持保持10，000的词汇量，因为这里的任务是确定评论是积极的还是消极的。也就是说，我们不需要过于复杂的词汇来确定这一点。</li>
+<li>排除前20个单词。英语中最常见的单词包括“a”或“The”等单词；像这样的词在决定一个电影评论是正面还是负面时可能不是很重要。所以，排除20个最常见的应该没问题。</li>
+<li>句子长度为128个单词。拥有更短的句子，比如5个单词的句子，可能会缺乏足够的内容，拥有更长的句子，比如300个单词的句子，也没有太大的意义，因为我们可能会用更少的单词来感受评论的语气。128个单词的选择完全是任意的，但在所解释的意义上是合理的。</li>
+</ul>
+<p>考虑到这些因素，我们可以轻松地加载数据集，如下所示:</p>
+<pre>from keras.datasets import <strong>imdb</strong><br/>from keras.preprocessing import sequence<br/><br/>inpt_dim = <strong>128</strong><br/>index_from = 3<br/><br/>(x_train, y_train),(x_test, y_test)=<strong>imdb.load_data</strong>(num_words=<strong>10000</strong>,<br/>                                                   start_char=1,<br/>                                                   oov_char=2,<br/>                                                   index_from=index_from,<br/>                                                   skip_top=<strong>20</strong>)<br/>x_train = sequence.pad_sequences(x_train, <br/>                                 maxlen=<strong>inpt_dim</strong>).astype('float32')<br/>x_test = sequence.pad_sequences(x_test, maxlen=<strong>inpt_dim</strong>).astype('float32')<br/><br/># let's print the shapes<br/>print('x_train shape:', x_train.shape)<br/>print('x_test shape:', x_test.shape)</pre>
+<p>我们还可以打印一些用于验证的数据，如下所示:</p>
+<pre># let's print the indices of sample #7<br/>print(' '.join(str(int(id)) for id in x_train[7]))<br/><br/># let's print the actual words of sample #7<br/>wrd2id = imdb.<strong>get_word_index</strong>()<br/>wrd2id = {k:(v+index_from) for k,v in wrd2id.items()}<br/>wrd2id["&lt;PAD&gt;"] = 0<br/>wrd2id["&lt;START&gt;"] = 1<br/>wrd2id["&lt;UNK&gt;"] = 2<br/>wrd2id["&lt;UNUSED&gt;"] = 3<br/><br/>id2wrd = {value:key for key,value in wrd2id.items()}<br/>print(' '.join(id2wrd[id] for id in x_train[7] ))</pre>
+<p>这将输出以下内容:</p>
+<pre>x_train shape: (25000, 128)<br/>x_test shape: (25000, 128)<br/><br/> 55   655    707    6371     956    225    1456    841     42 1310   225     2 ...<br/>very middle class suburban setting there's zero atmosphere or mood there's &lt;UNK&gt; ...</pre>
+<p>上述代码的第一部分显示了如何加载被分为训练集和测试集的数据集，分别为<kbd>x_train</kbd>和<kbd>y_train</kbd>、<kbd>x_test</kbd>和<kbd>y_test</kbd>。剩下的部分只是显示数据集的形状(维度)用于验证，为了验证，我们可以打印出样本#7的原始形式(索引)以及相应的单词。如果你以前没有使用过IMDb，这部分代码会有点奇怪。但是要点是我们需要为特殊的记号保留某些索引:句子的开始<kbd>&lt;START&gt;</kbd>，未使用的索引<kbd>&lt;UNUSED&gt;</kbd>，未登录词索引<kbd>&lt;UNK&gt;</kbd>，以及零填充索引<kbd>&lt;PAD&gt;</kbd>。一旦我们为这些标记做了特殊的分配，我们就可以很容易地从索引映射回单词。RNN将学习这些指数，并学习如何处理它们，要么忽略它们，要么给它们特定的权重。</p>
+<p>现在，让我们实现下图所示的体系结构，该体系结构使用了之前解释的所有层:</p>
+<div><img src="img/50bfc3af-30bc-4ba2-8e63-699a4b32fbec.png" style="width:36.58em;height:26.75em;"/></div>
+<p>图13.3。IMDb数据集的RNN架构</p>
+<p>该图显示了与负面评价相关联的相同示例(来自训练集的#7)。图表中描述的体系结构以及加载数据的代码如下:</p>
+<pre>from keras.datasets import imdb<br/>from keras.preprocessing import sequence<br/>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import SimpleRNN, Embedding, BatchNormalization<br/>from tensorflow.keras.layers import Dense, Activation, Input, Dropout<br/><br/>seqnc_lngth = 128<br/>embddng_dim = 64<br/>vocab_size = 10000<br/><br/>(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=<strong>vocab_size</strong>, <br/>                                                      skip_top=20)<br/>x_train = sequence.pad_sequences(x_train, <br/>                                 maxlen=<strong>seqnc_lngth</strong>).astype('float32')<br/>x_test = sequence.pad_sequences(x_test, <br/>                                maxlen=<strong>seqnc_lngth</strong>).astype('float32')</pre>
+<p>模型的各层定义如下:</p>
+<pre>inpt_vec = Input(shape=(<strong>seqnc_lngth</strong>,))<br/>l1 = <strong>Embedding</strong>(<strong>vocab_size</strong>, <strong>embddng_dim</strong>, input_length=<strong>seqnc_lngth</strong>)(inpt_vec)<br/>l2 = Dropout(0.3)(l1)<br/>l3 = <strong>SimpleRNN</strong>(32)(l2)<br/>l4 = BatchNormalization()(l3)<br/>l5 = Dropout(0.2)(l4)<br/>output = Dense(1, activation='sigmoid')(l5)<br/><br/>rnn = Model(inpt_vec, output)<br/><br/>rnn.compile(loss='binary_crossentropy', optimizer='adam', <br/>            metrics=['accuracy'])<br/>rnn.summary()</pre>
+<p>该模型使用我们之前使用的标准损失和优化器，生成的摘要如下:</p>
+<pre>Model: "functional"<br/>_________________________________________________________________<br/>Layer (type)                 Output Shape     Param # <br/>=================================================================<br/>input_1 (InputLayer)         [(None, 128)]    0 <br/>_________________________________________________________________<br/>embedding (Embedding)        (None, 128, 64)  640000 <br/>_________________________________________________________________<br/>dropout_1 (Dropout)          (None, 128, 64)  0 <br/>_________________________________________________________________<br/>simple_rnn (SimpleRNN)       (None, 32)       3104 <br/>_________________________________________________________________<br/>batch_normalization (BatchNo (None, 32)       128 <br/>_________________________________________________________________<br/>dropout_2 (Dropout)          (None, 32)       0 <br/>_________________________________________________________________<br/>dense (Dense)                (None, 1)        33 <br/>=================================================================<br/>Total params: 643,265<br/>Trainable params: 643,201<br/>Non-trainable params: 64</pre>
+<p>然后我们可以用之前用过的回调来训练网络:a)提前停止，b)自动学习率降低。学习可以按如下方式执行:</p>
+<pre>from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping<br/>import matplotlib.pyplot as plt<br/><br/>#callbacks<br/>reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, <br/>                              min_delta=1e-4, mode='min', verbose=1)<br/><br/>stop_alg = EarlyStopping(monitor='val_loss', patience=7, <br/>                         restore_best_weights=True, verbose=1)<br/><br/>#training<br/>hist = rnn.fit(x_train, y_train, batch_size=100, epochs=1000, <br/>               callbacks=[stop_alg, reduce_lr], shuffle=True, <br/>               validation_data=(x_test, y_test))<br/><br/></pre>
+<p>然后我们保存模型，并像这样显示损失:</p>
+<pre># save and plot training process<br/>rnn.save_weights("rnn.hdf5")<br/><br/>fig = plt.figure(figsize=(10,6))<br/>plt.plot(hist.history['loss'], color='#785ef0')<br/>plt.plot(hist.history['val_loss'], color='#dc267f')<br/>plt.title('Model Loss Progress')<br/>plt.ylabel('Brinary Cross-Entropy Loss')<br/>plt.xlabel('Epoch')<br/>plt.legend(['Training Set', 'Test Set'], loc='upper right')<br/>plt.show()</pre>
+<p>前面的代码产生了下图所示的曲线，这表明网络在时段#3之后开始过度拟合:</p>
+<div><img src="img/42c839cf-deb9-4108-879b-f8df79fe75cf.png" style="width:42.83em;height:27.17em;"/></div>
+<p class="mce-root"/>
+<p>图13.4。训练中的RNN损失</p>
+<p>过度拟合在递归网络中很常见，您不应该对此行为感到惊讶。到今天为止，使用当前的算法，这种情况经常发生。然而，关于RNNs的一个有趣的事实是，与其他传统模型相比，它们也收敛得非常快。如你所见，三个纪元后的收敛还不算太差。</p>
+<p>接下来，我们必须通过查看平衡准确度、混淆矩阵和ROC曲线下的<strong>面积</strong> ( <strong> AUC </strong>)来检查实际的分类性能。我们将只在如下测试集中这样做:</p>
+<pre>from sklearn.metrics import confusion_matrix<br/>from sklearn.metrics import balanced_accuracy_score<br/>from sklearn.metrics import roc_curve, auc<br/>import matplotlib.pyplot as plt<br/>import numpy as np<br/><br/>y_hat = rnn.predict(x_test)<br/><br/># gets the ROC<br/>fpr, tpr, thresholds = roc_curve(y_test, y_hat)<br/>roc_auc = auc(fpr, tpr)<br/><br/># plots ROC<br/>fig = plt.figure(figsize=(10,6))<br/>plt.plot(fpr, tpr, color='#785ef0', <br/>         label='ROC curve (AUC = %0.2f)' % roc_auc)<br/>plt.plot([0, 1], [0, 1], color='#dc267f', linestyle='--')<br/>plt.xlim([0.0, 1.0])<br/>plt.ylim([0.0, 1.05])<br/>plt.xlabel('False Positive Rate')<br/>plt.ylabel('True Positive Rate')<br/>plt.title('Receiver Operating Characteristic Curve')<br/>plt.legend(loc="lower right")<br/>plt.show()<br/><br/># finds optimal threshold and gets ACC and CM<br/>optimal_idx = np.argmax(tpr - fpr)<br/>optimal_threshold = thresholds[optimal_idx]<br/>print("Threshold value is:", optimal_threshold)<br/>y_pred = np.where(y_hat&gt;=optimal_threshold, 1, 0)<br/>print(balanced_accuracy_score(y_test, y_pred))<br/>print(confusion_matrix(y_test, y_pred))</pre>
+<p>先来分析一下这里产生的剧情，如图<em>图13.5 </em>所示:</p>
+<div><img src="img/a2deb947-03bf-45c9-a981-eb58bf955efb.png" style="width:42.08em;height:26.33em;"/></div>
+<p>图13.5。在测试集中计算的RNN模型的ROC和AUC</p>
+<p>该图显示了<strong>真阳性率</strong> ( <strong> TPR </strong>)和<strong>假阳性率</strong> ( <strong> FPR </strong>)的良好组合，尽管这并不理想:我们希望看到更陡峭的阶梯状曲线。AUC是0.92，这也很好，但理想的AUC是1.0。</p>
+<p>类似地，代码产生平衡的准确性和混淆矩阵，看起来像这样:</p>
+<pre>Threshold value is: 0.81700134<br/><br/>0.8382000000000001<br/><br/>[[10273 2227]<br/> [ 1818 10682]]</pre>
+<p>首先，我们在这里计算作为TPR和FPR的函数的最佳阈值。我们希望选择能给我们最大TPR和最小FPR的阈值。此处显示的阈值和结果<strong>将根据网络的初始状态而变化</strong>；然而，精度通常应该在非常相似的值左右。</p>
+<p>一旦计算出最佳阈值，我们可以使用NumPy的<kbd>np.where()</kbd>方法对整个预测进行阈值处理，将它们映射到{0，1}。在此之后，平衡精度计算为83.82%，这也不算太差，但也不理想。</p>
+<p>对图13.3所示的RNN模型进行改进的一种可能方法是，以某种方式赋予循环层跨层记住特定单词的能力，并让它们继续刺激整个序列中的神经单元。下一节将介绍一种具有这种功能的RNN。</p>
+<h1 id="uuid-c77e916b-7e4d-4036-a69f-86aa05ba4df9">长短期记忆模型</h1>
+<p>最初由Hochreiter提出，<strong>长短期记忆模型</strong> ( <strong> LSTMs </strong>)作为循环模型的改进版本获得了关注【Hochreiter，s .，<em>等人</em> (1997)】。LSTMs承诺缓解以下与传统rnn相关的问题:</p>
+<ul>
+<li>消失渐变</li>
+<li>爆炸渐变</li>
+<li>不能记住或忘记输入序列的某些方面</li>
+</ul>
+<p>下图显示了一个非常简化的LSTM版本。在<em> (b) </em>中，我们可以看到附加在某个内存上的自环，在<em> (c) </em>中，我们可以观察到网络展开或扩展时的样子:</p>
+<div><img src="img/a4f0eb33-ca40-4135-b0b9-9a854216321a.png" style="width:36.25em;height:47.83em;"/></div>
+<p>图13.6。LSTM的简化表示</p>
+<p>模型还有很多，但最基本的元素显示在图13.6 中。观察LSTM层如何从先前的时间步长接收先前的输出，还接收称为<strong>状态</strong>的东西，其充当一种类型的存储器。在图中，您可以看到当前的输出和状态对于下一层是可用的，如果需要的话，它们也可以在任何时候使用。</p>
+<p>我们在图13.6中没有展示的一些东西包括LSTM记忆或遗忘的机制。对于初学者来说，在本书中解释这些可能很复杂。但是，此时您需要知道的是，有三种主要机制:</p>
+<ul>
+<li style="list-style-type: none">
+ 
+</li>
+</ul>
+<p>这些机制对于每一个单独的序列数据集都是可训练和优化的。但是为了展示使用LSTM作为递归层的优势，我们将重复与之前完全相同的代码，只是用LSTM来更改RNN。</p>
+<p>加载数据集和构建模型的代码如下:</p>
+<pre>from keras.datasets import imdb<br/>from keras.preprocessing import sequence<br/>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import <strong>LSTM</strong>, Embedding, BatchNormalization<br/>from tensorflow.keras.layers import Dense, Activation, Input, Dropout<br/><br/>seqnc_lngth = 128<br/>embddng_dim = 64<br/>vocab_size = 10000<br/><br/>(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=vocab_size, <br/>                                                      skip_top=20)<br/>x_train = sequence.pad_sequences(x_train, maxlen=seqnc_lngth).astype('float32')<br/>x_test = sequence.pad_sequences(x_test, maxlen=seqnc_lngth).astype('float32')</pre>
+<p>该模型可以指定如下:</p>
+<pre>inpt_vec = Input(shape=(seqnc_lngth,))<br/>l1 = Embedding(vocab_size, embddng_dim, input_length=seqnc_lngth)(inpt_vec)<br/>l2 = Dropout(0.3)(l1)<br/>l3 = <strong>LSTM</strong>(32)(l2)<br/>l4 = BatchNormalization()(l3)<br/>l5 = Dropout(0.2)(l4)<br/>output = Dense(1, activation='sigmoid')(l5)<br/><br/>lstm = Model(inpt_vec, output)<br/><br/>lstm.compile(loss='binary_crossentropy', optimizer='adam', <br/>             metrics=['accuracy'])<br/>lstm.summary()</pre>
+<p>这会产生以下输出:</p>
+<pre>Model: "functional"<br/>_________________________________________________________________<br/>Layer (type) Output Shape Param # <br/>=================================================================<br/>input (InputLayer)          [(None, 128)] 0 <br/>_________________________________________________________________<br/>embedding (Embedding)       (None, 128, 64) 640000 <br/>_________________________________________________________________<br/>dropout_1 (Dropout)         (None, 128, 64) 0 <br/>_________________________________________________________________<br/>lstm (LSTM)                 (None, 32) 12416 <br/>_________________________________________________________________<br/>batch_normalization (Batch  (None, 32) 128 <br/>_________________________________________________________________<br/>dropout_2 (Dropout)         (None, 32) 0 <br/>_________________________________________________________________<br/>dense (Dense)               (None, 1) 33 <br/>=================================================================<br/>Total params: 652,577<br/>Trainable params: 652,513<br/>Non-trainable params: 64</pre>
+<p>这实质上复制了下图所示的模型:</p>
+<div><img src="img/33464f77-9425-4bb9-8172-8e17ad37ce68.png" style="width:36.67em;height:27.00em;"/></div>
+<p>图13.7。用于IMDb数据集的基于LSTM的神经架构</p>
+<p>请注意，这个模型比简单的RNN方法多了近10，000个参数。但是，前提是这种参数的增加也要带来性能的提升。</p>
+<p>然后我们像以前一样训练我们的模型，就像这样:</p>
+<pre>from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping<br/>import matplotlib.pyplot as plt<br/><br/>#callbacks<br/>reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, <br/>                              min_delta=1e-4, mode='min', verbose=1)<br/><br/>stop_alg = EarlyStopping(monitor='val_loss', patience=7, <br/>                         restore_best_weights=True, verbose=1)<br/><br/>#training<br/>hist = lstm.fit(x_train, y_train, batch_size=100, epochs=1000, <br/>                callbacks=[stop_alg, reduce_lr], shuffle=True, <br/>                validation_data=(x_test, y_test))</pre>
+<p>接下来，我们保存模型并显示其性能，如下所示:</p>
+<pre># save and plot training process<br/>lstm.save_weights("lstm.hdf5")<br/><br/>fig = plt.figure(figsize=(10,6))<br/>plt.plot(hist.history['loss'], color='#785ef0')<br/>plt.plot(hist.history['val_loss'], color='#dc267f')<br/>plt.title('Model Loss Progress')<br/>plt.ylabel('Brinary Cross-Entropy Loss')<br/>plt.xlabel('Epoch')<br/>plt.legend(['Training Set', 'Test Set'], loc='upper right')<br/>plt.show()</pre>
+<p>该代码将生成下图所示的图:</p>
+<div><img src="img/e37d404e-9f38-4e4b-8609-84255ffe6f5d.png"/></div>
+<p>图13.8。跨时代的损失训练LSTM</p>
+<p>从图中注意到，模型在<strong>一个时期</strong>后开始过度拟合。使用最佳点的训练模型，我们可以计算实际性能如下:</p>
+<pre>from sklearn.metrics import confusion_matrix<br/>from sklearn.metrics import balanced_accuracy_score<br/>from sklearn.metrics import roc_curve, auc<br/>import matplotlib.pyplot as plt<br/>import numpy as np<br/><br/>y_hat = lstm.predict(x_test)<br/><br/># gets the ROC<br/>fpr, tpr, thresholds = roc_curve(y_test, y_hat)<br/>roc_auc = auc(fpr, tpr)<br/><br/># plots ROC<br/>fig = plt.figure(figsize=(10,6))<br/>plt.plot(fpr, tpr, color='#785ef0', <br/>         label='ROC curve (AUC = %0.2f)' % roc_auc)<br/>plt.plot([0, 1], [0, 1], color='#dc267f', linestyle='--')<br/>plt.xlim([0.0, 1.0])<br/>plt.ylim([0.0, 1.05])<br/>plt.xlabel('False Positive Rate')<br/>plt.ylabel('True Positive Rate')<br/>plt.title('Receiver Operating Characteristic Curve')<br/>plt.legend(loc="lower right")<br/>plt.show()<br/><br/># finds optimal threshold and gets ACC and CM<br/>optimal_idx = np.argmax(tpr - fpr)<br/>optimal_threshold = thresholds[optimal_idx]<br/>print("Threshold value is:", optimal_threshold)<br/>y_pred = np.where(y_hat&gt;=optimal_threshold, 1, 0)<br/>print(balanced_accuracy_score(y_test, y_pred))<br/>print(confusion_matrix(y_test, y_pred))</pre>
+<p>这将产生下图所示的ROC:</p>
+<div><img src="img/f2baf0a7-1cf9-4b01-b57e-38169a66ec94.png"/></div>
+<p>图13.9。LSTM建筑的ROC曲线</p>
+<p>从该图中，我们可以看到模型中有轻微的增益，当简单RNN模型的AUC为0.92时，产生了0.93的AUC。</p>
+<p>当查看由前面的代码生成的平衡精度和混淆矩阵时，会显示如下数字:</p>
+<pre>Threshold value is: 0.44251397<br/>0.8544400000000001<br/>[[10459 2041]<br/> [ 1598 10902]]</pre>
+<p>在这里，我们可以看到准确率为85.44%，比简单的RNN提高了约2%。我们进行这个实验只是为了表明，通过转换RNN模型，我们可以很容易地看到改进。当然，还有其他方法来改进模型，例如以下方法:</p>
+<ul>
+<li>增加/减少词汇量</li>
+<li>增加/减少序列长度</li>
+<li>增加/减少嵌入尺寸</li>
+<li>增加/减少循环层中的神经单元</li>
+</ul>
+<p>除此之外可能还有其他人。</p>
+<p>到目前为止，您已经看到了如何获取文本表示(电影评论)，这是一个常见的NLP任务，并找到了一种方法来在一个空间中表示这些内容，您可以将它们分为负面或正面评论。我们通过嵌入和LSTM层做到了这一点，但在最后，有一个致密层，其中一个神经元给出最终输出。我们可以认为这是从文本空间到一维空间的映射，在一维空间中我们可以执行分类。我们这样说是因为考虑这些映射有三种主要方式:</p>
+<ul>
+<li><strong>序列到向量</strong>:就像这里的例子一样，将序列映射到一个<em> n- </em>维空间。</li>
+<li><strong>向量到序列</strong>:这走相反的路，从一个<em> n </em>维空间到一个序列。</li>
+<li><strong>序列到序列</strong>:这是从一个序列到一个序列的映射，通常中间经过一个<em> n </em>维的映射。</li>
+</ul>
+<p>为了举例说明这些事情，我们将在下一节中使用自动编码器架构和MNIST。</p>
+<h1 id="uuid-2be10790-d623-406d-b3e1-2d10077477f1">序列到向量模型</h1>
+<p>在上一节中，您<em>在技术上</em>看到了一个序列到向量的模型，它采用一个序列(代表单词的数字)并映射到一个向量(一维对应于一个电影评论)。然而，为了进一步理解这些模型，我们将回到MNIST作为输入源来构建一个模型，该模型将采用一个MNIST数并将其映射到一个潜在向量。</p>
+<h2 id="uuid-6c092d5d-190a-4ee6-be62-6f454cccba38">无监督模型</h2>
+<p>让我们在下图所示的自动编码器架构中工作。我们以前研究过自动编码器，现在我们将再次使用它们，因为我们了解到它们在寻找矢量表示(潜在空间)方面非常强大，这些表示是鲁棒的，由无监督学习驱动:</p>
+<div><img src="img/6af9a8ff-db2e-4cdc-b0c7-2ba2350e2ca2.png" style="width:43.83em;height:28.75em;"/></div>
+<p>图13.10。基于LSTM的MNIST自动编码器架构</p>
+<p>这里的目标是获取一幅图像并找到它的潜在表示，在图13.10 的例子中，它是二维的。然而，您可能会想:图像怎么会是一个序列呢？</p>
+<p>我们可以将图像理解为一系列行或一系列列。假设我们将一个28×28像素的二维图像解释为一系列行；我们可以把每一行从上到下看成一个由28个向量组成的序列，每个向量的维数都是1x28。这样，我们可以使用LSTM来处理这些序列，利用LSTM理解序列中时间关系的能力。这意味着，例如在MNIST的情况下，图像中的特定行看起来像前一行或下一行的可能性非常高。</p>
+<p>请进一步注意，图13.10 中的<em>提出的模型不像我们之前处理文本时那样需要嵌入层。回想一下，在处理文本时，我们需要将每个单词嵌入(向量化)到一个向量序列中。然而，对于图像，它们已经是矢量序列，这消除了对嵌入层的需要。</em></p>
+<p>除了两个有用的数据操作工具之外，我们将在此展示的代码没有什么新内容:</p>
+<ul>
+<li>这将允许我们任意重复一个向量。它有助于解码器(参见<em>图13.10 </em>)从一个向量转换成一个序列。</li>
+<li><kbd>TimeDistributed()</kbd>:这将允许我们为一个序列的每个元素分配一个特定类型的层。</li>
+</ul>
+<p>这两件是<kbd>tensorflow.keras.layers</kbd>系列的一部分。这些在下面的代码中实现:</p>
+<pre>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import Dense, Activation, Input<br/>from tensorflow.keras.layers import BatchNormalization, Dropout<br/>from tensorflow.keras.layers import Embedding, LSTM<br/>from tensorflow.keras.layers import RepeatVector, TimeDistributed<br/>from tensorflow.keras.datasets import mnist<br/>from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping<br/>import numpy as np<br/><br/>seqnc_lngth = 28    # length of the sequence; must be 28 for MNIST<br/>ltnt_dim = 2        # latent space dimension; it can be anything reasonable<br/><br/>(x_train, y_train), (x_test, y_test) = mnist.load_data()<br/><br/>x_train = x_train.astype('float32') / 255.<br/>x_test = x_test.astype('float32') / 255.<br/><br/>print('x_train shape:', x_train.shape)<br/>print('x_test shape:', x_test.shape)</pre>
+<p>加载数据后，我们可以如下定义模型的编码器部分:</p>
+<pre>inpt_vec = Input(shape=(seqnc_lngth, seqnc_lngth,))<br/>l1 = Dropout(0.1)(inpt_vec)<br/>l2 = LSTM(seqnc_lngth, activation='tanh', <br/>          recurrent_activation='sigmoid')(l1)<br/>l3 = BatchNormalization()(l2)<br/>l4 = Dropout(0.1)(l3)<br/>l5 = Dense(ltnt_dim, activation='sigmoid')(l4)<br/><br/># model that takes input and encodes it into the latent space<br/>encoder = Model(inpt_vec, l5)</pre>
+<p>接下来，我们可以将模型的解码器部分定义如下:</p>
+<pre>l6 = RepeatVector(seqnc_lngth)(l5)<br/>l7 = LSTM(seqnc_lngth, activation='tanh', recurrent_activation='sigmoid', <br/>          return_sequences=True)(l6)<br/>l8 = BatchNormalization()(l7)<br/>l9 = TimeDistributed(Dense(seqnc_lngth, activation='sigmoid'))(l8)<br/><br/>autoencoder = Model(inpt_vec, l9)</pre>
+<p>最后，我们像这样编译和训练模型:</p>
+<pre>autoencoder.compile(loss='binary_crossentropy', optimizer='adam')<br/>autoencoder.summary()<br/><br/>reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, <br/>                              min_delta=1e-4, mode='min', verbose=1)<br/><br/>stop_alg = EarlyStopping(monitor='val_loss', patience=15, <br/>                         restore_best_weights=True, verbose=1)<br/><br/>hist = autoencoder.fit(x_train, x_train, batch_size=100, epochs=1000, <br/>                       callbacks=[stop_alg, reduce_lr], shuffle=True, <br/>                       validation_data=(x_test, x_test))</pre>
+<p>代码应该打印以下输出，对应于数据集的维度、模型参数的摘要，然后是训练步骤，为了节省空间，我们省略了这些步骤:</p>
+<pre>x_train shape: (60000, 28, 28)<br/>x_test shape: (10000, 28, 28)<br/><br/>Model: "functional"<br/>_________________________________________________________________<br/>Layer (type)               Output Shape      Param # <br/>=================================================================<br/>input (InputLayer)         [(None, 28, 28)]  0 <br/>_________________________________________________________________<br/>dropout_1 (Dropout)        (None, 28, 28)    0 <br/>_________________________________________________________________<br/>lstm_1 (LSTM)              (None, 28)        6384 <br/>_________________________________________________________________<br/>batch_normalization_1 (Bat (None, 28)        112 <br/>_________________________________________________________________<br/>.<br/>.<br/>.<br/>time_distributed (TimeDist (None, 28, 28)    812 <br/>=================================================================<br/>Total params: 10,950<br/>Trainable params: 10,838<br/>Non-trainable params: 112<br/>_________________________________________________________________<br/><br/>Epoch 1/1000<br/>600/600 [==============================] - 5s 8ms/step - loss: 0.3542 - val_loss: 0.2461<br/>.<br/>.<br/>.<br/><br/></pre>
+<p>模型最终会收敛到一个谷底，在那里被回调自动停止。在这之后，我们可以简单地调用<kbd>encoder</kbd>模型将任何有效的序列(例如，MNIST图像)转换成一个向量，这是我们接下来要做的。</p>
+<h2 id="uuid-b656b90b-a603-4c2f-b28c-e91a8574ee4b">结果</h2>
+<p>我们可以调用<kbd>encoder</kbd>模型将任何有效的序列转换成向量，如下所示:</p>
+<pre>encoder.predict(x_test[0:1])</pre>
+<p class="mce-root">这将产生一个二维矢量，其值对应于序列<kbd>x_test[0]</kbd>的矢量表示，这是MNIST测试集的第一幅图像。它可能看起来像这样:</p>
+<pre class="mce-root">array([[3.8787320e-01, 4.8048562e-01]], dtype=float32)</pre>
+<p class="mce-root">但是，请记住，这个模型是在没有监督的情况下训练的，因此，这里显示的数字肯定会有所不同！编码器模型实际上就是我们的序列到向量模型。autoencoder模型的其余部分用于进行重建。</p>
+<p>如果您想知道autoencoder模型如何能够从只有两个值的矢量中重建28x28的图像，或者如果您想知道MNIST的整个测试集在学习到的二维空间中投影时会是什么样子，您可以运行以下代码:</p>
+<pre>import matplotlib.pyplot as plt<br/>import numpy as np<br/><br/>x_hat = autoencoder.predict(x_test)<br/><br/>smp_idx = [3,2,1,18,4,8,11,0,61,9]      # samples for 0,...,9 digits<br/>plt.figure(figsize=(12,6))<br/>for i, (img, y) in enumerate(zip(x_hat[smp_idx].reshape(10, 28, 28), y_test[smp_idx])):<br/>  plt.subplot(2,5,i+1)<br/>  plt.imshow(img, cmap='gray')<br/>  plt.xticks([])<br/>  plt.yticks([])<br/>  plt.title(y)<br/>plt.show()</pre>
+<p>它显示原始数字的样本，如图11所示。</p>
+<div><img src="img/2ee1636e-8781-4b4a-bbfd-b288336795e6.png" style="width:31.33em;height:14.67em;"/></div>
+<p>图11。MNIST原始数字0-9</p>
+<p class="mce-root">以下代码产生重构数字的样本:</p>
+<pre>plt.figure(figsize=(12,6))<br/>for i, (img, y) in enumerate(zip(x_test[smp_idx].reshape(10, 28, 28), y_test[smp_idx])):<br/>  plt.subplot(2,5,i+1)<br/>  plt.imshow(img, cmap='gray')<br/>  plt.xticks([])<br/>  plt.yticks([])<br/>  plt.title(y)<br/>plt.show()</pre>
+<p>重建的数字如<em>图12: </em>所示</p>
+<div><img src="img/4cce3195-d9fc-46ef-83bf-5cee6a876b8d.png" style="width:37.50em;height:17.42em;"/></div>
+<p>图12。MNIST用LSTM的自动编码器重建了数字0-9</p>
+<p>下一段代码将显示原始数据投射到潜在空间的散点图，如图<em>图13 </em>所示:</p>
+<pre>y_ = list(map(int, y_test))<br/>X_ = encoder.predict(x_test)<br/><br/>plt.figure(figsize=(10,8))<br/>plt.title('LSTM-based Encoder')<br/>plt.scatter(X_[:,0], X_[:,1], s=5.0, c=y_, alpha=0.75, cmap='tab10')<br/>plt.xlabel('First encoder dimension')<br/>plt.ylabel('Second encoder dimension')<br/>plt.colorbar()</pre>
+<p>回想一下，由于自动编码器不受监督的特性，这些结果可能会有所不同。类似地，学习的空间可以在视觉上想象成如图<em>图13 </em>所示，其中每个点对应于一个序列(MNIST数字),该序列是一个二维向量:</p>
+<div><img src="img/0424aed3-9b57-4bf1-89ec-b2578136e808.png" style="width:36.92em;height:32.67em;"/></div>
+<p>图13。基于MNIST数据集的学习向量空间</p>
+<p>从<em>图13 </em>中，我们可以看到，即使重建仅基于二维向量，序列-向量模型也能正常工作。我们将在下一节看到更大的表示。然而，你需要知道序列到向量模型在过去几年里非常有用[张，z .，<em>等</em> (2017)]。</p>
+<p>另一个有用的策略是创建向量到序列模型，这是从向量表示到序列表示。在自动编码器中，这将对应于解码器部分。让我们接着讨论这个问题。</p>
+<h1 id="uuid-cd4ba758-b890-4894-8d94-55209833a7ea">向量到序列模型</h1>
+<p>如果你回头看<em>图10 </em>，向量到序列模型将对应于解码器漏斗形状。主要的理念是，大多数模型通常可以从大量输入到丰富的表示，而不会有任何问题。然而，直到最近，机器学习社区才非常成功地重新获得了从向量产生序列的牵引力(Goodfellow，I .，et al. (2016))。</p>
+<p>你可以再次想到图10 中的<em>和模型，它将从原始序列中产生一个序列。在这一节中，我们将重点放在第二部分，解码器，并使用它作为一个向量到序列模型。然而，在我们去那里之前，我们将介绍RNN的另一个版本，双向LSTM。</em></p>
+<h2 id="uuid-6bd60999-d585-4251-b405-aff9fc77bc90">双向LSTM</h2>
+<p>一个<strong>双向LSTM </strong> ( <strong> BiLSTM </strong>)，简单来说，就是一个分析向前和向后的序列的LSTM，如图<em>图14 </em>所示:</p>
+<div><img src="img/65dedd87-5a7e-4f19-8f0b-00c6aa7dede3.png"/></div>
+<p>图14。双向LSTM表示</p>
+<p>考虑以下向前和向后分析的序列示例:</p>
+<ul>
+<li>一个在自然声音中分析的音频序列，然后倒回去(有些人这样做是为了寻找<em>潜意识</em>信息)。</li>
+<li>一个文本序列，如一个句子，被分析用于向前的良好风格，也用于向后的良好风格，因为一些模式(至少在英语和西班牙语中)向后引用；例如，指出现在句首的主语的动词。</li>
+<li>从上到下、从下到上、从一边到另一边、从后到后都有特殊形状的图像；如果你从上到下思考数字9，传统的LSTM可能会忘记顶部的圆形部分，而记住底部的细长部分，但BiLSTM可能会通过从上到下和从下到上来回忆数字的两个重要方面。</li>
+</ul>
+<p>从<em>图14 (b) </em>中，我们还可以观察到正向和反向传递的状态和输出在序列中的任何点都是可用的。</p>
+<p>我们可以通过简单地调用简单LSTM层周围的<kbd>Bidirectional()</kbd>包装器来实现双向LSTM。然后，我们将采用图10 中的<em>架构，并将其修改为:</em></p>
+<ul>
+<li>潜在空间的100个维度</li>
+<li>取代LSTM层的BiLSTM</li>
+<li>从潜在空间进入解码器的附加脱落层</li>
+</ul>
+<p>新的架构将看起来像图15所示:</p>
+<div><img src="img/66ead033-612e-4d8c-be82-593830cb24ab.png" style="width:41.75em;height:27.08em;"/></div>
+<p>图15。实施BiLSTMs，以期建立一个从向量到序列的模型</p>
+<p>回想一下，这里最重要的一点是使潜在空间(向量到序列模型的输入)尽可能丰富，以便生成更好的序列。我们试图通过增加潜在空间维度和增加BiLSTMS来实现这一点。让我们继续实现它，看看结果。</p>
+<h2 id="uuid-4d6cbe8e-dc54-4150-bff8-1d9e67118e1d">实施情况和结果</h2>
+<p>实现图15 中<em>架构的代码如下:</em></p>
+<pre>from tensorflow.keras.models import Model<br/>from tensorflow.keras.layers import Dense, Activation, Input<br/>from tensorflow.keras.layers import BatchNormalization, Dropout<br/>from tensorflow.keras.layers import <strong>Bidirectional</strong>, LSTM<br/>from tensorflow.keras.layers import RepeatVector, TimeDistributed<br/>from tensorflow.keras.datasets import mnist<br/>from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping<br/>import numpy as np<br/><br/>seqnc_lngth = 28<br/>ltnt_dim = <strong>100</strong> <br/><br/>(x_train, y_train), (x_test, y_test) = mnist.load_data()<br/><br/>x_train = x_train.astype('float32') / 255.<br/>x_test = x_test.astype('float32') / 255.</pre>
+<p>我们将模型的编码器部分定义如下:</p>
+<pre>inpt_vec = Input(shape=(seqnc_lngth, seqnc_lngth,))<br/>l1 = Dropout(0.5)(inpt_vec)<br/>l2 = <strong>Bidirectional</strong>(LSTM(seqnc_lngth, activation='tanh', <br/>                        recurrent_activation='sigmoid'))(l1)<br/>l3 = BatchNormalization()(l2)<br/>l4 = Dropout(0.5)(l3)<br/>l5 = Dense(ltnt_dim, activation='sigmoid')(l4)<br/><br/># sequence to vector model<br/>encoder = Model(inpt_vec, l5, name='encoder')</pre>
+<p>该模型的解码器部分可以定义如下:</p>
+<pre>ltnt_vec = Input(shape=(ltnt_dim,))<br/>l6 = Dropout(0.1)(ltnt_vec)<br/>l7 = RepeatVector(seqnc_lngth)(l6)<br/>l8 = <strong>Bidirectional</strong>(LSTM(seqnc_lngth, activation='tanh', <br/>                   recurrent_activation='sigmoid', <br/>                   return_sequences=True))(l7)<br/>l9 = BatchNormalization()(l8)<br/>l10 = TimeDistributed(Dense(seqnc_lngth, activation='sigmoid'))(l9)<br/><br/><strong># vector to sequence model</strong><br/><strong>decoder</strong> = Model(ltnt_vec, l10, name='decoder')</pre>
+<p>接下来，我们编译自动编码器并训练它:</p>
+<pre>recon = decoder(encoder(inpt_vec))<br/>autoencoder = Model(inpt_vec, recon, name='ae')<br/><br/>autoencoder.compile(loss='binary_crossentropy', optimizer='adam')<br/>autoencoder.summary()<br/><br/>reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, <br/>                              min_delta=1e-4, mode='min', verbose=1)<br/><br/>stop_alg = EarlyStopping(monitor='val_loss', patience=15, <br/>                         restore_best_weights=True, verbose=1)<br/><br/>hist = autoencoder.fit(x_train, x_train, batch_size=100, epochs=1000, <br/>                       callbacks=[stop_alg, reduce_lr], shuffle=True, <br/>                       validation_data=(x_test, x_test))</pre>
+<p>这里没有什么新东西，除了前面已经解释过的使用的<kbd>Bidirectional()</kbd>包装器。输出应该生成完整自动编码器模型和完整训练操作的摘要，如下所示:</p>
+<pre>Model: "ae"<br/>_________________________________________________________________<br/>Layer (type)          Output Shape     Param # <br/>=================================================================<br/>input (InputLayer)    [(None, 28, 28)] 0 <br/>_________________________________________________________________<br/>encoder (Functional)  (None, 100)      18692 <br/>_________________________________________________________________<br/>decoder (Functional)  (None, 28, 28)   30716 <br/>=================================================================<br/>Total params: 49,408<br/>Trainable params: 49,184<br/>Non-trainable params: 224<br/>_________________________________________________________________<br/>Epoch 1/1000<br/>600/600 [==============================] - 9s 14ms/step - loss: 0.3150 - val_loss: 0.1927<br/>.<br/>.<br/>.</pre>
+<p>现在，在大量的无监督学习之后，训练将自动停止，我们可以使用<kbd>decoder</kbd>模型作为我们的向量到序列模型。但在此之前，我们可能希望通过运行与之前相同的代码来快速检查重建的质量，以生成下图所示的图像:</p>
+<div><img src="img/43b0a05b-9283-44a1-84cd-12274c6959e5.png" style="width:36.67em;height:17.42em;"/></div>
+<p>图16。用BiLSTM自动编码器重构MNIST数字</p>
+<p>如果您比较<em>图11 </em>和<em>图16 </em>，您会注意到，与图12 图<em>中之前的模型重建相比，重建效果更好，细节层次更高。</em></p>
+<p>现在，我们可以使用任何兼容的向量直接调用我们的向量到序列模型，如下所示:</p>
+<pre>z = np.random.rand(1,100)<br/>x_ = <strong>decoder</strong>.predict(z)<br/>print(x_.shape)<br/>plt.imshow(x_[0], cmap='gray')</pre>
+<p>这产生了以下输出和图17 中的图:</p>
+<pre>(1, 28, 28)</pre>
+<div><br/>
+<img src="img/bda7e5f5-ec39-4f70-8ac7-4e566aae3894.png" style="width:12.92em;height:12.83em;"/></div>
+<p>图17。由模型从随机向量产生的序列</p>
+<p>您可以生成任意数量的随机向量，并测试您的向量到序列模型。另一个有趣的观察点是序列到序列模型，我们将在下一步讨论。</p>
+<h1 id="uuid-d0519997-ed8a-4fdb-af45-361923aab676">序列间模型</h1>
+<p>一位谷歌大脑科学家(Vinyals，o .等人(2015))写道:</p>
+<p>“由于递归神经网络的复兴，序列已经成为监督学习中的一等公民。许多需要从一个观察序列映射或映射到一个观察序列的复杂任务现在可以用<strong>序列到序列</strong> ( <strong> seq2seq </strong>)框架来制定，该框架采用链规则来有效地表示序列的联合概率。”</p>
+<p class="mce-root"/>
+<p>这是惊人的正确，因为现在应用程序已经增长。只需考虑以下序列到序列项目的想法:</p>
+<ul>
+<li>文档摘要。输入序列:一个文档。输出序列:一个摘要。</li>
+<li>图像超分辨率。输入序列:低分辨率图像。输出序列:高分辨率图像。</li>
+<li>视频字幕。输入序列:视频。输出序列:文本标题。</li>
+<li>机器翻译。输入序列:源语言的文本。输出序列:目标语言的文本。</li>
+</ul>
+<p>这些都是激动人心且极具挑战性的应用。如果您使用过在线翻译器，那么您很可能使用了某种序列对序列模型。</p>
+<p>在本节中，为了简单起见，我们将继续使用<em>图15 </em>中的自动编码器作为我们的主要关注点，但只是为了确保我们在序列间模型的通用性方面达成一致，我们将指出以下注意事项:</p>
+<ul>
+<li>序列到序列模型可以跨域映射；例如，视频到文本或文本到音频。</li>
+<li>序列到序列模型可以在不同维度上映射；例如，为了压缩，从低分辨率图像到高分辨率图像，反之亦然。</li>
+<li>序列到序列模型可以使用许多不同的工具，如密集层、卷积层和递归层。</li>
+</ul>
+<p>考虑到这一点，您可以根据您的应用程序构建一个序列到序列的模型。现在，我们将回到图15 的<em>中的模型，并展示自动编码器是一个序列到序列的模型，它接受一个图像的一系列行，并产生另一个图像的一系列行。由于这是一个自动编码器，输入和输出尺寸必须匹配。</em></p>
+<p>我们将把先前训练的序列到序列模型(autoencoder)的展示限制在以下短代码片段，该代码片段基于上一节中的代码:</p>
+<pre>plt.figure(figsize=(12,6))<br/>for i in range(10):<br/>  plt.subplot(2,5,i+1)<br/>  rnd_vec = np.round(np.mean(x_test[y_test==i],axis=0))   #(a)<br/>  rnd_vec = np.reshape(rnd_vec, (1,28,28))                #(b)<br/>  z = <strong>encoder</strong>.predict(rnd_vec)                            #(c)<br/>  decdd = <strong>decoder</strong>.predict(z)                              #(d)<br/>  plt.imshow(decdd[0], cmap='gray')<br/>  plt.xticks([])<br/>  plt.yticks([])<br/>  plt.title(i)<br/>plt.show()</pre>
+<p>让我们解释其中的一些步骤。在<em> (a) </em>中，我们计算每个单个数的平均序列；这是对以下问题的回答:既然随机操作如此简单，我们可以用什么作为输入序列呢？嗯，使用平均序列来形成测试集听起来很有趣。</p>
+<p>接下来，<em> (b) </em>就是简单的让输入与编码器输入尺寸兼容。然后，<em> (c) </em>取平均序列并从中生成一个向量。最后，<em> (d) </em>使用该向量重新创建序列，生成下图所示的图:</p>
+<div><img src="img/c00afefc-9376-43b2-845f-c1b8b8883fa3.png" style="width:22.17em;height:10.50em;"/></div>
+<p>图18。序列间示例输出</p>
+<p>从图中，您可以很容易地观察到与手写数字一致的定义良好的模式，这些模式是由双向LSTMs生成的行序列。</p>
+<p>在我们结束这个之前，让我们来谈谈这些模型的伦理含义。</p>
+<h1 id="uuid-2fe6fa4c-f814-4b98-b10c-7c3d67429db2">伦理含义</h1>
+<p>随着递归模型的复苏及其在序列中捕获时间信息的适用性，存在发现未被适当公平分布的潜在空间的风险。这在无监督的模型中具有更高的风险，这些模型在没有适当管理的数据中操作。如果你仔细想想，这个模型并不关心它所发现的关系；它只关心最小化损失函数，因此，如果用20世纪50年代的杂志或报纸对它进行训练，它可能会发现单词“women”可能接近(就欧几里德距离而言)家务劳动单词，如“扫帚”、“盘子”和“烹饪”，而单词“man”可能接近所有其他劳动，如“驾驶”、“教学”、“医生”和“科学家”。这是一个已经被引入潜在空间的偏差的例子(Shin，s .，<em> </em>等(2020))。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p>这里的风险是，向量到序列或序列到序列模型将发现，将医生与男人联系起来比与女人联系起来容易得多，与女人做饭比与男人联系起来容易得多，这只是举几个例子。你也可以把这种方法应用到人脸图像中，发现某些具有某些特征的人可能会被错误地联系起来。这就是为什么进行我们在这里所做的分析是如此的重要，尽可能的可视化潜在空间，尝试观察模型的输出，等等。</p>
+<p>这里的关键是，虽然这里讨论的模型非常有趣和强大，但它们也有风险，可以了解我们的社会中特别被认为是不需要的东西。如果风险存在且未被发现，可能会导致偏见(Amini，a .等人(2019))。如果偏见没有被发现，它可能会导致几种形式的歧视。请永远小心这些事情，以及超出你自己的社会背景的事情。</p>
+<h1 id="uuid-8798f224-b9f4-41a2-8997-674fbf7f2d19">摘要</h1>
+<p>这一高级章节向您展示了如何创建rnn。您了解了LSTMs及其双向实现，这是处理具有远距离时间相关性的序列的最强大的方法之一。您还学习了如何创建一个基于LSTM的情感分析模型来对电影评论进行分类。您设计了一个自动编码器，使用简单的双向LSTMs学习MNIST的潜在空间，并将其用作向量到序列模型和序列到序列模型。</p>
+<p>在这一点上，你应该有信心解释RNNs中记忆背后的动机，因为需要更健壮的模型。使用Keras/TensorFlow编写自己的递归网络，你应该会感觉很舒服。此外，您应该有信心实现有监督和无监督的递归网络。</p>
+<p>LSTMs非常适合编码高度相关的空间信息，如图像、音频或文本，就像CNN一样。然而，CNN和LSTMs都学习可能缺乏多样性的非常具体的潜在空间。如果有一个恶意的黑客试图破坏你的系统，这可能会导致一个问题；如果您的模型非常特定于您的数据，它可能会对变化产生一定的敏感性，从而导致输出中的灾难性后果。自动编码器通过使用称为变分自动编码器的生成方法来解决这个问题，变分自动编码器学习数据的分布而不是数据本身。然而，问题仍然存在:我们如何在不一定是自动编码器的其他类型的网络中实现这种生成方法的思想？要找出答案，你不能错过下一章，<a href="7b09fe4b-078e-4c57-8a81-dc0863eba43d.xhtml">第十四章</a>，<em>生成神经网络</em>。下一章将介绍一种克服神经网络脆弱性的方法，通过攻击它们并教会它们变得更加健壮。但是在你走之前，用下面的问题来测试你自己。</p>
+<p class="mce-root"/>
+<h1 id="uuid-0bc33f67-ccda-4d78-83c0-2b62ecceeecd">问题和答案</h1>
+<ol>
+<li><strong>如果CNN和lstm都可以模拟空间相关数据，lstm的优势是什么？</strong></li>
+</ol>
+<p style="padding-left: 60px">除了LSTMs有记忆的事实之外，没有其他的。但是在某些应用程序中，比如NLP，当你向前和向后移动时，一个句子被连续地发现，在开头、中间和结尾有对某些单词的引用，并且一次有多个。BiLSTMs比CNN更容易模拟这种行为。CNN可能会学着这么做，但相比之下可能要花更长的时间。</p>
+<ol start="2">
+<li><strong>增加更多的递归层是否会使网络变得更好？</strong></li>
+</ol>
+<p style="padding-left: 60px">不。这只会让事情变得更糟。建议保持简单，不要超过三层，除非你是一个科学家，正在尝试一些新的东西。否则，在编码器模型中，一行中的重复层不应超过三个。</p>
+<ol start="3">
+<li>【LSTMs还有哪些应用？</li>
+</ol>
+<p style="padding-left: 60px">音频处理和分类；图像去噪；图像超分辨率；文本摘要和其他文本处理和分类任务；单词补全；聊天机器人；文本完成；文本生成；音频生成；图像生成。</p>
+<ol start="4">
+<li>看起来LSTMs和CNN有相似的应用。是什么让你选择了一个而不是另一个？</li>
+</ol>
+<p style="padding-left: 60px">LSTMs收敛更快；因此，如果时间是一个因素，LSTMs更好。CNN比LSTMs更稳定；因此，如果您的输入非常不可预测，LSTM可能会将问题带到循环层，每次都变得更糟，在这种情况下，CNN可以通过池化来缓解这种情况。就个人而言，对于图像相关的应用程序，我通常首先尝试CNN，对于NLP应用程序，我通常首先尝试LSTMs。</p>
+<h1 id="uuid-ca1662b2-9c8a-4e4d-97d7-b620f6b8ec3e">参考</h1>
+<ul>
+<li>鲁梅尔哈特、辛顿和威廉姆斯(1986)。<em>通过反向传播误差学习表征</em>。<em>性质</em>，323(6088)，533-536。</li>
+<li>Mikolov，Sutskever，I .，Chen，k .，Corrado，G. S .，和Dean，J. (2013年)。<em>词语的分布式表征及其组合性</em>。在<em>神经信息处理系统的进展</em>(第3111-3119页)。</li>
+<li>Pennington、r . Socher和c . d . Manning(2014年10月)。<em> Glove:单词表示的全局向量</em>。在<em>2014年自然语言处理经验方法会议论文集</em> (EMNLP)(第1532-1543页)。</li>
+<li>Rivas p .和Zimmermann m .(2019年12月)。<em>用于英语句子质量评估的句子嵌入实证研究</em>。在<em> 2019计算科学与计算智能国际会议</em> (CSCI)(第331-336页)。IEEE。</li>
+<li>hoch Reiter s .和schmid Huber j .(1997年)。<em>长短期记忆</em>。<em>神经计算</em>，9(8)，1735-1780。</li>
+<li>张、刘、韩和舒勒(2017)。<em>学习用于声学事件分类的音频序列表示</em>。<em> arXiv预印本</em> arXiv:1707.08729。</li>
+<li>I .古德费勒、y .本吉奥和a .库维尔(2016年)。<em>序列建模:递归和递归网</em>。<em>深度学习</em>，367-415。</li>
+<li>Vinyals、s . beng io和m . kud lur(2015年)。<em>排序事项:对器械包进行排序</em>。<em> arXiv预印本</em> arXiv:1511.06391。</li>
+<li>Shin，s .，Song，k .，Jang，j .，Kim，h .，Joo，w .，和Moon，I. C. (2020年)。<em>用潜在的解纠缠和反事实生成来中和单词嵌入中的性别偏见</em>。arXiv预印本arXiv:2004.03133。</li>
+<li>Amini，a .，Soleimany，A. P .，Schwarting，w .，Bhatia，S. N .，Rus，2019年1月)。<em>通过学习到的潜在结构发现并减轻算法偏差</em>。在<em>2019年AAAI/美国计算机学会人工智能、伦理与社会会议论文集</em>(第289-295页)。</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

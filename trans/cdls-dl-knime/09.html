@@ -1,0 +1,665 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B16391_11_Final_NM_ePUB</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-193"><em class="italic"> <a id="_idTextAnchor386"/>第十一章:</em>最佳实践和其他部署选项</h1>
+
+			<p>在<a href="B16391_10_Final_VK_ePUB.xhtml#_idTextAnchor367"> <em class="italic">第10章</em> </a>、<em class="italic">部署深度学习网络</em>中，我们介绍了部署的概念，并展示了如何构建工作流来将网络应用于新数据。在本章中，我们将关注使用KNIME软件的另外两个部署选项。</p>
+
+			<p>在本章的第一部分，您将学习如何将深度学习模型部署为web应用程序，以便最终用户可以通过web浏览器执行、交互和控制该应用程序。为了实现一个web应用程序，我们需要介绍KNIME WebPortal，KNIME Server的一个特性。组件在web应用程序的开发中起着核心作用，因为根据KNIME软件的<strong class="bold">导向分析</strong>特性，它们被用来实现交互点。在本章中，您还将了解更多关于组件的知识。</p>
+
+			<p>消费深度学习模型的另一个部署选项是web服务，通过REST接口。Web服务最近变得非常流行，因为它们允许您在同一个生态系统中无缝、轻松地集成和编排许多应用程序。在本章的第二部分，您将学习如何使用KNIME软件构建、部署和调用工作流作为REST服务。</p>
+
+			<p>我们将用一些关于神经网络和KNIME分析平台的最佳实践建议和技巧来结束这一章。这些最佳实践和技巧来自于我们自己多年从事深度学习项目的经验，其中一些已经在本书中进行了描述。</p>
+
+			<p>本章分为以下几个主题:</p>
+
+			<ul>
+
+				<li>构建Web应用程序</li>
+
+				<li><a id="_idTextAnchor387"/>使用REST接口构建Web服务</li>
+
+				<li>KNIME提示和技巧</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-194"><a id="_idTextAnchor388"/>构建Web应用程序</h1>
+
+			<p>在本节的<a id="_idIndexMarker988"/>中，我们将向您展示使用KNIME软件构建一个<strong class="bold"> web应用程序</strong>所需的几个步骤。</p>
+
+			<p>在简要介绍了<strong class="bold">KNIME</strong><strong class="bold">web portal</strong>之后，我们将展示如何创建复合视图，如何包含它们以创建交互点，以及如何按照<strong class="bold">导向分析</strong>原则将应用程序组织成一系列网页作为交互点。</p>
+
+			<p>作为一个例子，我们将围绕<a href="B16391_09_Final_NM_ePUB.xhtml#_idTextAnchor316"> <em class="italic">第9章</em> </a>、<em class="italic">图像分类卷积神经网络</em>中描述的癌细胞分类案例研究的部署工作流程，应用我们所学的知识构建一个web应用程序。</p>
+
+			<h2 id="_idParaDest-195"><a id="_idTextAnchor389"/>KNIME网络门户简介</h2>
+
+			<p>构建web应用程序的第一步是设计和实现工作流中基于web的交互点序列。在一个关于癌细胞分类的案例研究中，我们的数据科学家可以构建一个具有两个交互点的部署工作流:一个允许最终用户上传组织病理学幻灯片图像，另一个在最终的网页上显示结果。在这两个交互点之间，工作流接收新图像并执行训练好的模型对其进行分类。</p>
+
+			<p>一旦工作流准备就绪，它将被转移到生产<strong class="bold"> KNIME服务器</strong>上。从现在开始，可以通过任何网络浏览器，通过<strong class="bold"> KNIME WebPortal </strong>按需访问工作流程。这种基于网络的交互允许病理学家在不熟悉KNIME分析平台或深度学习算法的情况下控制过程。<em class="italic">图11.1 </em>向您展示了这个基于web的应用程序可能的样子:</p>
+
+			<div><div><img src="img/B16391_11_001.jpg" alt="igure 11.1 – A web application implemented by a KNIME workflow, running on KNIME Server, and called via KNIME WebPortal from any web browser&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption"><a id="_idTextAnchor390"/></p>
+
+			<p class="figure-caption">图11.1-一个由KNIME工作流实现的web应用程序，运行在KNIME服务器上，通过KNIME WebPortal从任何web浏览器调用</p>
+
+			<p>在这个例子中，<a id="_idIndexMarker990"/> web应用程序是一个非常简单的应用程序。它只有两个交互点——也就是两个网页:第一个用于图片上传，第二个用于检查结果。</p>
+
+			<p>使用KNIME Analytics Platform、KNIME Server和KNIME WebPortal的组合，可以开发更复杂的web应用程序。从KNIME Hub(<a href="https://hub.knime.com">https://hub.knime.com</a>)可以下载一些非常复杂且设计非常精美的web应用程序的例子，比如可视化引导、标签引导和自动化引导。</p>
+
+			<p>与KNIME分析平台相反，KNIME服务器不包含数据操作或模型训练算法。但是，它包含了整个it基础设施，允许团队成员之间的协作、应用程序的按需和计划执行、每个注册用户或用户组的访问权限定义、模型管理、审计功能，当然还有部署选项，我们将在本章中看到。此外，与KNIME分析平台相反，KNIME服务器不是开源的，而是需要一个年度许可证。<em class="italic">图11.2 </em>显示了KNIME WebPortal的登录页面:</p>
+
+			<p class="figure-caption"><a id="_idTextAnchor391"/></p>
+
+			<div><div><img src="img/B16391_11_002.jpg" alt="Figure 11.2 – Login page for KNIME WebPortal"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.2-KNIME网络门户的登录页面</p>
+
+			<p>在KNIME Server提供的众多IT <a id="_idIndexMarker992"/>特性中，KNIME WebPortal允许您从任何web浏览器查看和管理工作流。这似乎是一个简单的功能，但它可能是数据科学家和最终用户之间缺失的一环。</p>
+
+			<p class="callout-heading">重要说明</p>
+
+			<p class="callout">最终用户是他们领域的专家，通常既没有时间也没有兴趣打开KNIME分析平台并调查工作流和节点。最终用户需要的只是一个舒适的基于web的应用程序，它运行在web浏览器上，只显示他们需要看到的信息；至少，用于数据上传的页面和总结结果的最终页面。</p>
+
+			<p>WebPortal不需要任何特殊安装。它已经预打包在KNIME Server的安装中。然而，它的外观可以通过专用的<em class="italic"> CSS样式表</em>轻松定制。KNIME WebPortal只接受注册用户，需要登录(<em class="italic">图11.2 </em>)。</p>
+
+			<p>成功登录后，<a id="_idIndexMarker993"/>起始页出现，显示您有权访问的文件夹。导航至您想要启动的工作流程，然后按下<strong class="bold">运行</strong> ( <em class="italic">图11.3 </em> ): <a id="_idTextAnchor392"/></p>
+
+			<div><div><img src="img/B16391_11_003.jpg" alt="Figure 11.3 – Start page for a selected workflow on KNIME WebPortal"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.3-KNIME web portal上所选工作流的起始页</p>
+
+			<p class="callout-heading">重要说明</p>
+
+			<p class="callout">KNIME服务器是KNIME分析平台的补充工具。虽然KNIME Analytics Platform拥有所有的算法和数据操作，但是KNIME Server为基于团队的协作、应用程序自动化、模型管理和部署选项提供了IT基础设施。</p>
+
+			<p>让我们看看如何构建一个工作流，以便在KNIME WebPortal上创建一系列带有已定义交互选项的页面。</p>
+
+			<h2 id="_idParaDest-196"><a id="_idTextAnchor393"/>创建在KNIME网络门户上运行的工作流程</h2>
+
+			<p>KNIME WebPortal上工作流的执行从一个网页移动到下一个网页。这些页面也称为向导步骤，为最终用户提供了可视化引导操作的可能性，以移动流程并与之交互。</p>
+
+			<p>现在，如果我们必须从头开始构建所有这些页面/步骤，那将是漫长而复杂的。幸运的是，有<strong class="bold">组件</strong>。每个页面/步骤只是可视化底层工作流中组件的<strong class="bold">复合视图</strong>的内容。因此，为WebPortal实现一系列网页实际上相当于用所需的复合视图实现一系列组件。</p>
+
+			<p><em class="italic">图11.4 </em>的上半部分显示了在KNIME WebPortal上运行的应用程序的三个网页:从数据库导入客户的表单；相互连接的散点图和表格，用于选择一些客户；最后是显示所选客户信息的页面。<em class="italic">图11.4 </em>的下半部分显示了具有相应三个组件的底层工作流。在KNIME WebPortal上执行工作流的过程中，每个组件的复合视图产生一个页面<a id="_idTextAnchor394"/>:</p>
+
+			<div><div><img src="img/B16391_11_004.jpg" alt="Figure 11.4 – Top: step execution of an application on KNIME WebPortal. Bottom: the corresponding workflow generating the web pages for the step execution"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.4–顶部:KNIME WebPortal上应用程序的分步执行。底部:为步骤执行生成网页的相应工作流</p>
+
+			<p><em class="italic">图11.4 </em>中的<a id="_idIndexMarker996"/>工作流用作从网络浏览器执行工作流的步骤的示例，并引用客户数据集。在本节中，我们将只使用这个数据集，因为它允许我们展示组件构造中使用的许多不同的特性。该web应用程序旨在允许最终用户检查客户数据，并选择团队成员联系的高流失风险客户。</p>
+
+			<p>第一个组件<strong class="bold">从数据库</strong>中获取客户，在左侧创建第一个页面。在这里，最终用户必须提供他们的用户名和密码来连接到数据库。</p>
+
+			<p>点击右下角的<strong class="bold">下一个</strong>按钮后，执行工作流，直到到达下一个组件<strong class="bold">选择要联系的客户</strong>，并创建相应的网页。在该页面上，最终用户通过散点图和表格获得客户数据的概述，并选择要联系的客户。对于选择，视图提供了两个交互选项:通过左上角的单选按钮选择一个产品，或者使用左下角的范围滑块更改客户流失率。散点图和表格会根据新的选择参数自动更新。一旦最终用户对选择感到满意，他们再次点击<strong class="bold">下一步</strong>到达网络应用的最后一页。</p>
+
+			<p>最终页面由<strong class="bold">浏览和下载客户列表</strong>组件创建。在这里，每个选定客户的数据都以平铺视图的形式报告，并且可以导出到Excel文件中。工作流程可在KNIME Hub上获得:<a href="https://hub.knime.com/kathrin/spaces/Codeless%20Deep%20Learning%20with%20KNIME/latest/Chapter_11/">https://Hub . KNIME . com/kath rin/spaces/Codeless % 20 deep % 20 learning % 20 with % 20 KNIME/latest/Chapter _ 11/</a>。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">要打开一个已经在KNIME Analytics平台中的组件的交互视图，在执行后，右键单击该组件并选择<strong class="bold">交互视图:&lt;组件名称&gt; </strong>。</p>
+
+			<p>总而言之，这些页面中的每一个都是由工作流中的一个组件创建的，并显示其交互式视图。组件及其复合视图是构建web应用程序工作流的关键元素。</p>
+
+			<p>现在让我们看看如何创建和定制一个复合视图。</p>
+
+			<h2 id="_idParaDest-197"><a id="_idTextAnchor395"/>创建复合视图</h2>
+
+			<p>一个组件的复合视图<a id="_idIndexMarker998"/>从其内部包含的<strong class="bold">视图</strong>和<strong class="bold">小部件</strong>节点收集所有交互视图。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">要创建一个新组件，您必须选择要包含在组件中的节点，然后右击并选择<strong class="bold">创建组件...</strong>选项。</p>
+
+			<p>在深入查看<strong class="bold">视图</strong>和<strong class="bold">小部件</strong>节点之前，让我们先看看<strong class="bold">选择客户联系</strong>组件的内部(<em class="italic">图11)。<a id="_idTextAnchor396"/> 5 </em>):</p>
+
+			<div><div><img src="img/B16391_11_005.jpg" alt="Figure 11.5 – Contents of the Select Customers to Contact component"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.5-选择要联系的客户组件的内容</p>
+
+			<p>在相应页面的左下方<a id="_idIndexMarker999"/>部分，最终用户可以选择通过滑块定义流失分数的阈值。这个交互式滑块是由<strong class="bold">交互式范围滑块过滤器部件</strong>节点创建的<a id="_idIndexMarker1000"/>。</p>
+
+			<p>在左上角，选择产品的<a id="_idIndexMarker1001"/>选项是由<strong class="bold">交互值过滤器小部件</strong>节点创建的。</p>
+
+			<p>此外，该页面还显示了交互式散点图和交互式表格。这两个视图分别是由<strong class="bold">散点图</strong>节点和<strong class="bold">表格视图</strong>节点创建的<a id="_idIndexMarker1002"/>。</p>
+
+			<p>正如您所看到的，每个小部件/视图节点都向最终的复合视图添加了一部分，因此也向WebPortal中的相应页面添加了一部分。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">在KNIME Analytics平台中，右键点击节点，选择<strong class="bold">交互视图:&lt;节点名称&gt; </strong>，可以看到每个widget/view节点的视图。</p>
+
+			<p>可以向复合视图提供片段的节点可以分为三组:</p>
+
+			<ul>
+
+				<li><strong class="bold"> Widget节点</strong></li>
+
+				<li><strong class="bold">查看节点</strong></li>
+
+				<li><strong class="bold">互动小工具节点</strong></li>
+
+			</ul>
+
+			<p>让我们详细看一下每一个类别。</p>
+
+			<h3>小部件节点</h3>
+
+			<p>小部件节点产生<a id="_idIndexMarker1004"/>一个带有交互表单的视图，用于设置参数。然后，新设置的参数作为<strong class="bold">流变量</strong>导出，并可由工作流中<a id="_idIndexMarker1005"/>的其他节点使用。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">在<a href="B16391_02_Final_SK_ePUB.xhtml#_idTextAnchor051"> <em class="italic">第2章</em> </a>、<em class="italic">使用KNIME Analytics Platform </em>进行数据访问和预处理中，我们介绍了流变量的概念以及如何使用它们来覆盖设置选项。</p>
+
+			<p>每个小部件节点专门用于产生一种特定的输入或交互形式，比如字符串输入、整数输入、从列表中选择一个或多个值等等。您可以在<strong class="bold">工作流抽象</strong> | <strong class="bold"> Widgets </strong>下的节点库中找到所有可用的widget节点，如图<em class="italic">图<a id="_idTextAnchor397"/>图11.6 </em>所示:</p>
+
+			<div><div><img src="img/B16391_11_006.jpg" alt="Figure 11.6 – Available widget nodes in the Node Repository"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.6–节点存储库中可用的小部件节点</p>
+
+			<p>小部件节点本身可以<a id="_idIndexMarker1006"/>分为三个子组:</p>
+
+			<ul>
+
+				<li><strong class="bold">输入小部件节点</strong>:<em class="italic">输入</em>类别中的<a id="_idIndexMarker1007"/>小部件节点在网页上生成一个输入表单，它允许您向工作流中输入不同类型的值——整数、字符串、布尔值、双精度值或列表——以及其他格式的数据，如日期&amp;时间或凭证。</li>
+
+				<li><strong class="bold">选择小部件节点</strong>:<em class="italic">选择</em>类别中的小部件<a id="_idIndexMarker1008"/>节点生成web表单来从列表中选择值，例如从数据表中选择特定的列，从数据集中包含/排除多个列，或者从表中选择一个或多个值来过滤数据。</li>
+
+				<li><strong class="bold">输出小部件节点</strong>:这些<a id="_idIndexMarker1009"/>小部件节点向<a id="_idIndexMarker1010"/>复合视图添加定制文本、链接或图像。</li>
+
+			</ul>
+
+			<p>例如，<em class="italic">图11.7 </em>显示了<strong class="bold">单选控件</strong>节点<a id="_idIndexMarker1011"/>及其配置<a id="_idTextAnchor398"/>比例窗口:</p>
+
+			<div><div><img src="img/B16391_11_007.jpg" alt="Figure 11.7 – The Single Selection Widget node and its configuration window "/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.7–单一选择小部件节点及其配置窗口</p>
+
+			<p>大多数<a id="_idIndexMarker1012"/>小部件节点共享一些重要设置，如<strong class="bold">标签</strong>、<strong class="bold">描述</strong>、<strong class="bold">变量名</strong>:</p>
+
+			<ul>
+
+				<li><strong class="bold"> Label </strong>:这将在widget节点创建的表单上创建一个标签。</li>
+
+				<li><strong class="bold">描述</strong>:该值在widget表单上显示为工具提示。</li>
+
+				<li><strong class="bold">变量名</strong>:给出节点创建的流变量的名称。</li>
+
+			</ul>
+
+			<p>让我们看看<strong class="bold">单选小工具</strong>节点的附加配置设置(<em class="italic">图11.7 </em>):</p>
+
+			<ul>
+
+				<li><strong class="bold">选择类型</strong>:定义用于选择的对象:下拉菜单、垂直或水平单选按钮或列表</li>
+
+				<li><strong class="bold">可能的选择</strong>:定义可供选择的值列表</li>
+
+				<li><strong class="bold">默认值</strong>:给选择操作分配一个初始默认值</li>
+
+			</ul>
+
+			<p>标准小部件节点产生一些流变量或一个表作为输出，可以在工作流的下游节点中使用。一组特殊的小部件节点是交互式小部件节点。</p>
+
+			<h3>查看节点</h3>
+
+			<p>视图节点<a id="_idIndexMarker1013"/>通过交互式图表、绘图和表格可视化数据。</p>
+
+			<p><em class="italic">图11.8 </em>显示了N <a id="_idTextAnchor399"/> ode资源库中可用视图节点的概述:</p>
+
+			<div><div><img src="img/B16391_11_008.jpg" alt="Figure 11.8 – Available view nodes in the Node Repository"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.8–节点存储库中可用的视图节点</p>
+
+			<p>如果多个视图节点<a id="_idIndexMarker1014"/>出现在一个组件中，它们的视图在结果组件视图中相互作用；例如，通过选择，在一个节点的视图中选择的数据点可以在另一个节点的视图中被选择或者甚至被隔离。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout"><strong class="bold"> Plotly </strong>节点<a id="_idIndexMarker1015"/>和<strong class="bold"> JavaScript </strong>节点在<strong class="bold">实验室</strong>类别中提供了更多的交互式选项，以在复合视图中可视化您的数据<a id="_idIndexMarker1016"/>。来自<strong class="bold">本地(Swing) </strong>类别中的(本地)节点的视图不能集成到组件的复合视图中。</p>
+
+			<h3>交互式小部件节点</h3>
+
+			<p><strong class="bold">交互控件</strong>节点是<a id="_idIndexMarker1017"/>特殊控件节点。它们实现过滤器事件和提要视图节点。在执行期间，交互式小部件节点中的更改会立即反映在后续视图节点的视图中。</p>
+
+			<p>在撰写本文时，KNIME Analytics平台提供了两个交互式小部件节点:<strong class="bold">交互式范围滑块过滤器小部件</strong>节点和<strong class="bold">交互式值过滤器小部件</strong>节点。</p>
+
+			<p>这些节点可用于触发复合视图中的更新。在下游视图节点的配置窗口中，我们可以设置该节点是否应该侦听来自以前的交互式小部件节点的过滤器事件。如果是，那么当先前的交互式小部件节点的过滤器事件中的设置改变时，由视图节点产生的视图立即被更新。</p>
+
+			<p>与标准小部件节点相比，这两个节点在打开的复合视图或网页中触发直接过滤器事件。由标准小部件节点创建的流变量可以由后续节点使用，但不会触发打开的页面或复合视图中的直接更改。</p>
+
+			<p>现在我们已经有了构建复合视图可用的节点的概述，让我们通过一些布局选项来定制组件的复合视图。</p>
+
+			<h3>定义复合视图的布局</h3>
+
+			<p>您可以为包含至少一个小部件或视图节点的每个组件的复合视图定义一个布局。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">要在工作流编辑器的新标签页中打开一个组件，必须按下<em class="italic"> Ctrl </em> +双击该组件或者右键单击该组件并选择<strong class="bold">组件</strong> | <strong class="bold">打开</strong>。</p>
+
+			<p>复合视图中的布局通过组件内部的<strong class="bold">布局编辑器</strong>设置。在工作流编辑器的新标签页中打开组件的内容后，点击顶部工具栏最右侧的布局编辑器按钮，如<em class="italic">图11.9 </em>所示:</p>
+
+			<div><div><img src="img/B16391_11_009.jpg" alt="Figure 11.9 – Toolbar with layout editor button to the far right"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.9-最右侧带有布局编辑器按钮的工具栏</p>
+
+			<p>点击布局编辑器按钮后，可视布局编辑器(<em class="italic"> Fi <a id="_idTextAnchor401"/>图11.10 </em>)打开:</p>
+
+			<div><div><img src="img/B16391_11_010.jpg" alt="Figure 11.10 – Visual layout editor"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.10–可视化布局编辑器</p>
+
+			<p>布局编辑器<a id="_idIndexMarker1019"/>使用具有行和列的网格结构。</p>
+
+			<p>左侧是具有不同列数的行模板，以及所有尚未放置的视图的列表。右边是布局编辑器本身。</p>
+
+			<p>您可以通过从左侧的模板列表拖放到右侧的布局编辑器来添加新的行模板，从而更改布局。要添加新的空列，单击布局编辑器中的<strong class="bold"> + </strong>按钮。行内的列可以手动调整大小。</p>
+
+			<p>布局编辑器中的空单元可以通过将视图从未使用的视图列表中拖放到布局编辑器的单元中来填充。</p>
+
+			<p>默认布局只包含一列，小部件和视图节点的所有视图都从上到下放置在其中。要从空白画布开始，点击布局编辑器左上角的<strong class="bold">清除布局</strong>按钮。此清除操作会将所有视图添加到左侧列表中。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">布局编辑器中使用节点标签(节点下的文本)来标识视图。最佳实践是将节点标签更改为有意义的描述，以便在布局编辑器中轻松识别视图。</p>
+
+			<p>如果您想<a id="_idIndexMarker1020"/>从复合视图中排除一个节点的视图，您可以转到布局编辑器的第一个选项卡，名为<strong class="bold">节点用法</strong>，并禁用web portal/复合视图的节点视图。</p>
+
+			<p>也可能有嵌套组件，即组件中的组件。如果嵌套组件有一个视图，它在布局编辑器中显示为节点视图。因此，您可以像处理任何其他节点一样，将嵌套组件的视图集成到布局中。</p>
+
+			<p>一个复合视图可以很容易地被美化——例如，通过添加一个标题或一个侧边栏，并对文本体进行样式化。您很幸运，因为在KNIME Hub上有共享的组件可以做到这一点。</p>
+
+			<p><em class="italic">图11.11 </em>显示了使用一些可用的<a id="_idTextAnchor402"/>共享组件引入一些样式元素前后的网页:</p>
+
+			<div><div><img src="img/B16391_11_011.jpg" alt="Figure 11.11 – Web page without (left) and with (right) a header, sidebar, and additional information in the body of the page"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.11–没有(左)和有(右)标题、侧边栏和附加信息的网页</p>
+
+			<p>当我们构建癌细胞分类示例时，您将在本节末尾看到一些共享组件的运行。</p>
+
+			<p>让我们首先了解更多关于共享组件的信息。</p>
+
+			<h2 id="_idParaDest-198"><a id="_idTextAnchor403"/>共享组件</h2>
+
+			<p>在上一节<em class="italic">创建复合视图</em>中，我们讨论了如何使用组件来<a id="_idIndexMarker1022"/>为WebPortal应用程序创建复合视图和页面。组件还可以通过KNIME Hub和KNIME Server捆绑可以重用和共享的功能。这些功能从简单的重复性任务(如将凭证输入数据库)到更复杂的任务(如优化参数)不等。</p>
+
+			<p>与元节点相比，组件有自己的配置窗口。它们可以在不接触内部单个节点的情况下进行配置，这提供了一种隐藏配置复杂性的简便方法。当然，如果需要，您仍然可以打开组件，深入细节，并根据您的用例进行任何调整。</p>
+
+			<p>要在组件的配置窗口中添加设置，可以使用<strong class="bold">配置节点</strong>。它们的工作方式类似于小部件节点，但是是在配置窗口级别，而不是在复合视图级别。你可以在<strong class="bold">工作流抽象</strong> | <strong class="bold">配置</strong>下的节点库中找到它们。像任何KNIME节点一样，组件可以在<strong class="bold">描述</strong>面板中有一个描述。在组件内部，您可以通过点击KNIME Analytics Platform中<strong class="bold">描述</strong>面板左上角的笔来编辑描述。</p>
+
+			<p>为了让组件变得像所有其他KNIME节点一样，它们必须被共享。</p>
+
+			<p>要共享一个组件，右击它并选择<strong class="bold">组件</strong> | <strong class="bold">共享… </strong>。</p>
+
+			<p>然后，决定保存模板的位置:本地工作区、KNIME Hub或KNIME服务器。</p>
+
+			<p>接下来，您可以选择<a id="_idIndexMarker1023"/>链接类型，将组件实例链接到组件模板。链接类型定义了检查更新时组件模板的位置。选择组件模板的目标后，会打开一个对话框，询问您链接类型:</p>
+
+			<ul>
+
+				<li><strong class="bold">创建绝对链接</strong>:工作流在寻找组件模板时使用绝对路径。</li>
+
+				<li><strong class="bold">创建挂载点相对链接</strong>:工作流在查找组件模板时使用从所选挂载点开始的相对路径。</li>
+
+				<li><strong class="bold">创建工作流相对链接</strong>:工作流在查找组件模板时，使用从当前工作流文件夹开始的相对路径。</li>
+
+				<li><strong class="bold">Don't create link with shared instance</strong>: A component template is created but is not linked to the current instance.<p class="callout-heading">小费</p><p class="callout">当您将工作流部署到KNIME Server时，请确保组件实例上的所有链接类型在服务器上也能工作。</p></li>
+
+			</ul>
+
+			<p>要创建共享组件的实例，只需将组件模板从KNIME Hub或KNIME Explorer拖放到工作流编辑器中。新创建的实例是只读的，并链接到相应的共享组件。</p>
+
+			<p>每次启动工作流时，KNIME Analytics Platform都会搜索组件模板的可能更新，如果有，就会建议更新实例。这样做的好处是，如果组件模板发生了变化，这些变化会自动反映在实例中。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">由于是只读的，新实例无法编辑。您需要首先断开实例与模板的连接，以便更改其内容。为此，您需要右键单击组件实例并选择<strong class="bold">组件</strong> | <strong class="bold">断开链接</strong>。</p>
+
+			<p>EXAMPLES服务器或KNIME Hub上有许多公共的共享组件。在KNIME Hub上，您还可以在本章的工作流组中找到一些共享组件。</p>
+
+			<p>现在您已经熟悉了共享组件和WebPortal，让我们看看癌细胞分类的部署示例。</p>
+
+			<h2 id="_idParaDest-199"><a id="_idTextAnchor404"/>构建用于癌细胞分类的门户网站应用程序</h2>
+
+			<p>让我们回到<a href="B16391_09_Final_NM_ePUB.xhtml#_idTextAnchor316"> <em class="italic">第九章</em> </a>、<em class="italic">卷积神经网络用于图像分类</em>中描述的<a id="_idIndexMarker1025"/>癌症数据和癌细胞分类的工作流程。在本节中，我们将展示如何使用KNIME WebPortal将经过训练的深度学习模型部署为web应用程序。</p>
+
+			<p>这里的目标是为不熟悉KNIME分析平台和数据科学的病理学家开发一个web应用程序。通过在组织病理学图像分析期间建议癌症分类，这将有助于他们的日常工作。一个额外的要求是不需要重启应用程序就可以按顺序上传多个图像。<em class="italic">图11.12 </em>显示了实现应用程序的工作流程。可以从KNIME Hub下载工作流程:<a href="https://hub.knime.com/kathrin/spaces/Codeless%20Deep%20Learning%20with%20KNIME/latest/Chapter_11/">https://Hub . KNIME . com/kath rin/spaces/Codeless % 20 deep % 20 learning % 20 with % 20 KNIME/latest/Chapter _ 11/</a>。</p>
+
+			<p>让我们首先关注工作流的中间部分:注释框中的循环体:</p>
+
+			<div><div><img src="img/B16391_11_012.jpg" alt="Figure 11.12 – Deployment workflow to score new histopathology images from a web browser"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.12–通过网络浏览器对新的组织病理学图像进行评分的部署工作流程</p>
+
+			<p>在每次迭代中，上传一个<a id="_idIndexMarker1026"/>图像，产生分类，并向病理学家呈现两个网页。循环负责迭代和循环体中的两个组件——网页的<strong class="bold">上传图像</strong>组件和<strong class="bold">查看结果</strong>组件:</p>
+
+			<div><div><img src="img/B16391_11_013.jpg" alt="Figure 11.13 – Workflow inside the Upload Image component and the webpage created by it"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.13–上传图像组件内部的工作流程及其创建的网页</p>
+
+			<p><a id="_idIndexMarker1027"/>循环体从<strong class="bold">上传图像</strong>组件开始，它创建web应用程序的第一个网页。您可以在<em class="italic">图11.13 </em>中看到创建的页面以及组件的内部。</p>
+
+			<p>带有KNIME徽标和导航路径的web页面的标题是由名为<strong class="bold"> WebPortal Header </strong>的共享组件创建的。对于包含许多步骤的WebPortal应用程序，像这样的标题有助于最终用户了解当前步骤(框架中)、已经完成的步骤(黄色框或浅灰色框)以及即将完成的步骤(灰色框)。</p>
+
+			<p>在<strong class="bold"> WebPortal Header </strong>组件左下角的绿色小箭头表示这个组件实例链接到一个共享组件模板。<strong class="bold"> WebPortal Header </strong>组件带有一个配置窗口(<em class="italic">图11.14 </em>)，由其中的配置节点产生。在该配置窗口中，您可以定义步骤标签，以及是否用黄色框显示当前st <a id="_idTextAnchor407"/> ep:</p>
+
+			<div><div><img src="img/B16391_11_014.jpg" alt="Figure 11.14 – Configuration window of the WebPortal Header component"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.14–web portal Header组件的配置窗口</p>
+
+			<p>用于<strong class="bold">上传图像</strong>步骤的<a id="_idIndexMarker1028"/>网页仅包括一个用于上传下一幅图像的项目。通过点击<strong class="bold">选择文件</strong>按钮，病理学家将带有组织病理学切片图像的文件上传至临时本地文件夹。此项<a id="_idIndexMarker1029"/>是由<strong class="bold">文件上传小工具</strong>节点创建的。节点的输出变量包含临时文件夹中所选图像的文件路径。</p>
+
+			<p>在<em class="italic">图11.12的工作流中，</em>使用<strong class="bold">变量到表行</strong>节点将流量<a id="_idIndexMarker1030"/>变量写入表中。<strong class="bold">加载并预处理图像</strong>元节点执行与训练相同的预处理步骤，如<a href="B16391_09_Final_NM_ePUB.xhtml#_idTextAnchor316"> <em class="italic">第9章</em> </a>、<em class="italic">用于图像分类的卷积神经网络</em>中所述。也就是说，它加载图像，对其进行归一化，将其分割为64 x 64像素的小块，并交换一些维度以适合用作迁移学习方法起点的VGG16模型。</p>
+
+			<p>接下来，工作流使用<strong class="bold"> Keras网络读取器</strong>节点读取经过训练的深度学习网络，并使用<strong class="bold"> Keras网络执行器</strong>节点将其应用于图像补丁。</p>
+
+			<p>在<strong class="bold">准备可视化</strong>元节点中，根据<a id="_idIndexMarker1031"/>属于三种癌症类别之一的概率，图像补片被分配一种颜色。</p>
+
+			<p>最后，使用最后一个组件可视化结果，名为<strong class="bold">查看结果</strong>。<em class="italic">图11.15 </em>显示了组件内部的工作流以及在web浏览器中执行wo <a id="_idTextAnchor408"/> rkflow时获得的相应网页:</p>
+
+			<div><div><img src="img/B16391_11_015.jpg" alt="Figure 11.15 – Workflow snippet inside the View Results component and the web page created by it"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.15–查看结果组件内部的工作流片段以及由它创建的网页</p>
+
+			<p>在<strong class="bold">查看结果</strong>组件中，我们再次找到共享的<strong class="bold"> WebPortal Header </strong>组件，以<a id="_idIndexMarker1032"/>创建页面标题，这次用黄色的<strong class="bold">上传图像</strong>框(过去的步骤)和黄色框架的<strong class="bold">结果</strong>框(当前步骤)。</p>
+
+			<p><strong class="bold">表格到图像</strong>节点<a id="_idIndexMarker1033"/>将所选列第一行中包含的图像转换为图像对象。这个图像对象然后被输入到<strong class="bold">图像输出小部件</strong>节点<a id="_idIndexMarker1034"/>中，以在复合视图中显示它。</p>
+
+			<p>最后，病理学家必须决定是否上传另一幅图像。该选择部分通过单选按钮在web <a id="_idIndexMarker1035"/>页面中实现，通过<strong class="bold">单选小部件</strong>节点在工作流中实现。</p>
+
+			<p>该节点通过所选选项在其输出po <a id="_idTextAnchor409"/> rt产生一个流量变量:</p>
+
+			<div><div><img src="img/B16391_11_016.jpg" alt="Figure 11.16 – Configuration window of the Variable Condition Loop End node"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.16–可变条件循环结束节点的配置窗口</p>
+
+			<p>从<strong class="bold">上传图像</strong>到<strong class="bold">查看结果</strong>的整个片段被包裹在一个循环中，以满足额外的<a id="_idIndexMarker1036"/>要求，让病理学家可以选择上传多个图像。最后一个单选按钮选择用作循环停止标准。</p>
+
+			<p class="callout-heading">小费</p>
+
+			<p class="callout">记住一个循环总是需要一个循环开始和一个循环结束节点。在这两个节点之间是循环体，它在每次循环迭代中执行。</p>
+
+			<p>有许多不同的循环开始和循环结束节点可用。例如，有些只在每次迭代中使用行的子集(<strong class="bold">组循环开始</strong>和<strong class="bold">块循环开始</strong>)，有些只使用列的子集(<strong class="bold">列列表循环开始</strong>)。</p>
+
+			<p><em class="italic">图11.12 </em>中的工作流使用由<code>No</code>创建的<code>keepgoing</code>。由于<strong class="bold">通用循环开始</strong>节点总是需要一个输入表，所以用<a id="_idIndexMarker1039"/>空表创建者<strong class="bold">节点创建一个空表来填充该节点。</strong></p>
+
+			<p>将此工作流程部署到KNIME服务器并在KNIME门户网站上运行后，病理学家可以轻松上传新图像并从自动分类中获得结果。</p>
+
+			<p>在本节中，您已经学习了如何使用KNIME软件构建web应用程序，以及如何将深度学习网络部署为web应用程序。</p>
+
+			<p>现在让我们来看看深度学习网络如何部署为REST服务。</p>
+
+			<h1 id="_idParaDest-200"><a id="_idTextAnchor410"/>使用REST接口构建Web服务</h1>
+
+			<p>在本节中，您<a id="_idIndexMarker1040"/>将学习如何使用<a id="_idIndexMarker1041"/> KNIME软件构建<strong class="bold"> REST </strong>服务。作为一个实际的例子，我们将走过第七章<a href="B16391_07_Final_NM_ePUB.xhtml#_idTextAnchor230"><em class="italic"/></a><em class="italic">实现NLP应用</em>的情感分析例子的部署工作流程。</p>
+
+			<p>KNIME Server REST API为非KNIME应用程序通过简单的HTTP请求与KNIME服务器通信提供了一个接口。RESTful web服务的主要好处是易于将应用程序集成到公司的it环境中。独立的应用程序可以通过REST接口相互调用和交换数据。通过这种方式，向生态系统添加新应用变得更加容易。</p>
+
+			<p>任何上传到KNIME服务器上的工作流都可以通过REST API自动获得。这允许您通过REST API无缝地将KNIME工作流部署为web服务，并将它们集成到您的数据科学实验室的基础设施中。</p>
+
+			<p>在情感分析示例中，我们希望将深度学习网络部署为<strong class="bold"> REST服务</strong>。通过这种方式，外部应用程序——比如网站或移动应用程序——可以向REST服务发送一些文本，并获得预测的情绪。</p>
+
+			<p>让我们快速看一下在KNIME Analytics Platform中将部署工作流构建为REST服务所需的步骤。</p>
+
+			<h2 id="_idParaDest-201"><a id="_idTextAnchor411"/>构建REST服务工作流程</h2>
+
+			<p>在情感预测的例子中，目标是构建一个REST服务，输入是新的电影评论，输出是情感预测。</p>
+
+			<p>当构建一个有输入和输出的<a id="_idIndexMarker1042"/> REST服务时，我们需要定义输入和输出的结构。在KNIME Analytics平台中，这可以通过<strong class="bold">容器</strong>输入和输出节点来完成。</p>
+
+			<p class="callout-heading">重要说明</p>
+
+			<p class="callout">不是每个REST服务都有输入和输出。例如，连接到数据库以获取最新数据的REST服务只有输出。通过将结果写入数据库来结束流程的REST服务不需要输出任何结果。</p>
+
+			<p>KNIME Analytics平台有各种输入节点，可以用来定义REST API的输入结构。你可以在<strong class="bold">工作流抽象</strong> | <a id="_idTextAnchor412"/> <strong class="bold">工作流调用</strong> ( <em class="italic">图11.17 </em>)下的节点库中找到这些节点:</p>
+
+			<div><div><img src="img/B16391_11_017.jpg" alt="Figure 11.17 – Available container nodes to define the REST API"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.17–定义REST API的可用容器节点</p>
+
+			<p>正如您在<em class="italic">图11.17 </em>中看到的，有四个<strong class="bold">容器输入</strong>节点——用于凭证、仅用于一个数据行、用于数据表或用于流变量。表输入允许您向web服务发送单个数据行或多个数据行。另一方面，行输入只发送一个数据行。</p>
+
+			<p><strong class="bold">容器输入(行)</strong>和<strong class="bold">容器输入(表)</strong>节点有一个可选的输入端口<a id="_idIndexMarker1043"/>。这个<a id="_idIndexMarker1044"/>端口接收一个模板数据表，并基于该表定义输入结构。这个<a id="_idIndexMarker1045"/>模板有两个目的:首先，如果在通过REST API调用工作流时没有提供输入表，那么模板中的值将被用作执行工作流的默认输入。其次，该表用于定义web服务期望的输入结构。如果当前输入的结构与模板不同，web服务将产生一条错误消息。这种模板技术的优点是输入被自动解析并转换成指定的类型。</p>
+
+			<p>类似地，要定义<a id="_idIndexMarker1046"/> REST服务的输出，您可以使用<strong class="bold">容器输出</strong>节点之一:或者是<strong class="bold">容器输出(行)</strong>或者是<a id="_idIndexMarker1047"/>容器输出(表)节点。</p>
+
+			<p>对于我们的部署工作流，为了一次对一个电影评论进行分类，我们使用一个<strong class="bold">容器输入(行)</strong>节点来定义输入结构，使用一个<strong class="bold">容器输出(行)</strong>节点来定义REST服务的输出结构。为了一次对一个或多个电影评论进行分类，可以使用<strong class="bold">容器输入(表)</strong>节点和<strong class="bold">容器输出(表)</strong>节点。</p>
+
+			<p>有两种方法可以创建可以作为REST服务部署的工作流:</p>
+
+			<ul>
+
+				<li>使用<strong class="bold">集成部署</strong>功能自动完成</li>
+
+				<li>通过从头开始手动构建工作流</li>
+
+			</ul>
+
+			<p>在<a href="B16391_10_Final_VK_ePUB.xhtml#_idTextAnchor367"> <em class="italic">第10章</em></a><em class="italic">部署深度学习网络</em>中，我们介绍了KNIME Analytics Platform的<strong class="bold">集成部署</strong>扩展，它允许您捕获部分培训工作流并<a id="_idIndexMarker1048"/>自动部署它们。即使在那里，作为一个例子，我们使用了情绪分析案例研究。在<em class="italic">图11.18 </em>中，您可以看到通过<strong class="bold">集成部署</strong>自动创建的工作流，带有一个<strong class="bold">容器输入(表格)</strong>节点和一个<strong class="bold">容器输出(表格)</strong>节点，用于定义<a id="_idTextAnchor413"/>输入和输出数据结构:</p>
+
+			<div><div><img src="img/B16391_11_018.jpg" alt="Figure 11.18 – Automatically created deployment workflow from Chapter 10, Deploying a Deep Learning Network"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.18–从第10章 的<a href="B16391_10_Final_VK_ePUB.xhtml#_idTextAnchor367"> <em class="italic">自动创建部署工作流，部署深度学习网络</em></a></p>
+
+			<p>在<a href="B16391_10_Final_VK_ePUB.xhtml#_idTextAnchor367"> <em class="italic">第10章</em></a><em class="italic">部署深度学习网络</em>中，我们将这个自动创建的工作流保存在本地，并通过<strong class="bold">调用工作流(基于表格)</strong>节点来触发其执行。我们可以将工作流部署在KNIME服务器上，而不是本地保存。</p>
+
+			<p>另一种选择是从头开始手工构建REST服务。在这种情况下，我们必须提供字典<a id="_idTextAnchor414"/> ry和训练模型(<em class="italic">图11.19 </em>):</p>
+
+			<div><div><img src="img/B16391_11_019.jpg" alt="Figure 11.19 – Manually built REST service deployment workflow"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.19–手动构建的REST服务部署工作流</p>
+
+			<p>正如你所看到的，它<a id="_idIndexMarker1050"/>看起来与<em class="italic">图11.18 </em>中之前的工作流非常相似，唯一的区别是它使用了一个<strong class="bold">表读取器</strong>节点和一个<strong class="bold"> Keras网络读取器</strong>节点来读取字典和训练好的模型。此外，还插入了一个模板表来定义REST API的输入数据结构。</p>
+
+			<p>我们有休息服务。让我们看看如何称呼它。</p>
+
+			<h3>呼叫休息服务</h3>
+
+			<p>要从外部应用程序调用部署的工作流作为REST服务<a id="_idIndexMarker1051"/>，您需要知道REST服务的路径和预期的输入数据结构。KNIME Server可以在浏览器中显示API定义。只需右键单击服务器上已部署的工作流，并选择<strong class="bold">显示API定义</strong>。一个浏览器窗口打开，显示该特定工作流的REST API定义(图11.20)。</p>
+
+			<div><div><img src="img/B16391_11_020.jpg" alt="Figure 11.20 – Documentation of the REST API using Swagger"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.20–使用Swagger的REST API文档</p>
+
+			<p>这个网页<a id="_idIndexMarker1052"/>是使用名为<strong class="bold"> Swagger </strong>的开源框架创建的。Swagger <a id="_idIndexMarker1053"/>已经被集成到KNIME Server中，用来记录REST API，轻松地探索不同的HTTP请求并测试它们。</p>
+
+			<p>例如，您可以测试如何用一个<strong class="bold"> POST </strong>请求来触发REST服务的执行。通过选择POST请求，Swagger向您展示了可能的参数、输入数据的模式和要调用的URL的概述。您也可以点击<strong class="bold">试用</strong>按钮进行试用。</p>
+
+			<p>您还可以使用<strong class="bold">调用工作流(基于表格)</strong>节点从另一个工作流中<a id="_idIndexMarker1054"/>触发REST服务的执行。该节点调用本地或远程工作流，发送提供的输入表并输出REST服务响应。</p>
+
+			<p>图11.21中的工作流程显示了如何在KNIME服务器上触发REST服务的执行:</p>
+
+			<div><div><img src="img/B16391_11_021.jpg" alt="Figure 11.21 – This workflow triggers the execution of a REST service on KNIME Server"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.21–该工作流触发了KNIME服务器上REST服务的执行</p>
+
+			<p>如果你想在KNIME服务器上运行一个工作流，你必须确保<strong class="bold">调用工作流</strong>节点连接到服务器。要<a id="_idIndexMarker1055"/>连接到一个KNIME服务器，您可以使用<strong class="bold"> KNIME服务器连接</strong>节点。在其配置窗口中，您需要向服务器提供地址，方法是手动键入地址，或者选择一个挂载点并输入凭据。</p>
+
+			<p>在<strong class="bold">调用工作流(基于表格)</strong>节点的配置窗口中，您可以通过点击<strong class="bold">浏览工作流</strong>按钮获得部署在KNIME服务器上的所有工作流的列表。选择工作流后，在高级设置中，您可以将输入表分配给被调用工作流的输入，将输出表分配给被调用工作流的输出。当部署的工作流有许多输入节点时，这个<a id="_idIndexMarker1056"/>特性非常方便。</p>
+
+			<p>在本节中，您已经学习了如何在KNIME Server上将工作流部署为REST服务。现在让我们根据自己的经验总结一些技巧和诀窍。</p>
+
+			<h1 id="_idParaDest-202">KNIME提示和技巧</h1>
+
+			<p>在本书中，我们涵盖了许多使用KNIME分析平台实现的案例研究。在本书的KNIME Hub空间中，你可以找到这些工作流，你可以将它们作为你深度学习项目的起点:<a href="https://hub.knime.com/kathrin/spaces/Codeless%20Deep%20Learning%20with%20KNIME/latest/">https://Hub . KNIME . com/kath rin/spaces/Codeless % 20 deep % 20 learning % 20 with % 20k nime/latest/</a>。在最后一部分，我们想分享一些在KNIME Analytics平台中使用深度学习的技巧和诀窍。</p>
+
+			<p>让我们从训练的数据洗牌开始。</p>
+
+			<h2 id="_idParaDest-203"><a id="_idTextAnchor418"/>在训练期间混洗数据</h2>
+
+			<p>当<a id="_idIndexMarker1058"/>训练神经网络时，为了更快地收敛训练过程并避免过度拟合，建议在每个时期之前混洗训练数据。</p>
+
+			<p>为此，请确保您在<strong class="bold"> Keras网络学习者</strong>节点的配置窗口中的<strong class="bold">高级</strong>选项卡中激活了<strong class="bold">在每个时期之前混洗训练数据</strong>复选框。</p>
+
+			<h2 id="_idParaDest-204"><a id="_idTextAnchor419"/>使用批量归一化</h2>
+
+			<p>批次标准化<a id="_idIndexMarker1059"/>是<a id="_idIndexMarker1060"/>一种标准化每批数据的技术。这具有稳定学习过程和显著减少训练深度网络所需的训练时期的效果。</p>
+
+			<p>要将批处理规范化添加到<a id="_idIndexMarker1061"/>网络中，您可以使用<strong class="bold"> Keras批处理规范化层</strong>节点。</p>
+
+			<h2 id="_idParaDest-205">保持你的工作流程整洁有序</h2>
+
+			<p>为了使您的工作流程易于维护，将它们记录和组织成逻辑的、易于理解的块是很重要的:</p>
+
+			<ul>
+
+				<li><strong class="bold">使用元节点和组件</strong>:为了保持大型工作流的整洁，建议将实现细节和一些复杂性隐藏在元节点或组件中。实际上，为了使工作流一眼就能看懂，您可以为项目中的每个步骤创建一个元节点或组件，比如数据访问、数据预处理、模型训练和模型评估。在每个元节点/组件中，可以有更多的元节点和组件用于不同的子步骤，例如不同的预处理步骤或网络层。</li>
+
+				<li><strong class="bold">Documenting a workflow</strong>: KNIME Analytics Platform offers you three ways to document a workflow:<p><strong class="bold"> a)节点标签</strong></p><p><strong class="bold"> b)注释框</strong></p><p><strong class="bold"> c)工作流程描述</strong></p></li>
+
+			</ul>
+
+			<p>节点标签和批注框有助于您和其他用户轻松了解工作流的任务和子任务。</p>
+
+			<p>也可以通过<strong class="bold">描述</strong>面板向您的工作流程添加元信息。为此，请单击工作流编辑器中的任意位置(不是在节点上)。<strong class="bold">描述</strong>视图用关于工作流的元信息改变工作流描述:标题、描述以及相关的链接和标签。</p>
+
+			<h2 id="_idParaDest-206"><a id="_idTextAnchor421"/>使用分组节点和旋转节点避免循环</h2>
+
+			<p>循环的<a id="_idIndexMarker1063"/>执行可能会很慢，因为<a id="_idIndexMarker1064"/>节点必须在每次迭代中执行。然而，毫无疑问，由于我们的编程背景，我们经常过度使用循环，甚至在有更有效的替代方法时也使用它们。</p>
+
+			<p>例如，一些循环可以通过简单地使用以下聚合节点来避免:<strong class="bold"> GroupBy </strong>、<strong class="bold"> Pivoting </strong>、<strong class="bold"> Ungroup </strong>和<strong class="bold"> Unpivoting </strong>。<strong class="bold">聚合</strong>节点通常执行与循环相同的任务，在执行速度方面效率更高。</p>
+
+			<h2 id="_idParaDest-207"><a id="_idTextAnchor422"/>指定执行顺序</h2>
+
+			<p>当工作流中有<a id="_idIndexMarker1065"/>并行分支时，定义执行顺序有时很重要。<em class="italic">图11.22 </em>显示了一个非常简单的例子，其中将表格写入Excel表格的顺序被强制执行:</p>
+
+			<div><div><img src="img/B16391_11_022.jpg" alt="Figure 11.22 – In this workflow, the execution order is forced by using a flow variable connection"/>
+
+				</div>
+
+			</div>
+
+			<p class="figure-caption">图11.22–在此工作流中，通过使用流变量连接来强制执行顺序</p>
+
+			<p>当然，<strong class="bold"> Excel表追加器(XLS) </strong>节点<a id="_idIndexMarker1066"/>应该在<strong class="bold"> Excel表编写器(XLS) </strong>节点之后执行。通过使用从<strong class="bold"> Excel Writer (XLS) </strong>节点的流量<a id="_idIndexMarker1067"/>变量输出端口到<strong class="bold"> Excel工作表Appender (XLS) </strong>节点的流量变量输入端口的流量变量连接，我们<a id="_idIndexMarker1068"/>强制<strong class="bold"> Excel工作表Appender (XLS) </strong>节点的执行仅在<strong class="bold"> Excel Writer (XLS) </strong>节点的执行完成后开始。</p>
+
+			<h1 id="_idParaDest-208"><a id="_idTextAnchor424"/>总结</h1>
+
+			<p>在这一章中，你学习了另外两个选项来部署你训练过的深度学习网络:web应用和REST服务。我们完成了这一章和这本书，提供了一些在KNIME Analytics平台中成功使用深度学习的技巧和诀窍。</p>
+
+			<p>在本章的第一节中，您学习了如何使用KNIME Server的KNIME WebPortal构建web应用程序，以便最终用户可以执行他们的工作流，并从web浏览器轻松地与web页面进行交互。</p>
+
+			<p>接下来，您学习了如何使用KNIME Server构建、部署和调用REST服务，以将您的深度学习网络集成到公司的IT基础设施中。您了解了定义REST服务的输入和输出数据结构的许多选项，如何使用开源的Swagger工具检查REST API，以及如何在KNIME Analytics平台内触发REST服务的执行。</p>
+
+			<p>在上一节中，我们从自己的经验中整理了一些提示和技巧，这些提示和技巧可能会在KNIME Analytics平台中使用深度学习时有所帮助。</p>
+
+			<p>在这一点上，我们认为您已经准备好开始构建和部署您自己的工作流，以通过KNIME软件培训和使用适合您自己的业务案例和数据的深度学习网络。</p>
+
+			<h1 id="_idParaDest-209"><a id="_idTextAnchor425"/>问题和练习</h1>
+
+			<ol>
+
+				<li>Which kind of nodes can you use to add input fields to a composite view?<p>a)配置节点</p><p>b)小部件节点</p><p>c)查看节点</p><p>d)容器输入节点</p></li>
+
+				<li>How can you create a composite view?<p>a)选择一些节点，点击右键，选择<strong class="bold">创建元节点</strong></p><p>b)通过选择一些视图或小部件节点，右键单击，并选择<strong class="bold">创建元节点</strong></p><p>c)通过选择一些视图或小部件节点，右键单击，并选择<strong class="bold">创建组件</strong></p><p>d)右击工作流程中的任意位置，并选择<strong class="bold">创建组件</strong></p></li>
+
+				<li>How can you define the layout of a composite view?<p>a)右击一个组件并选择<strong class="bold">组件</strong> | <strong class="bold">布局</strong>。</p><p>b)双击一个组件并转到配置窗口中的<strong class="bold">布局</strong>选项卡。</p><p>c)进入组件内部，点击工具栏中的<strong class="bold">布局</strong>按钮。</p><p>d)右击一个组件并选择<strong class="bold">布局</strong>。</p></li>
+
+				<li>Which node can be used to define the input and output of a REST service?<p>a)配置节点</p><p>b)小部件节点</p><p>c)查看节点</p><p>d)容器节点</p></li>
+
+			</ol>
+
+		</div>
+
+	
+
+
+
+</body></html>

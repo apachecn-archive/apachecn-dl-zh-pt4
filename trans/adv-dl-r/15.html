@@ -1,0 +1,1400 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Text classification Using Long Short-Term Memory Network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">基于长短期记忆网络的文本分类</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在前一章中，我们使用递归神经网络为以单词序列为特征的文本数据开发了一个电影评论情感分类模型。<strong>长短期记忆</strong> ( <strong> LSTM </strong>)神经网络是一种特殊类型的<strong>递归神经网络</strong> ( <strong> RNNs </strong>)对涉及序列的数据很有用，并提供我们将在下一节讨论的优势。本章说明了使用LSTM神经网络进行情感分类的步骤。将LSTM网络应用于商业问题的步骤可能包括文本数据准备、创建LSTM模型、训练模型以及评估模型性能。</p>
+
+<p>更具体地说，在本章中，我们将讨论以下主题:</p>
+
+<ul>
+
+<li>我们为什么使用LSTM网络？</li>
+
+<li>为模型构建准备文本数据</li>
+
+<li>创建长短期记忆网络模型</li>
+
+<li>拟合LSTM模型</li>
+
+<li>评估模型性能</li>
+
+<li>性能优化技巧和最佳实践</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Why do we use LSTM networks?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们为什么使用LSTM网络？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在前一章中，我们已经看到，当处理涉及序列的数据时，递归神经网络提供了不错的性能。使用LSTM网络的一个关键优势在于，它们解决了消失梯度问题，该问题使得对于长的单词或整数序列的网络训练变得困难。梯度用于更新RNN参数和用于长的单词或整数序列；这些梯度变得越来越小，以至于实际上无法进行网络训练。LSTM网络有助于克服这个问题，并使捕获相距较远的序列中的关键字或整数之间的长期相关性成为可能。例如，考虑以下两个句子，其中第一个句子很短，第二个句子相对较长:</p>
+
+<ul>
+
+<li>我喜欢吃巧克力。</li>
+
+<li>只要有机会，而且通常有很多机会，我就喜欢吃巧克力。</li>
+
+</ul>
+
+<p>在这些句子中，抓住句子主要精髓的两个重要单词是<strong> like </strong>和<strong>chocolate</strong>。在第一句话中，单词<strong>如</strong>和<strong>巧克力</strong>彼此更接近，它们之间只隔着两个单词。另一方面，在第二句话中，这两个词之间被多达14个词隔开。LSTM网络被设计用来处理这种在较长的句子或较长的整数序列中观察到的长期依赖性。在这一章中，我们集中于应用LSTM网络来开发一个电影评论情感分类模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Preparing text data for model building</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">为模型构建准备文本数据</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们将继续使用IMDB电影评论数据，我们在上一章中使用了递归神经网络。这些数据已经以一种格式可用，我们可以用它来开发深度网络模型，只需要最少的数据处理。</p>
+
+<p>让我们来看看下面的代码:</p>
+
+<pre># IMDB data<br/>library(keras)<br/>imdb &lt;- dataset_imdb(num_words = 500) <br/>c(c(train_x, train_y), c(test_x, test_y)) %&lt;-% imdb<br/>train_x &lt;- pad_sequences(train_x, maxlen = 200) <br/>test_x &lt;- pad_sequences(test_x, maxlen = 200)</pre>
+
+<p>捕获训练和测试数据的整数序列分别存储在<kbd>train_x</kbd>和<kbd>test_x</kbd>中。类似地，<kbd>train_y</kbd>和<kbd>test_y</kbd>存储捕获关于电影评论是正面还是负面的信息的标签。我们已经指定最常用单词的数量为500。对于填充，我们使用200作为训练和测试数据的整数序列的最大长度。</p>
+
+<p>当整数的实际长度小于200时，会在序列的开头添加零，以人为地将整数的长度增加到200。但是，当整数的长度超过200时，开头的整数将被删除，以便整数的总长度保持在200。</p>
+
+<p>如前所述，训练和测试数据集都是平衡的，每个数据集都包含涉及25，000条电影评论的数据。对于每个电影评论，积极或消极的标签也是可用的。</p>
+
+<p>请注意，<kbd>maxlen</kbd>值的选择会影响模型性能。如果选择的值太小，序列中的更多单词或整数将被截断。另一方面，如果选择的值太大，那么序列中的更多单词或整数将需要填充，并添加零。避免过多填充或过多截断的一种方法是选择一个更接近中值的值。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Creating a long short-term memory network model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">创建长短期记忆网络模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将从一个简单的LSTM网络体系结构开始，看看如何计算参数的数量。随后，我们将编译模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>LSTM network architecture</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">LSTM网络架构</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们将从LSTM网络架构的简单流程图开始，如下面的屏幕截图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/ac568b12-cbe5-4312-b47e-1e95783f27ee.png" style="width:6.33em;height:16.50em;"/></p>
+
+<p>前面的LSTM网络流程图强调了体系结构中的各层以及所使用的激活功能。在LSTM层中，使用了<kbd>tanh</kbd>激活功能，这是该层的默认激活功能。在密集层，使用<kbd>sigmoid</kbd>激活功能。</p>
+
+<p>让我们来看看下面的代码和模型摘要:</p>
+
+<pre># Model architecture<br/>model &lt;- keras_model_sequential() %&gt;%<br/>         layer_embedding(input_dim = 500, output_dim = 32) %&gt;%<br/>         layer_lstm(units = 32) %&gt;%<br/>         layer_dense(units = 1, activation = "sigmoid")<br/>model<br/><strong>__________________________________________________________________________</strong><br/><strong>Layer (type)                      Output Shape                  Param #     </strong><br/><strong>==========================================================================</strong><br/><strong>embedding (Embedding)             (None, None, 32)              16000       </strong><br/><strong>__________________________________________________________________________</strong><br/><strong>lstm (LSTM)                       (None, 32)                    8320        </strong><br/><strong>__________________________________________________________________________</strong><br/><strong>dense (Dense)                     (None, 1)                     33          </strong><br/><strong>==========================================================================</strong><br/><strong>Total params: 24,353</strong><br/><strong>Trainable params: 24,353</strong><br/><strong>Non-trainable params: 0</strong><br/><strong>__________________________________________________________________________</strong></pre>
+
+<p>除了我们在上一章中用于RNN模型的，我们在这个例子中用<kbd>layer_lstm</kbd>代替了<kbd>layer_simple_rnn</kbd>用于LSTM网络。对于嵌入层，我们总共有16，000 (500 x 32)个参数。如下所示的计算将计算LSTM图层的参数数量:</p>
+
+<p><em>= 4x【LSTM层单位x(LSTM层单位+输出维度)+LSTM层单位】</em></p>
+
+<p><em> = 4 x [32(32+32) + 32] </em></p>
+
+<p><em> = 8320 </em></p>
+
+<p>对于涉及RNN层的类似架构，我们将有2080个参数。LSTM层参数数量的四倍增长也导致更多的训练时间，因此需要相对较高的处理成本。密集层的参数数量为<em> [(32x1) + 1] </em>，共计33个。因此，在这个网络中总共有24，353个参数。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Compiling the LSTM network model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">编制LSTM网络模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了编译LSTM网络模型，我们将使用以下代码:</p>
+
+<pre># Compile<br/>model %&gt;% compile(optimizer = "rmsprop",  <br/>         loss = "binary_crossentropy",<br/>         metrics = c("acc"))</pre>
+
+<p>我们使用<kbd>rmsprop</kbd>作为优化器，使用<kbd>binary_crossentropy</kbd>作为损失，因为电影评论有二元反应，或者换句话说，它们要么是正面的，要么是负面的。对于度量标准，我们使用分类准确性。编译完模型后，我们准备进入下一步，拟合LSTM模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Fitting the LSTM model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">拟合LSTM模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了训练LSTM模型，我们将使用以下代码:</p>
+
+<pre># Fit model<br/>model_one &lt;- model %&gt;% fit(train_x, train_y,<br/>         epochs = 10,<br/>         batch_size = 128,<br/>         validation_split = 0.2)<br/>plot(model_one)</pre>
+
+<p>我们将使用训练数据来拟合具有10个时期的LSTM模型，并使用128的批量大小。我们还将保留20%的训练数据作为验证数据，用于评估模型训练期间的损失和准确性值。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Loss and accuracy plot</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">损失和准确度图</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>下面的屏幕截图显示了<kbd>model_one</kbd>的损耗和精度图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/7e6e0763-3476-4566-b4ab-2006bc2b2e06.png"/></p>
+
+<p>基于训练和验证数据的损失和准确度的图显示了曲线之间的总体接近度。从图中观察到的情况如下:</p>
+
+<ul>
+
+<li>两条线没有大的分歧，说明不存在过拟合问题。</li>
+
+<li>增加历元数可能不会显著提高模型性能。</li>
+
+<li>然而，基于验证数据的损失和精度值显示出一定量的不均匀性或振荡，其中它们偏离训练损失和精度相对较高的量。</li>
+
+<li>时期4和8在这方面特别突出，显示出基于训练数据的损失和准确性的显著偏离。</li>
+
+</ul>
+
+<p>接下来，我们将评估<kbd>model_one</kbd>，并使用它来预测电影评论情绪。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Evaluating model performance </title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">评估模型性能</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将基于训练和测试数据来评估模型。我们还将为训练和测试数据创建混淆矩阵，以进一步了解模型的电影评论情感分类性能。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Model evaluation with train data</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用训练数据进行模型评估</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们将首先使用以下代码评估列车数据的模型性能:</p>
+
+<pre># Evaluate<br/>model %&gt;% evaluate(train_x, train_y)<br/>$loss<br/> [1] 0.3749587<br/>$acc<br/> [1] 0.82752</pre>
+
+<p>从前面的输出可以看出，对于训练数据，我们获得了损失值<kbd>0.375</kbd>和大约<kbd>0.828</kbd>的准确度。考虑到相对简单的LSTM架构，这是相当不错的表现。接下来，我们使用该模型对电影评论情绪进行预测，并通过使用以下代码开发混淆矩阵来总结结果:</p>
+
+<pre># Confusion Matrix<br/>pred &lt;- model %&gt;% predict_classes(train_x)<br/>table(Predicted=pred, Actual=imdb$train$y)<br/>         Actual<br/> Predicted     0     1<br/>         0  9258  1070<br/>         1  3242 11430</pre>
+
+<p>我们可以从混淆矩阵中得出以下结论:</p>
+
+<ul>
+
+<li>据观察，与负面电影评论(9，258个正确预测)相比，该模型在预测正面电影评论(11，430个正确预测)方面似乎更准确。换句话说，对于训练数据，该模型以大约91.4%的比率(也称为模型的敏感度)正确分类正面评论。</li>
+
+<li>类似地，对于训练数据，该模型以大约74.1%的比率(也称为模型的特异性)正确地分类负面评论。</li>
+
+<li>还观察到负面电影评论被错误分类为正面评论的比率是正面评论被错误分类为负面(1，070个评论)的大约三倍(3，242个评论)。</li>
+
+<li>因此，尽管总的来说，该模型似乎对训练数据表现良好，但更深入地看，我们观察到对正面电影评论进行正确分类的一些偏差，代价是对负面评论进行正确分类的准确性较低。</li>
+
+</ul>
+
+<p>基于训练数据观察到的模型性能是否会导致测试数据的类似行为，这将是一件有趣的事情。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Model evaluation with test data</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用测试数据进行模型评估</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们现在将使用测试数据，通过以下代码获得模型的损耗和精度值:</p>
+
+<pre># Evaluate<br/>model %&gt;% evaluate(test_x, test_y)<br/>$loss<br/> [1] 0.3997277<br/>$acc<br/> [1] 0.81992</pre>
+
+<p>从前面的输出可以看出，对于测试数据，我们获得的损失值为0.399，精确度约为0.819。正如所料，这些值比从列车数据中获得的值稍差。然而，它们与基于训练数据的结果足够接近，可以认为该模型行为是一致的。</p>
+
+<p>使用测试数据获得混淆矩阵的代码如下:</p>
+
+<pre># Confusion Matrix<br/>pred1 &lt;- model %&gt;$ predict_classes(text_x)<br/>table(Predicted=pred1, Actual=imdb$test$y)<br/>         Actual<br/> Predicted     0     1<br/>         0  9159  1161<br/>         1  3341 11339</pre>
+
+<p>从上面显示的混淆矩阵中，可以得出以下观察结果:</p>
+
+<ul>
+
+<li>基于使用测试数据的预测的混淆矩阵显示了与我们之前观察到的训练数据相似的模式。</li>
+
+<li>与正确分类负面评论(大约73.3%)相比，该模型在准确分类正面电影评论(大约90.7%)时似乎表现得更好。</li>
+
+<li>因此，当正确分类正面电影评论时，该模型继续表现出偏差。</li>
+
+</ul>
+
+<p>在下一节中，我们将进行一些实验来探索模型的电影评论情感分类性能的可能改进。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Performance optimization tips and best practices</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">性能优化技巧和最佳实践</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一部分中，我们将进行三个不同的实验来搜索改进的基于LSTM的电影评论情感分类模型。这将包括在编译模型时尝试不同的优化器，在开发模型架构时添加另一个LSTM层，以及在网络中使用双向LSTM层。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Experimenting with the Adam optimizer</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">试用Adam优化器</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们将使用<kbd>adam</kbd>(自适应矩优化)优化器，而不是之前编译模型时使用的<kbd>rmsprop</kbd>(均方根传播)优化器。为了更容易地比较模型性能，我们将保持其他一切与前面相同，如下面的代码所示:</p>
+
+<pre># Model architecture<br/>model &lt;- keras_model_sequential() %&gt;%<br/>         layer_embedding(input_dim = 500, output_dim = 32) %&gt;%<br/>         layer_lstm(units = 32) %&gt;%<br/>         layer_dense(units = 1, activation = "sigmoid")<br/><br/># Compile<br/>model %&gt;% compile(optimizer = "adam",  <br/>         loss = "binary_crossentropy",<br/>         metrics = c("acc"))<br/><br/># Fit model<br/>model_two &lt;- model %&gt;% fit(train_x, train_y,<br/>         epochs = 10,<br/>         batch_size = 128,<br/>         validation_split = 0.2)<br/>plot(model_two)</pre>
+
+<p>运行前述代码并训练模型后，每个时期的精度和损耗值存储在<kbd>model_two</kbd>中。我们使用<kbd>model_two</kbd>中的损耗和精度值来绘制以下图表:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/2c80e3bf-c6f5-4c71-b9a8-008cd2ff70c2.png" style="width:38.58em;height:36.67em;"/></p>
+
+<p>根据前面的损耗和精度图，我们可以得出以下结论:</p>
+
+<ul>
+
+<li>基于训练和验证数据的损失和准确度图显示，与我们用<kbd>model_one</kbd>构建的第一个模型的图相比，模式略有改善。</li>
+
+<li>在基于<kbd>model_one</kbd>的图中，我们观察到验证数据的损失和准确度值偶尔会与基于训练数据的值出现较大偏差。在这个图中，我们看不到两条线之间有任何如此大的偏差。</li>
+
+</ul>
+
+<ul>
+
+<li>此外，基于验证数据的最后几个值的损失和准确度值似乎是平坦的，这表明我们使用的十个时期足以训练模型，并且增加时期数不太可能有助于提高模型性能。</li>
+
+</ul>
+
+<p>接下来，让我们使用以下代码获得训练数据的损失、准确性和混淆矩阵:</p>
+
+<pre class="cdpcomment"># Loss and accuracy<br/>model %&gt;% evaluate(train_x, train_y)<br/>$loss<br/>[1] 0.3601628<br/>$acc<br/>[1] 0.8434<br/><br/>pred &lt;- model %&gt;%   predict_classes(train_x)<br/><br/># Confusion Matrix<br/>table(Predicted=pred, Actual=imdb$train$y)<br/>         Actual<br/>Predicted     0     1<br/>        0 11122  2537<br/>        1  1378  9963</pre>
+
+<p>从前面的代码输出中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>通过使用<kbd>adam</kbd>优化器，我们获得训练数据的损失和准确度分别为0.360和0.843。这两个数字都显示了与我们使用<kbd>rmsprop</kbd>优化器的早期模型相比的改进。</li>
+
+<li>从混淆矩阵中可以观察到另一个差异。该模型在正确分类负面电影评论时(以大约88.9%的比率)比正确分类正面评论(以大约79.7%的比率)表现得更好。</li>
+
+<li>这种行为与之前模型中观察到的情况相反。与正确分类正面评论相比，该模型似乎偏向于正确分类负面电影评论情绪。</li>
+
+</ul>
+
+<p>使用训练数据查看了模型的性能后，我们现在将使用以下代码对测试数据重复该过程，以获得损失、准确性和混淆矩阵:</p>
+
+<pre class="cdpcomment"># Loss and accuracy<br/>model %&gt;% evaluate(test_x, test_y)<br/>$loss<br/>[1] 0.3854687<br/>$acc<br/>[1] 0.82868<br/><br/>pred1 &lt;- model %&gt;%   predict_classes(test_x)<br/><br/># Confusion Matrix<br/>table(Predicted=pred1, Actual=imdb$test$y)<br/>         Actual<br/>Predicted     0     1<br/>        0 10870  2653<br/>        1  1630  9847</pre>
+
+<p>从前面的代码输出中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>基于测试数据的损耗和准确度分别为0.385和0.829。基于测试数据的这些结果也显示了与具有测试数据的先前模型相比更好的模型性能。</li>
+
+<li>混淆矩阵显示了我们在训练数据中观察到的类似模式。对于测试数据，负面电影评论情绪被正确分类为大约86.9%的比率。</li>
+
+<li>类似地，对于测试数据，正面的电影评论情绪被模型以大约78.8%的比率正确分类。</li>
+
+<li>此行为与使用训练数据获得的模型性能一致。</li>
+
+</ul>
+
+<p>虽然尝试<kbd>adam</kbd>优化器提高了整体电影评论情感分类性能，但当正确地将一个类别与另一个类别相比较时，它仍然会保留偏差。一个好的模型不仅应该提高整体性能，还应该在正确分类时将任何偏差最小化。以下代码提供了一个表格，显示了<kbd>train</kbd>和<kbd>test</kbd>数据中负面和正面评论的数量:</p>
+
+<pre># Number of positive and negative reviews in the train data<br/>table(train_y)<br/>train_y<br/>    0     1 <br/>12500 12500 <br/><br/># Number of positive and negative review in the test data<br/>table(test_y)<br/>test_y<br/>    0     1 <br/>12500 12500 </pre>
+
+<p>从前面的代码输出可以看出，这个电影评论数据是平衡的，其中训练和测试数据都有25，000个评论。这个数据在正面或负面评论的数量上也是平衡的。训练和测试数据集各有12，500条正面和12，500条负面电影评论。因此，在提供给模型用于训练的负面或正面评论的数量上没有偏差。然而，在正确分类负面和正面电影评论时看到的偏见肯定是需要改进的。</p>
+
+<p>在下一个实验中，让我们探索更多的LSTM层，看看我们是否可以获得更好的电影评论情感分类模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Experimenting with the LSTM network having an additional layer</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">尝试LSTM网络增加一层</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在第二个实验中，为了提高分类模型的性能，我们将添加一个额外的LSTM层。让我们看看下面的代码:</p>
+
+<pre># Model architecture<br/>model &lt;- keras_model_sequential() %&gt;%<br/>         layer_embedding(input_dim = 500, output_dim = 32) %&gt;%<br/>         layer_lstm(units = 32,<br/>                    return_sequences = TRUE) %&gt;%<br/>         layer_lstm(units = 32) %&gt;%<br/>         layer_dense(units = 1, activation = "sigmoid")<br/><br/># Compiling model<br/>model %&gt;% compile(optimizer = "adam",   <br/>         loss = "binary_crossentropy",<br/>         metrics = c("acc"))<br/><br/># Fitting model<br/>model_three &lt;- model %&gt;% fit(train_x, train_y,<br/>         epochs = 10,<br/>         batch_size = 128,<br/>         validation_split = 0.2)<br/><br/># Loss and accuracy plot<br/>plot(model_three)</pre>
+
+<p>通过向网络中添加一个额外的LSTM图层，如前面的代码所示，这两个LSTM图层的参数总数现在将增加到32，673个，而之前一个LSTM图层的参数总数为24，353个。在训练网络时，参数数量的增加也将导致更长的训练时间。在编译模型时，我们还保留了Adam优化器的使用。我们保持其他一切与我们在以前的模型中使用的相同。</p>
+
+<p>下面的屏幕截图显示了本实验中使用的具有两个LSTM层的网络架构的简单流程图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/0418119a-4dae-4bfa-a9b1-0897d0815d18.png" style="width:8.33em;height:25.83em;"/></p>
+
+<p>前面显示的LSTM网络流程图强调了体系结构中的两层以及所使用的激活功能。在两个LSTM层中，<kbd>tanh</kbd>被用作默认激活功能。在密集层中，我们继续使用之前使用的<kbd>sigmoid</kbd>激活函数。</p>
+
+<p>训练模型后，每个历元的精度和损失值存储在<kbd>model_three</kbd>中。我们使用<kbd>model_three</kbd>中的损耗和精度值绘制以下图表:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/9cc7906f-0224-47de-8ec8-ef9ed8d7b438.png" style="width:46.17em;height:44.00em;"/></p>
+
+<p>从所示的损耗和精度图中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>损失值和准确度值的图并不表示存在过拟合问题，因为训练数据和验证数据的曲线彼此接近。</li>
+
+</ul>
+
+<ul>
+
+<li>与早期模型一样，验证数据的损失和准确性似乎在最后几个时期保持不变，表明十个时期足以训练模型，增加时期的数量不太可能改善结果。</li>
+
+</ul>
+
+<p>我们现在可以使用以下代码获得训练数据的损失、准确性和混淆矩阵:</p>
+
+<pre># Loss and accuracy<br/>model %&gt;% evaluate(train_x, train_y)<br/>$loss<br/>[1] 0.3396379<br/>$acc<br/>[1] 0.85504<br/><br/>pred &lt;- model %&gt;%   predict_classes(train_x)<br/><br/># Confusion Matrix<br/>table(Predicted=pred, Actual=imdb$train$y) <br/>         Actual<br/>Predicted     0     1<br/>        0 11245  2369<br/>        1  1255 10131</pre>
+
+<p>从前面的代码输出中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>基于训练数据的损失和精度值分别被获得为<kbd>0.339</kbd>和<kbd>0.855</kbd>。与前两个模型相比，损耗和精度都有所提高。</li>
+
+<li>我们可以使用这个模型对训练数据中的每个评论进行预测，并与实际标签进行比较，然后以混淆矩阵的形式总结结果。</li>
+
+<li>对于训练数据，混淆矩阵表明，该模型在大约90%的时间内正确分类负面电影评论，在大约81%的时间内正确分类正面评论。</li>
+
+<li>因此，尽管模型性能总体上有所提高，但当正确地将一个类别与另一个类别进行比较时，我们仍然会观察到偏差。</li>
+
+</ul>
+
+<p>在使用训练数据检查了模型的性能之后，我们现在将使用测试数据重复该过程。以下是获取损失、准确度和混淆矩阵的代码:</p>
+
+<pre># Loss and accuracy<br/>model %&gt;% evaluate(test_x, test_y)<br/>$loss<br/>[1] 0.3761043<br/>$acc<br/>[1] 0.83664<br/><br/>pred1 &lt;- model %&gt;%   predict_classes(test_x)<br/><br/># Confusion Matrix<br/>table(Predicted=pred1, Actual=imdb$test$y)<br/>         Actual<br/>Predicted     0     1<br/>        0 10916  2500<br/>        1  1584 10000</pre>
+
+<p>从前面的代码输出中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>对于测试数据，损失值和准确度值分别为0.376和0.837。对于测试数据，这两个结果都显示了比前两个模型更好的分类性能。</li>
+
+<li>混淆矩阵显示，负面影评的正确分类率约为87.3%，正面影评的正确分类率约为80%。</li>
+
+<li>因此，这些结果与使用训练数据获得的结果一致，并显示出与我们观察到的训练数据相似的偏差。</li>
+
+</ul>
+
+<p>总之，通过添加额外的LSTM层，我们能够提高模型的电影评论情感分类性能。然而，当正确地将一个类别与另一个类别相比较时，我们继续观察到偏差。因此，尽管我们在提高模型性能方面取得了一定的成功，但仍有进一步提高模型分类性能的空间。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Experimenting with a bidirectional LSTM layer</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">试验双向LSTM图层</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>顾名思义，双向LSTM不仅使用提供的整数序列作为输入，还使用它的逆序作为附加输入。可能存在这样的情况，通过捕获原始LSTM网络可能没有捕获的数据中的有用模式，这种方法可能有助于实现进一步的模型分类性能改进。</p>
+
+<p>对于这个实验，我们将在第一个实验中修改LSTM层，如以下代码所示:</p>
+
+<pre># Model architecture<br/>model &lt;- keras_model_sequential() %&gt;%<br/>          layer_embedding(input_dim = 500, output_dim = 32) %&gt;%<br/>          bidirectional(layer_lstm(units = 32)) %&gt;%<br/>          layer_dense(units = 1, activation = "sigmoid")<br/># Model summary<br/>summary(model)<br/>Model<br/>__________________________________________________________<br/>Layer (type)              Output Shape           Param #  <br/>==========================================================<br/>embedding_8 (Embedding)   (None, None, 32)       16000    <br/>__________________________________________________________<br/>bidirectional_5 (Bidirect (None, 64)             16640    <br/>__________________________________________________________<br/>dense_11 (Dense)          (None, 1)              65       <br/>==========================================================<br/>Total params: 32,705<br/>Trainable params: 32,705<br/>Non-trainable params: 0<br/>__________________________________________________________</pre>
+
+<p>从前面的代码输出中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>我们使用双向<kbd>()</kbd>功能将LSTM层转换为双向LSTM层。</li>
+
+<li>这一变化使与LSTM层相关的参数数量增加了一倍，达到16，640个，这可以从模型摘要中看出。</li>
+
+<li>这个架构的参数总数现在增加到32，705个。参数数量的增加将进一步降低训练网络的速度。</li>
+
+</ul>
+
+<p>以下是双向LSTM网络架构的简单流程图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/2c0b3651-c617-4563-816c-1469d82c371b.png" style="width:9.08em;height:21.17em;"/></p>
+
+<p>双向LSTM网络的流程图显示了嵌入层、双向层和密集层。在双向LSTM层中，<kbd>tanh</kbd>用作激活函数，密集层使用<kbd>sigmoid</kbd>激活函数。编译和定型模型的代码如下:</p>
+
+<pre># Compiling model<br/>model %&gt;% compile(optimizer = "adam",   <br/>          loss = "binary_crossentropy",<br/>          metrics = c("acc"))<br/><br/># Fitting model<br/> model_four &lt;- model %&gt;% fit(train_x, train_y,<br/>          epochs = 10,<br/>          batch_size = 128,<br/>          validation_split = 0.2)<br/><br/># Loss and accuracy plot<br/>plot(model_four)</pre>
+
+<p>从前面的代码中可以看出，我们将继续使用<kbd>adam</kbd>优化器，并保持其他设置与之前相同，以便编译和拟合模型。</p>
+
+<p>在我们训练模型之后，每个历元的精度和损失值被存储在<kbd>model_four</kbd>中。我们使用<kbd>model_four</kbd>中的损耗和精度值绘制以下图表:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/ab926820-55f4-4c95-8056-ad5ee3a57beb.png" style="width:45.08em;height:47.50em;"/></p>
+
+<p>从前面的图中，我们可以得出以下结论:</p>
+
+<ul>
+
+<li>损失和准确度图没有显示任何过度拟合的原因，因为训练线和验证线彼此相当接近。</li>
+
+<li>该图还表明，我们不需要十个以上的历元来训练该模型。</li>
+
+</ul>
+
+<p class="mce-root">我们将使用以下代码获得训练数据的损失、准确性和混淆矩阵:</p>
+
+<pre># Loss and accuracy<br/>model %&gt;% evaluate(train_x, train_y)<br/>$loss<br/>[1] 0.3410529<br/>$acc<br/>[1] 0.85232<br/><br/>pred &lt;- model %&gt;%   predict_classes(train_x)<br/><br/># Confusion Matrix<br/>table(Predicted=pred, Actual=imdb$train$y)<br/>         Actual<br/>Predicted     0     1<br/>        0 10597  1789<br/>        1  1903 10711</pre>
+
+<p>从前面的代码输出中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>对于训练数据，我们分别获得0.341和0.852的损失和准确度值。这些结果仅略次于先前的结果，并且没有显著差异。</li>
+
+<li>这次的混淆矩阵在正确分类正面和负面电影评论方面表现得更加均匀。</li>
+
+<li>对于负面电影评论，正确的分类率约为84.8%，而对于正面评论，正确的分类率约为85.7%。</li>
+
+<li>这个大约1%的差异比我们在早期模型中观察到的要小得多。</li>
+
+</ul>
+
+<p class="mce-root">我们现在将对测试数据重复前面的过程。以下是获取损失、准确度和混淆矩阵的代码:</p>
+
+<pre># Loss and accuracy<br/>model %&gt;% evaluate(test_x, test_y)<br/>$loss<br/>[1] 0.3737377<br/>$acc<br/>[1] 0.83448<br/><br/>pred1 &lt;- model %&gt;%   predict_classes(test_x)<br/><br/>#Confusion Matrix<br/>table(Predicted=pred1, Actual=imdb$test$y)<br/>         Actual<br/>Predicted     0     1<br/>        0 10344  1982<br/>        1  2156 10518</pre>
+
+<p>从前面的代码输出中，我们可以观察到以下情况:</p>
+
+<ul>
+
+<li>对于测试数据，损失值和准确度值分别为0.374和0.834。</li>
+
+<li>混淆矩阵显示，模型对负面评论的正确分类率约为82.8%。</li>
+
+<li>该模型对电影正面评论的正确分类率约为84.1%。</li>
+
+<li>这些结果与从训练数据中获得的结果一致。</li>
+
+</ul>
+
+<p>使用双向LSTM的实验有助于在损耗和精度方面获得与之前实验中使用两个LSTM层获得的性能相当的性能。然而，观察到的主要收获是实现了我们可以以更好的一致性正确分类负面或正面电影评论的结果。</p>
+
+<p>在这一章中，我们使用LSTM网络开发了一个电影评论情感分类模型。当数据涉及序列时，LSTM网络有助于捕捉单词或整数序列中的长期相关性。我们对四个不同的LSTM模型进行了实验，对模型进行了一些更改，相同的结果总结在下表中。</p>
+
+<p>下表总结了四种LSTM型号的性能:</p>
+
+<table border="1" style="border-collapse: collapse">
+
+<tbody>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign"><strong>型号</strong></td>
+
+<td class="CDPAlignCenter CDPAlign"><strong> LSTM层层</strong></td>
+
+<td class="CDPAlignCenter CDPAlign"><strong>优化器</strong></td>
+
+<td class="CDPAlignCenter CDPAlign"><strong>数据</strong></td>
+
+<td class="CDPAlignCenter CDPAlign"><strong>损失</strong></td>
+
+<td class="CDPAlignCenter CDPAlign"><strong>精度</strong></td>
+
+<td class="CDPAlignCenter CDPAlign">
+
+<p class="mce-root"><strong>负面评价的准确性或特异性</strong></p>
+
+</td>
+
+<td class="CDPAlignCenter CDPAlign">
+
+<p class="mce-root"><strong>正面评价的准确性或敏感度</strong></p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign">一个</td>
+
+<td class="CDPAlignCenter CDPAlign">一</td>
+
+<td class="CDPAlignCenter CDPAlign"><kbd>rmsprop</kbd></td>
+
+<td class="CDPAlignCenter CDPAlign">火车</td>
+
+<td class="CDPAlignCenter CDPAlign">0.375</td>
+
+<td class="CDPAlignCenter CDPAlign">82.8%</td>
+
+<td class="CDPAlignCenter CDPAlign">74.1%</td>
+
+<td class="CDPAlignCenter CDPAlign">91.4%</td>
+
+</tr>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign">试验</td>
+
+<td class="CDPAlignCenter CDPAlign">0.399</td>
+
+<td class="CDPAlignCenter CDPAlign">81.9%</td>
+
+<td class="CDPAlignCenter CDPAlign">73.3%</td>
+
+<td class="CDPAlignCenter CDPAlign">90.7%</td>
+
+</tr>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign">二</td>
+
+<td class="CDPAlignCenter CDPAlign">一</td>
+
+<td class="CDPAlignCenter CDPAlign"><kbd>adam</kbd></td>
+
+<td class="CDPAlignCenter CDPAlign">火车</td>
+
+<td class="CDPAlignCenter CDPAlign">0.360</td>
+
+<td class="CDPAlignCenter CDPAlign">84.3%</td>
+
+<td class="CDPAlignCenter CDPAlign">88.9%</td>
+
+<td class="CDPAlignCenter CDPAlign">79.7%</td>
+
+</tr>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign">试验</td>
+
+<td class="CDPAlignCenter CDPAlign">0.385</td>
+
+<td class="CDPAlignCenter CDPAlign">82.9%</td>
+
+<td class="CDPAlignCenter CDPAlign">86.9%</td>
+
+<td class="CDPAlignCenter CDPAlign">78.8%</td>
+
+</tr>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign">三</td>
+
+<td class="CDPAlignCenter CDPAlign">2</td>
+
+<td class="CDPAlignCenter CDPAlign"><kbd>adam</kbd></td>
+
+<td class="CDPAlignCenter CDPAlign">火车</td>
+
+<td class="CDPAlignCenter CDPAlign">0.339</td>
+
+<td class="CDPAlignCenter CDPAlign">85.5%</td>
+
+<td class="CDPAlignCenter CDPAlign">90.0%</td>
+
+<td class="CDPAlignCenter CDPAlign">81.0%</td>
+
+</tr>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign">试验</td>
+
+<td class="CDPAlignCenter CDPAlign">0.376</td>
+
+<td class="CDPAlignCenter CDPAlign">83.7%</td>
+
+<td class="CDPAlignCenter CDPAlign">87.3%</td>
+
+<td class="CDPAlignCenter CDPAlign">80.0%</td>
+
+</tr>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign">四</td>
+
+<td class="CDPAlignCenter CDPAlign">双向的</td>
+
+<td class="CDPAlignCenter CDPAlign"><kbd>adam</kbd></td>
+
+<td class="CDPAlignCenter CDPAlign">火车</td>
+
+<td class="CDPAlignCenter CDPAlign">0.341</td>
+
+<td class="CDPAlignCenter CDPAlign">85.2%</td>
+
+<td class="CDPAlignCenter CDPAlign">84.8%</td>
+
+<td class="CDPAlignCenter CDPAlign">85.7%</td>
+
+</tr>
+
+<tr>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign"> </td>
+
+<td class="CDPAlignCenter CDPAlign">试验</td>
+
+<td class="CDPAlignCenter CDPAlign">0.374</td>
+
+<td class="CDPAlignCenter CDPAlign">83.4%</td>
+
+<td class="CDPAlignCenter CDPAlign">82.8%</td>
+
+<td class="CDPAlignCenter CDPAlign">84.1%</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p>我们可以从上表中观察到以下情况:</p>
+
+<ul>
+
+<li>在尝试的四个模型中，双向LSTM模型提供了比其他三个模型更好的性能。根据测试数据，它具有最低的损耗值。</li>
+
+<li>尽管与第三个模型相比，第四个模型的总体准确性稍低，但正确分类负面和正面评论的准确性更加一致，从82.8%到84.1%不等，或者只有大约1.3%的差距。</li>
+
+<li>第三个模型似乎偏向于负面评论，对测试数据的正确分类率为87.3%。对于第三个模型，测试数据中正面评论的正确分类只有80%。因此，对于第三模型，负面和正面评论的正确分类之间的差异超过7%。</li>
+
+<li>对于前两个模型，灵敏度和特异性之间的差异甚至更高。</li>
+
+</ul>
+
+<p>虽然第四个模型提供了很好的结果，但通过进一步试验其他变量，肯定可以探索更多的改进。可用于进一步实验的变量可包括最频繁单词的数量、使用前置还是后置来填充和/或截断、用于填充的最大长度、LSTM层中的单元数量以及在编译模型时对另一优化器的选择。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:a4c88040-7c66-4c85-9d59-26726397fe76" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一章中，我们举例说明了LSTM网络在开发电影评论情感分类模型中的应用。我们在上一章中使用的递归神经网络所面临的问题之一是，它难以捕捉可能存在于一系列单词或整数中的两个单词/整数之间的长期依赖性。<strong>长短期记忆</strong> ( <strong> LSTM </strong>)网络是为了人工保留长期记忆而设计的，这些记忆在处理长句或一长串整数时很重要。</p>
+
+<p>在下一章中，我们将继续处理文本数据，并探索使用<strong>卷积递归神经网络</strong> <strong> s </strong> ( <strong> CRNNs </strong>)，它将<strong>卷积神经网络</strong> ( <strong> CNNs </strong>)和<strong>递归神经网络</strong> ( <strong> RNNs </strong>)的优点结合到单个网络中。我们将借助一个有趣的公开文本数据集<kbd>reuter_50_50</kbd>来说明这种网络的使用。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>
